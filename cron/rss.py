@@ -1,5 +1,6 @@
 import asyncio
 
+import os
 import feedparser
 import requests
 import json
@@ -14,9 +15,9 @@ is_F1 = True
 # CONFIG relate code
 #----------------------------------------------------------------------------------------------------------------
 f1_graphql_end_point = "https://api.purplesector.club/graphql"
-f1_graphql_token = "7e5089443be0407426818b288ff118b24140a4775707e2d08894e106059d69c6f16697055599c88a73f4de9c79462c6ea66df48675a0a28cfca403be049c2a227091ea8d4e667bbd5dd1073c7b692b4178f7693e7d174e34ba226f761794c67537589588f80de34cfbaa0a1e55deafb1c2829f1701881c8a7e109a634c59f28f"
+f1_graphql_token = os.getenv("F1_TOKEN")
 moto_graphql_end_point = "https://api.wheelie.club/graphql"
-moto_graphql_token = "7725092f7998bc4f04c3d7927a47950773ea4c2ac22ebb9715c91ce9f95cdbb464669eda0c98bc7bce20d7ba9bcbed87bf10af1c716d8e3c3060d0ea7e8f30e377c52aa83092e5d3c09ad539debf443a2f31cdc310ab4e65fe9b6564b96f5009b205c6f24d7316ea50a024c1539e887ca0ddb7386202f0431c22bb43848b7023"
+moto_graphql_token = os.getenv("MOTO_GP_TOKEN")
 
 def get_graphql_endpoint():
   if is_F1:
