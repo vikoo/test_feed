@@ -1,6 +1,7 @@
 import asyncio
 
 import os
+from dotenv import load_dotenv
 import feedparser
 import requests
 import json
@@ -10,6 +11,9 @@ from bs4 import BeautifulSoup
 
 # switch this flag for moto GP and F1 related feed
 is_F1 = True
+
+# Load environment variables from .env file - this is for local setup of token
+load_dotenv()
 
 #----------------------------------------------------------------------------------------------------------------
 # CONFIG relate code
