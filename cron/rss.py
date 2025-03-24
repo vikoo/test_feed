@@ -19,6 +19,9 @@ f1_graphql_token = os.getenv("F1_TOKEN")
 moto_graphql_end_point = "https://api.wheelie.club/graphql"
 moto_graphql_token = os.getenv("MOTO_GP_TOKEN")
 
+print("Using Token 1:", f1_graphql_token[:5] + "*****")  # Masking token
+print("Using Token 2:", moto_graphql_token[:5] + "*****")
+
 def get_graphql_endpoint():
   if is_F1:
     return f1_graphql_end_point

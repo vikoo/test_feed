@@ -30,12 +30,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r cron/requirements.txt  # dependencies
 
-      - name: Use secret token
+      - name: Run Python script with secrets
         env:
           MOTO_GP_TOKEN: ${{ secrets.MOTO_GP_TOKEN }}
           F1_TOKEN: ${{ secrets.F1_TOKEN }}
-        run: echo "Token is securely stored!"
-
-      - name: Run F1 RSS Fetch script
-        run: |
-          python cron/rss.py
+        run: python cron/rss.py
