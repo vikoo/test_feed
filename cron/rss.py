@@ -3,12 +3,9 @@ import asyncio
 import feedparser
 import requests
 import json
-import re
 from datetime import datetime, timezone, timedelta
 
 from bs4 import BeautifulSoup
-from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.constants import ParseMode
 
 # switch this flag for moto GP and F1 related feed
 is_F1 = True
@@ -180,56 +177,6 @@ def fetch_primary_image(url):
   except Exception as e:
     print(f"Error fetching primary image: {e}")
   return None
-#----------------------------------------------------------------------------------------------------------------
-# TELEGRAM relate code
-#----------------------------------------------------------------------------------------------------------------
-
-def get_telegram_bot_token():
-  if is_F1:
-    return "7728270531:AAH23QdzP4mw3tAuD-gf2GF0Uwu6RDLFXOY"
-  else :
-    return "7728270531:AAH23QdzP4mw3tAuD-gf2GF0Uwu6RDLFXOY"
-
-def get_telegram_chat_id():
-  if is_F1:
-    return "-4507300755"
-  else :
-    return "-4507300755"
-
-async def notify_telegram(feed_url, feed, feed_source):
-  telegram_bot_token = get_telegram_bot_token()
-  chat_id = get_telegram_chat_id()
-
-  message = f"{feed.link}\nPublished: {feed.published}"
-  REFACTOR_REGEX = r"(?<!\\)(_|\*|\[|\]|\(|\)|\~|`|>|#|\+|-|=|\||\{|\}|\.|\!)"
-  message = re.sub(REFACTOR_REGEX, lambda t: "\\"+t.group(), message)
-  callback_accept = f"a_{feed_source}_{feed.published}"
-  callback_reject = f"r_{feed_source}_{feed.published}"
-  buttons = [
-    [
-      InlineKeyboardButton("Accept", callback_data=callback_accept),
-      InlineKeyboardButton("Reject", callback_data=callback_reject)
-    ]
-  ]
-  reply_markup = InlineKeyboardMarkup(buttons)
-  bot = Bot(token=telegram_bot_token)
-  await bot.send_message(
-    chat_id=chat_id,
-    parse_mode=ParseMode.MARKDOWN_V2,
-    text=message,
-    # reply_markup=reply_markup
-  )
-
-async def send_message(message) :
-  telegram_bot_token = get_telegram_bot_token()
-  chat_id = get_telegram_chat_id()
-  bot = Bot(token=telegram_bot_token)
-  await bot.send_message(
-    chat_id=chat_id,
-    parse_mode=ParseMode.MARKDOWN_V2,
-    text=message,
-  )
-
 
 #----------------------------------------------------------------------------------------------------------------
 # RSS FEEDs relate code
