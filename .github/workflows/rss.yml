@@ -2,7 +2,11 @@ name: cron rss
 
 on:
   schedule:
-    - cron: "*/30 * * * *"  # Run every 30 minutes
+    # Runs every 60 minutes on Tuesday, Wednesday, and Thursday
+    - cron: "0 * * * 2-4"
+
+    # Runs every 30 minutes on Friday, Saturday, Sunday, and Monday
+    - cron: "*/30 * * * 1,5-7"
   workflow_dispatch:     # Allows manual trigger from the GitHub Actions tab
 
 jobs:
