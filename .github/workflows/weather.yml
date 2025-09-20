@@ -29,8 +29,11 @@ jobs:
 
       - name: Run Weather Script
         env:
+          MOTO_GP_TOKEN: ${{ secrets.MOTO_GP_TOKEN }}
+          F1_TOKEN: ${{ secrets.F1_TOKEN }}
           OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
-        run: python weather.py
+          TOMORROW_IO_API_KEY: ${{ secrets.TOMORROW_IO_API_KEY }}
+        run: python -m cron.weather
 
       - name: Commit JSON file
         run: |

@@ -34,4 +34,6 @@ jobs:
         env:
           MOTO_GP_TOKEN: ${{ secrets.MOTO_GP_TOKEN }}
           F1_TOKEN: ${{ secrets.F1_TOKEN }}
-        run: python cron/rss.py
+          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+          TOMORROW_IO_API_KEY: ${{ secrets.TOMORROW_IO_API_KEY }}
+        run: python -m cron.rss
