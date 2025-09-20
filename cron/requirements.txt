@@ -3,3 +3,4 @@ feedparser
 bs4
 python-dotenv
 astral
+pytz
