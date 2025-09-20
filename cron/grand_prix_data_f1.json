@@ -1,0 +1,83 @@
+{
+  "errors": [
+    {
+      "message": "Forbidden access",
+      "extensions": {
+        "error": {
+          "name": "ForbiddenError",
+          "message": "Forbidden access",
+          "details": {}
+        },
+        "code": "FORBIDDEN"
+      }
+    }
+  ],
+  "data": {
+    "grandPrixes": {
+      "data": [
+        {
+          "id": "64",
+          "attributes": {
+            "name": "Azerbaijan GP 25",
+            "startDate": "2025-09-19T09:30:00.000Z",
+            "fullName": "FORMULA 1 QATAR AIRWAYS AZERBAIJAN GRAND PRIX 2025",
+            "endDate": "2025-09-21T11:00:00.000Z",
+            "round": "17",
+            "season": null,
+            "track": {
+              "data": {
+                "id": "20",
+                "attributes": {
+                  "name": "Baku City Circuit",
+                  "imageOutline": "https://media.formula1.com/image/upload/f_auto/q_auto/v1677245030/content/dam/fom-website/2018-redesign-assets/Track%20icons%204x3/Azerbaijan%20carbon.png.transform/3col-retina/image.png",
+                  "image": "https://media.formula1.com/image/upload/f_auto/q_auto/v1677244987/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Baku_Circuit.png.transform/7col-retina/image.png",
+                  "imageFancy": null,
+                  "city": "Baku",
+                  "country": "Azerbaijan",
+                  "latitude": 40.37363697996654,
+                  "longitude": 49.85325202895406
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "races": {
+      "data": [
+        {
+          "id": "424",
+          "attributes": {
+            "type": "Q1",
+            "startTime": "2025-09-20T12:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "64"
+              }
+            },
+            "weather": {
+              "data": null
+            }
+          }
+        },
+        {
+          "id": "427",
+          "attributes": {
+            "type": "Race",
+            "startTime": "2025-09-21T11:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "64"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "3"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
