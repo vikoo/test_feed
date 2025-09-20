@@ -25,7 +25,7 @@ jobs:
           python-version: "3.x"
 
       - name: Install deps
-        run: pip install -r requirements.txt
+        run: pip install -r cron/requirements.txt  # dependencies
 
       - name: Run Weather Script
         env:
@@ -39,6 +39,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add cron/grand_prix_data.json
+          git add cron/grand_prix_data_f1.json
+          git add cron/grand_prix_data_moto.json
           git commit -m "Update Grand Prix data"
           git push
