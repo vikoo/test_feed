@@ -42,5 +42,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add cron/grand_prix_data_f1.json
+          git add cron/grand_prix_data_moto.json
           git commit -m "Update Grand Prix data" || echo "No changes to commit"
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
