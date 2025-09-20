@@ -1,0 +1,41 @@
+name: Weather Fetcher
+
+on:
+  schedule:
+    - # Runs every 120 minutes on Tuesday, Wednesday, and Thursday
+    - cron: "0 0-22/2 * * 2-4"
+    - # Runs every 15 minutes on Friday, Saturday, Sunday, and Monday (explicitly for each day)
+    - cron: "*/15 * * * 1"
+    - cron: "*/15 * * * 5"
+    - cron: "*/15 * * * 6"
+    - cron: "*/15 * * * 0"
+
+  workflow_dispatch:       # allow manual run
+
+jobs:
+  weather:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Run Weather Script
+        env:
+          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+        run: python weather.py
+
+      - name: Commit JSON file
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add cron/grand_prix_data.json
+          git commit -m "Update Grand Prix data"
+          git push

@@ -1,241 +1,21 @@
-import asyncio
-
-import os
-from dotenv import load_dotenv
 import feedparser
-import requests
-import json
-from datetime import datetime, timezone, timedelta
-
-from bs4 import BeautifulSoup
-
-# switch this flag for moto GP and F1 related feed
-is_F1 = True
+from datetime import timezone, timedelta
+from cron.apis import *
+from dotenv import load_dotenv
 
 # Load environment variables from .env file - this is for local setup of token
 load_dotenv()
 
-#----------------------------------------------------------------------------------------------------------------
-# CONFIG relate code
-#----------------------------------------------------------------------------------------------------------------
-f1_graphql_end_point = "https://api.purplesector.club/graphql"
-f1_graphql_token = os.getenv("F1_TOKEN")
-moto_graphql_end_point = "https://api.wheelie.club/graphql"
-moto_graphql_token = os.getenv("MOTO_GP_TOKEN")
-
 print("Using Token 1:", f1_graphql_token[:5] + "*****")  # Masking token
 print("Using Token 2:", moto_graphql_token[:5] + "*****")
 
-def get_graphql_endpoint():
-  if is_F1:
-    return f1_graphql_end_point
-  else:
-    return moto_graphql_end_point
-
-def get_graphql_token():
-  if is_F1:
-    return f1_graphql_token
-  else:
-    return moto_graphql_token
-
-def get_feed_urls():
-  if is_F1:
-    return f1_feed_urls
-  else:
-    return moto_feed_urls
-
-def get_config():
-  # Define GraphQL endpoint
-  end_point = get_graphql_endpoint()
-
-  token = get_graphql_token()
-  headers = {
-    "Content-Type": "application/json",
-    "Authorization": f"Bearer {token}"
-  }
-
-  # GraphQL query
-  query = """
-  {
-    config {
-        data {
-            id
-            attributes {
-                feedJson
-            }
-        }
-    }
-  }
-  """
-  # Send request
-  response = requests.post(end_point, json={'query': query}, headers=headers)
-  # Print response
-  print(response.json())
-  config_json = response.json()['data']['config']['data']['attributes']['feedJson']
-  print(config_json)
-  return config_json
-
-def update_config(config_json_str):
-  # Define GraphQL endpoint
-  end_point = get_graphql_endpoint()
-
-  token = get_graphql_token()
-  headers = {
-    "Content-Type": "application/json",
-    "Authorization": f"Bearer {token}"
-  }
-
-  mutation = """
-  mutation UpdateConfig($input: ConfigInput!) {
-    updateConfig(data: $input) {
-        data {
-            id
-            attributes {
-                feedJson
-            }
-        }
-    }
-  }
-  """
-
-  # Define new values for feedJson
-  variables = f"""
-    {{
-    "input": {{
-      "feedJson": {config_json_str}
-    }}
-  }}
-  """
-  print(f"------> config_json_str: {config_json_str}")
-  print(f"------> variables: {variables}")
-
-  # Send the request
-  response = requests.post(end_point, json={"query": mutation, "variables": variables}, headers=headers)
-  print(response.json())
-
-def post_feed(feed_url, feed, feed_source):
-  print(f"------> posting feed to strapi: {feed.title}")
-  # Define GraphQL endpoint
-  end_point = get_graphql_endpoint()
-
-  token = get_graphql_token()
-  headers = {
-    "Content-Type": "application/json",
-    "Authorization": f"Bearer {token}"
-  }
-
-  mutation = """
-  mutation PostFeed($input: FeedInput!) {
-    createFeed(data: $input) {
-        data {
-            id
-        }
-    }
-  }
-  """
-  feed_map = {}
-  feed_map['title'] = feed.title
-  summary = feed.summary.replace("<br>", "").replace("<br />", "").replace("<br/>", "").replace("<BR>", "").replace("<BR/>", "").replace("<BR />", "")
-  feed_map['description'] = summary
-  feed_map['guid'] = feed.id
-
-  # Convert to datetime object
-  dt = datetime.strptime(feed.published, "%a, %d %b %Y %H:%M:%S %z")
-  # Convert datetime to ISO format string
-  json_date = dt.isoformat()
-  feed_map['pubDate'] = json_date
-
-  feed_map['source'] = feed_source + ".com"
-  feed_map['link'] = feed.link
-
-  # if feed has image urls then get that
-  if feed.links:
-    type_to_href = {item['type']: item['href'] for item in feed.links if 'type' in item}
-    print(f"---> type_to_href: {type_to_href}")
-    feed_map['imageUrl'] = type_to_href.get('image/jpeg') or type_to_href.get('image/webp') or type_to_href.get('image/png')
-
-  # if feed does not have image url then get it from article
-  if not feed_map['imageUrl']:
-    primary_image = fetch_primary_image(feed.link)
-    if primary_image:
-      feed_map['imageUrl'] = primary_image
-
-  json_str = json.dumps(feed_map)
-  # Define new values for feedJson
-  variables = f"""
-  {{
-    "input": {json_str}
-  }}
-  """
-  print(f"------> variables: {variables}")
-
-  # Send the request
-  response = requests.post(end_point, json={"query": mutation, "variables": variables}, headers=headers)
-  print(response.json())
-
-# Fetch primary image from feed.link if feed.links is empty
-def fetch_primary_image(url):
-  try:
-    response = requests.get(url, timeout=5)
-    response.raise_for_status()
-    soup = BeautifulSoup(response.content, "html.parser")
-    img_tag = soup.find("meta", property="og:image")
-    if img_tag and img_tag["content"]:
-      return img_tag["content"]
-  except Exception as e:
-    print(f"Error fetching primary image: {e}")
-  return None
-
-#----------------------------------------------------------------------------------------------------------------
-# RSS FEEDs relate code
-#----------------------------------------------------------------------------------------------------------------
-# URLs of the RSS feeds
-f1_feed_urls = [
-  "https://www.formula1.com/content/fom-website/en/latest/all.xml",
-  "https://www.motorsport.com/rss/f1/news/",
-  "https://www.gpfans.com/en/rss.xml",
-  # "https://www.autosport.com/rss/f1/news/",
-  "https://www.gpblog.com/en/rss/index.xml",
-  # "https://flipboard.com/topic/formula1.rss"
-]
-
-moto_feed_urls = [
-  "https://www.gpone.com/en/article-feed.xml",
-  "https://www.motorsport.com/rss/motogp/news/",
-  # "https://www.autosport.com/rss/motogp/news/",
-  "https://flipboard.com/topic/motogp.rss"
-]
-
-url_to_id = {
-  # F1
-  "https://www.formula1.com/content/fom-website/en/latest/all.xml": "formula1",
-  "https://www.motorsport.com/rss/f1/news/": "motorsport",
-  "https://www.autosport.com/rss/f1/news/": "autosport",
-  "https://www.gpblog.com/en/rss/index.xml": "gpblog",
-  "https://www.gpfans.com/en/rss.xml":"gpfans",
-  "https://flipboard.com/topic/formula1.rss":"flipboard",
-  # moto GP
-  "https://www.gpone.com/en/article-feed.xml":"gpone",
-  "https://www.motorsport.com/rss/motogp/news/": "motorsport",
-  "https://www.autosport.com/rss/motogp/news/": "autosport",
-  "https://flipboard.com/topic/motogp.rss":"flipboard",
-}
-
-def get_epoch(date_str) :
-  # Parse the date string using the appropriate format
-  dt = datetime.strptime(date_str, "%a, %d %b %Y %H:%M:%S %z")
-
-  # Convert the datetime to an epoch timestamp
-  epoch_timestamp = dt.timestamp()
-  return epoch_timestamp
-
-def fetch_and_process_feeds():
+def fetch_and_process_feeds(is_f1_feed: bool):
   # GET CONFIG
-  config = get_config()
+  config = get_config(is_f1_feed)
 
   feed_update_map = {}
   # GET LAST FEED TIME
-  feed_urls = get_feed_urls()
+  feed_urls = get_feed_urls(is_f1_feed)
   for index, feed_url in enumerate(feed_urls):
     feeds = feedparser.parse(feed_url)
     print(f" feed len: {len(feeds)}")
@@ -293,7 +73,7 @@ def fetch_and_process_feeds():
         if feed_epoch > config_epoch:
           print(f"------>## processing feed title: {feed.title}")
           print(f"------>## processing feed: {feed}")
-          process_feed(feed_url, feed, feed_source)
+          process_feed(is_f1_feed, feed, feed_source)
     else :
       # parse based on guid
       is_last_feed_found = False
@@ -310,27 +90,19 @@ def fetch_and_process_feeds():
         if is_last_feed_found:
           print(f"------>## guid processing feed title: {feed.title}")
           print(f"------>## guid processing feed: {feed}")
-          process_feed(feed_url, feed, feed_source)
+          process_feed(is_f1_feed, feed, feed_source)
 
     feed_update_map[feed_source] = feed_date
 
   json_str = json.dumps(feed_update_map)
-  update_config(json_str)
-  # if is_F1 :
-  #   asyncio.run(send_message("F1 Feeds updated"))
-  # else:
-  #   asyncio.run(send_message("Moto GP Feeds updated"))
-    # update config with last update for the feed url
+  update_config(is_f1_feed, json_str)
 
-def process_feed(feed_url, feed, feed_source):
-  # push feed to strapi
-  post_feed(feed_url, feed, feed_source)
-  # Notify Telegram
-  # asyncio.run(notify_telegram(feed_url, feed, feed_source))
+def process_feed(is_f1_feed: bool, feed, feed_source):
+  post_feed(is_f1_feed, feed, feed_source)
+
 
 if __name__ == "__main__":
   print(f"------------- FETCHING F1 FEEDS ------------------")
-  fetch_and_process_feeds()
+  fetch_and_process_feeds(True)
   print(f"------------- FETCHING MOTO GP FEEDS ------------------")
-  is_F1 = False
-  fetch_and_process_feeds()
+  fetch_and_process_feeds(False)
