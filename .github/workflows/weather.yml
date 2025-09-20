@@ -2,9 +2,9 @@ name: Weather Fetcher
 
 on:
   schedule:
-    - # Runs every 120 minutes on Tuesday, Wednesday, and Thursday
+    # Runs every 120 minutes on Tuesday, Wednesday, and Thursday
     - cron: "0 0-22/2 * * 2-4"
-    - # Runs every 15 minutes on Friday, Saturday, Sunday, and Monday (explicitly for each day)
+    # Runs every 15 minutes on Friday, Saturday, Sunday, and Monday (explicitly for each day)
     - cron: "*/15 * * * 1"
     - cron: "*/15 * * * 5"
     - cron: "*/15 * * * 6"
