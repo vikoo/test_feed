@@ -49,8 +49,8 @@ def get_icon_url(code: str, lat: float, lon: float, time_str: str) -> str:
 
         if not filename:
             return ""
-        return BASE_URL + filename
-    return BASE_URL + filename
+        return BASE_URL + filename + "?raw=true"
+    return BASE_URL + filename + "?raw=true"
 
 def get_weather_desc(code: str) -> str:
     desc = weather_codes_to_desc_mapping.get(code)
