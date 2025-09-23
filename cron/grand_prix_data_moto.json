@@ -1,0 +1,70 @@
+{
+  "errors": [
+    {
+      "message": "Cannot query field \"latitude\" on type \"Track\".",
+      "locations": [
+        {
+          "line": 39,
+          "column": 33
+        }
+      ],
+      "extensions": {
+        "code": "GRAPHQL_VALIDATION_FAILED",
+        "exception": {
+          "stacktrace": [
+            "GraphQLError: Cannot query field \"latitude\" on type \"Track\".",
+            "    at Object.Field (/opt/node_modules/graphql/validation/rules/FieldsOnCorrectTypeRule.js:48:31)",
+            "    at Object.enter (/opt/node_modules/graphql/language/visitor.js:323:29)",
+            "    at Object.enter (/opt/node_modules/graphql/utilities/TypeInfo.js:370:25)",
+            "    at visit (/opt/node_modules/graphql/language/visitor.js:243:26)",
+            "    at validate (/opt/node_modules/graphql/validation/validate.js:69:24)",
+            "    at validate (/opt/node_modules/apollo-server-core/dist/requestPipeline.js:186:39)",
+            "    at processGraphQLRequest (/opt/node_modules/apollo-server-core/dist/requestPipeline.js:98:34)",
+            "    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)",
+            "    at async processHTTPRequest (/opt/node_modules/apollo-server-core/dist/runHttpQuery.js:221:30)",
+            "    at async /opt/node_modules/apollo-server-koa/dist/ApolloServer.js:83:59",
+            "    at async bodyParser (/opt/node_modules/koa-bodyparser/index.js:78:5)",
+            "    at async returnBodyMiddleware (/opt/node_modules/@strapi/strapi/dist/services/server/compose-endpoint.js:42:18)",
+            "    at async policiesMiddleware (/opt/node_modules/@strapi/strapi/dist/services/server/policy.js:15:5)",
+            "    at async /opt/node_modules/@strapi/strapi/dist/services/server/compose-endpoint.js:27:12",
+            "    at async compressMiddleware (/opt/node_modules/koa-compress/lib/index.js:52:5)",
+            "    at async /opt/node_modules/@strapi/strapi/dist/middlewares/body.js:32:7"
+          ]
+        }
+      }
+    },
+    {
+      "message": "Cannot query field \"longitude\" on type \"Track\".",
+      "locations": [
+        {
+          "line": 40,
+          "column": 33
+        }
+      ],
+      "extensions": {
+        "code": "GRAPHQL_VALIDATION_FAILED",
+        "exception": {
+          "stacktrace": [
+            "GraphQLError: Cannot query field \"longitude\" on type \"Track\".",
+            "    at Object.Field (/opt/node_modules/graphql/validation/rules/FieldsOnCorrectTypeRule.js:48:31)",
+            "    at Object.enter (/opt/node_modules/graphql/language/visitor.js:323:29)",
+            "    at Object.enter (/opt/node_modules/graphql/utilities/TypeInfo.js:370:25)",
+            "    at visit (/opt/node_modules/graphql/language/visitor.js:243:26)",
+            "    at validate (/opt/node_modules/graphql/validation/validate.js:69:24)",
+            "    at validate (/opt/node_modules/apollo-server-core/dist/requestPipeline.js:186:39)",
+            "    at processGraphQLRequest (/opt/node_modules/apollo-server-core/dist/requestPipeline.js:98:34)",
+            "    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)",
+            "    at async processHTTPRequest (/opt/node_modules/apollo-server-core/dist/runHttpQuery.js:221:30)",
+            "    at async /opt/node_modules/apollo-server-koa/dist/ApolloServer.js:83:59",
+            "    at async bodyParser (/opt/node_modules/koa-bodyparser/index.js:78:5)",
+            "    at async returnBodyMiddleware (/opt/node_modules/@strapi/strapi/dist/services/server/compose-endpoint.js:42:18)",
+            "    at async policiesMiddleware (/opt/node_modules/@strapi/strapi/dist/services/server/policy.js:15:5)",
+            "    at async /opt/node_modules/@strapi/strapi/dist/services/server/compose-endpoint.js:27:12",
+            "    at async compressMiddleware (/opt/node_modules/koa-compress/lib/index.js:52:5)",
+            "    at async /opt/node_modules/@strapi/strapi/dist/middlewares/body.js:32:7"
+          ]
+        }
+      }
+    }
+  ]
+}
