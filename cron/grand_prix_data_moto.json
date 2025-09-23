@@ -1,0 +1,30 @@
+{
+  "errors": [
+    {
+      "message": "Forbidden access",
+      "extensions": {
+        "error": {
+          "name": "ForbiddenError",
+          "message": "Forbidden access",
+          "details": {}
+        },
+        "code": "FORBIDDEN"
+      }
+    },
+    {
+      "message": "Forbidden access",
+      "extensions": {
+        "error": {
+          "name": "ForbiddenError",
+          "message": "Forbidden access",
+          "details": {}
+        },
+        "code": "FORBIDDEN"
+      }
+    }
+  ],
+  "data": {
+    "grandPrixes": null,
+    "races": null
+  }
+}
