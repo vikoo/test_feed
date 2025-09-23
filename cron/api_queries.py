@@ -33,6 +33,28 @@ mutation_post_feed = """
             }
         }
         """
+query_old_feeds = """
+        query GetOldFeeds($cutoffDate: DateTime!, $limit: Int!, $start: Int!) {
+              feeds(
+                    filters: { pubDate: { lte: $cutoffDate } }
+                    pagination: { limit: $limit, start: $start }
+                    sort: "pubDate:asc"
+              ) {
+                    data {
+                        id
+                    }
+              }
+        }
+"""
+mutation_delete_feed = """
+        mutation DeleteFeed($id: ID!) {
+            deleteFeed(id: $id) {
+                data {
+                    id
+                }
+            }
+        }
+"""
 
 query_get_latest_grand_prixes = """
     query GetLatestGrandPrixQuery($currentDate: DateTime!) {

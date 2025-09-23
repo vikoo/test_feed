@@ -1,7 +1,8 @@
 from bs4 import BeautifulSoup
 
 from cron.api_queries import query_get_latest_grand_prixes, mutation_post_feed, mutation_update_config, \
-    query_get_config, mutation_post_weather, mutation_update_race_with_weather, mutation_update_weather
+    query_get_config, mutation_post_weather, mutation_update_race_with_weather, mutation_update_weather, \
+    query_old_feeds, mutation_delete_feed
 from cron.utils import *
 import requests
 import json
@@ -9,7 +10,9 @@ from datetime import datetime, timedelta
 
 from cron.weather_utils import get_icon_url, get_weather_desc, convert_weather_api_json_to_strapi_json
 
-
+#----------------------------------------------------------------------------------------------------------------
+# common code
+#----------------------------------------------------------------------------------------------------------------
 def get_headers(is_f1_feed: bool) -> str:
     token = get_graphql_token(is_f1_feed)
     headers = {
@@ -18,6 +21,9 @@ def get_headers(is_f1_feed: bool) -> str:
     }
     return headers
 
+#----------------------------------------------------------------------------------------------------------------
+# Config relate code
+#----------------------------------------------------------------------------------------------------------------
 def get_config(is_f1_feed: bool) -> str:
     end_point = get_graphql_endpoint(is_f1_feed)
 
@@ -44,6 +50,9 @@ def update_config(is_f1_feed, config_json_str) -> str:
     response = requests.post(end_point, json={"query": mutation_update_config, "variables": variables}, headers=get_headers(is_f1_feed))
     print(response.json())
 
+#----------------------------------------------------------------------------------------------------------------
+# RSS FEEDs relate code
+#----------------------------------------------------------------------------------------------------------------
 def post_feed(is_f1_feed, feed, feed_source):
     print(f"------> posting feed to strapi: {feed.title}")
     end_point = get_graphql_endpoint(is_f1_feed)
@@ -100,6 +109,22 @@ def fetch_primary_image(url: str):
         print(f"Error fetching primary image: {e}")
     return None
 
+def fetch_old_feeds(is_f1_feed: bool, cutoff_date_str: str, start=0, limit=50):
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = {"cutoffDate": cutoff_date_str, "limit": limit, "start": start}
+    resp = requests.post(end_point, json={"query": query_old_feeds, "variables": variables}, headers=get_headers(is_f1_feed))
+    resp.raise_for_status()
+    return resp.json()["data"]["feeds"]["data"]
+
+def delete_feed(is_f1_feed: bool, feed_id):
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = {"id": feed_id}
+    resp = requests.post(end_point, json={"query": mutation_delete_feed, "variables": variables}, headers=get_headers(is_f1_feed))
+    resp.raise_for_status()
+    return resp.json()
+#----------------------------------------------------------------------------------------------------------------
+# weather relate code
+#----------------------------------------------------------------------------------------------------------------
 def get_upcoming_races(is_f1_feed) -> str:
     end_point = get_graphql_endpoint(is_f1_feed)
     current_date = datetime.utcnow()
