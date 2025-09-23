@@ -119,6 +119,7 @@ async def post_feed(is_f1_feed, feed, feed_source):
         update_response = requests.post(
             end_point,
             json={"query": mutation_post_feed, "variables": variables_update},
+            # json={"query": mutation_update_feed, "variables": variables_update},
             headers=get_headers(is_f1_feed),
         )
         print(f"Update Feed [{locale}] Response:", update_response.json())
