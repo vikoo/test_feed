@@ -1,6 +1,6 @@
 import feedparser
-from datetime import UTC
 from cron.apis import *
+from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 
 # Load environment variables from .env file - this is for local setup of token
@@ -8,7 +8,7 @@ load_dotenv()
 
 def fetch_and_clean_feeds(is_f1_feed: bool):
   # Cutoff: 30 days ago
-  cutoff_date = datetime.now(UTC) - timedelta(days=30)
+  cutoff_date = datetime.now(timezone.utc) - timedelta(days=30)
 
   # Format as "YYYY-MM-DDTHH:MM:SS.sssZ"
   cutoff_date_str = cutoff_date.strftime("%Y-%m-%dT%H:%M:%S.000Z")
