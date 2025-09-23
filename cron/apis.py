@@ -1,8 +1,9 @@
 from bs4 import BeautifulSoup
+from googletrans import Translator
 
 from cron.api_queries import query_get_latest_grand_prixes, mutation_post_feed, mutation_update_config, \
     query_get_config, mutation_post_weather, mutation_update_race_with_weather, mutation_update_weather, \
-    query_old_feeds, mutation_delete_feed
+    query_old_feeds, mutation_delete_feed, mutation_update_feed
 from cron.utils import *
 import requests
 import json
@@ -53,7 +54,7 @@ def update_config(is_f1_feed, config_json_str) -> str:
 #----------------------------------------------------------------------------------------------------------------
 # RSS FEEDs relate code
 #----------------------------------------------------------------------------------------------------------------
-def post_feed(is_f1_feed, feed, feed_source):
+async def post_feed(is_f1_feed, feed, feed_source):
     print(f"------> posting feed to strapi: {feed.title}")
     end_point = get_graphql_endpoint(is_f1_feed)
 
@@ -83,18 +84,44 @@ def post_feed(is_f1_feed, feed, feed_source):
         if primary_image:
             feed_map['imageUrl'] = primary_image
 
-    json_str = json.dumps(feed_map)
     # Define new values for feedJson
-    variables = f"""
-      {{
-        "input": {json_str}
-      }}
-    """
-    print(f"------> variables: {variables}")
+    variables = {"input": feed_map, "locale": "en"}
+    # print(f"------> variables: {variables}")
 
     # Send the request
     response = requests.post(end_point, json={"query": mutation_post_feed, "variables": variables}, headers=get_headers(is_f1_feed))
-    print(response.json())
+    result = response.json()
+    print(result)
+    feed_id = result["data"]["createFeed"]["data"]["id"]
+    print(f"feed_id : {feed_id}")
+
+    # Initialize translator
+    translator = Translator()
+
+    # Translate title and description for other locales
+    for locale in locales:
+
+        translated_title_obj = await translator.translate(feed_map["title"], dest=locale)
+        translated_desc_obj = await translator.translate(feed_map["description"], dest=locale)
+
+        translated_title = translated_title_obj.text
+        translated_desc = translated_desc_obj.text
+        print(f"{locale} : title: {translated_title}")
+
+        updated_map = feed_map.copy()
+        updated_map['title'] = translated_title
+        updated_map['description'] = translated_desc
+        updated_map['guid'] = feed_map['guid'] + locale
+
+        variables_update = {"input": updated_map, "locale": locale}
+        # variables_update = {"input": updated_map, "locale": locale, "feedId": feed_id}
+        # print(f"variable : {variables_update}")
+        update_response = requests.post(
+            end_point,
+            json={"query": mutation_post_feed, "variables": variables_update},
+            headers=get_headers(is_f1_feed),
+        )
+        print(f"Update Feed [{locale}] Response:", update_response.json())
 
 # Fetch primary image from feed.link if feed.links is empty
 def fetch_primary_image(url: str):

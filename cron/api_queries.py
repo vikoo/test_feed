@@ -25,14 +25,24 @@ mutation_update_config = """
           """
 
 mutation_post_feed = """
-        mutation PostFeed($input: FeedInput!) {
-            createFeed(data: $input) {
+        mutation PostFeed($input: FeedInput!, $locale: I18NLocaleCode) {
+            createFeed(data: $input, locale: $locale) {
                 data {
                     id
                 }
             }
         }
         """
+
+mutation_update_feed = """
+        mutation UpdateFeed($feedId: ID!, $input: FeedInput!, $locale: I18NLocaleCode) {
+            updateFeed(id: $feedId, data: $input, locale: $locale) {
+                data {
+                    id
+                }
+            }
+        }
+"""
 query_old_feeds = """
         query GetOldFeeds($cutoffDate: DateTime!, $limit: Int!, $start: Int!) {
               feeds(

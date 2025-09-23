@@ -1,3 +1,5 @@
+import asyncio
+
 import feedparser
 from datetime import timezone, timedelta
 from cron.apis import *
@@ -98,7 +100,7 @@ def fetch_and_process_feeds(is_f1_feed: bool):
   update_config(is_f1_feed, json_str)
 
 def process_feed(is_f1_feed: bool, feed, feed_source):
-  post_feed(is_f1_feed, feed, feed_source)
+  asyncio.run(post_feed(is_f1_feed, feed, feed_source))
 
 
 if __name__ == "__main__":

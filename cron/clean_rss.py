@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def fetch_and_clean_feeds(is_f1_feed: bool):
-  # Cutoff: 30 days ago
-  cutoff_date = datetime.now(timezone.utc) - timedelta(days=30)
+  # Cutoff: 20 days ago
+  cutoff_date = datetime.now(timezone.utc) - timedelta(days=20)
 
   # Format as "YYYY-MM-DDTHH:MM:SS.sssZ"
   cutoff_date_str = cutoff_date.strftime("%Y-%m-%dT%H:%M:%S.000Z")
