@@ -92,7 +92,19 @@ async def post_feed(is_f1_feed, feed, feed_source):
     response = requests.post(end_point, json={"query": mutation_post_feed, "variables": variables}, headers=get_headers(is_f1_feed))
     result = response.json()
     print(result)
-    feed_id = result["data"]["createFeed"]["data"]["id"]
+
+    # Check for GraphQL errors
+    if "errors" in result:
+        print("❌ GraphQL errors:", result["errors"])
+        return
+
+    # Check that createFeed->data exists
+    feed_data = result.get("data", {}).get("createFeed", {}).get("data")
+    if not feed_data:
+        print("❌ No feed data in response:", result)
+        return
+
+    feed_id = feed_data["id"]
     print(f"feed_id : {feed_id}")
 
     # Initialize translator
