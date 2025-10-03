@@ -1,1 +1,136 @@
-""
+{
+  "errors": [
+    {
+      "message": "Forbidden access",
+      "extensions": {
+        "error": {
+          "name": "ForbiddenError",
+          "message": "Forbidden access",
+          "details": {}
+        },
+        "code": "FORBIDDEN"
+      }
+    }
+  ],
+  "data": {
+    "grandPrixes": {
+      "data": [
+        {
+          "id": "38",
+          "attributes": {
+            "name": "Indonesia GP 25",
+            "startDate": "2025-10-03T02:45:00.000Z",
+            "fullName": "GRAND PRIX OF INDONESIA",
+            "endDate": "2025-10-05T07:45:00.000Z",
+            "round": "18",
+            "season": null,
+            "track": {
+              "data": {
+                "id": "16",
+                "attributes": {
+                  "name": "Pertamina Mandalika Circuit",
+                  "imageOutline": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/tracks/mandalika_indonesia.png",
+                  "image": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/tracks/mandalika_indonesia.png",
+                  "imageFancy": null,
+                  "city": "West Nusa Tenggara",
+                  "country": "Indonesia",
+                  "latitude": -8.894956094910397,
+                  "longitude": 116.30432455704842
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "races": {
+      "data": [
+        {
+          "id": "306",
+          "attributes": {
+            "type": "PRACTICE",
+            "startTime": "2025-10-03T07:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "38"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "6"
+              }
+            }
+          }
+        },
+        {
+          "id": "308",
+          "attributes": {
+            "type": "QNR1",
+            "startTime": "2025-10-04T02:50:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "38"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "7"
+              }
+            }
+          }
+        },
+        {
+          "id": "309",
+          "attributes": {
+            "type": "QNR2",
+            "startTime": "2025-10-04T03:15:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "38"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "8"
+              }
+            }
+          }
+        },
+        {
+          "id": "310",
+          "attributes": {
+            "type": "Sprint",
+            "startTime": "2025-10-04T07:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "38"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "9"
+              }
+            }
+          }
+        },
+        {
+          "id": "312",
+          "attributes": {
+            "type": "Race",
+            "startTime": "2025-10-05T06:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "38"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "10"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
