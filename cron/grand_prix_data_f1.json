@@ -1,1 +1,85 @@
-""
+{
+  "errors": [
+    {
+      "message": "Forbidden access",
+      "extensions": {
+        "error": {
+          "name": "ForbiddenError",
+          "message": "Forbidden access",
+          "details": {}
+        },
+        "code": "FORBIDDEN"
+      }
+    }
+  ],
+  "data": {
+    "grandPrixes": {
+      "data": [
+        {
+          "id": "65",
+          "attributes": {
+            "name": "Singapore GP 25",
+            "startDate": "2025-10-03T09:30:00.000Z",
+            "fullName": "FORMULA 1 SINGAPORE AIRLINES SINGAPORE GRAND PRIX 2025",
+            "endDate": "2025-10-05T13:30:00.000Z",
+            "round": "18",
+            "season": null,
+            "track": {
+              "data": {
+                "id": "21",
+                "attributes": {
+                  "name": "Marina Bay Street Circuit",
+                  "imageOutline": "https://media.formula1.com/image/upload/f_auto/q_auto/v1683639275/content/dam/fom-website/2018-redesign-assets/Track%20icons%204x3/Singapore%20carbon.png.transform/3col-retina/image.png",
+                  "image": "https://media.formula1.com/image/upload/f_auto/q_auto/v1683633963/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Singapore_Circuit.png.transform/7col-retina/image.png",
+                  "imageFancy": null,
+                  "city": "Singapore",
+                  "country": "Singapore",
+                  "latitude": 1.2916785992365931,
+                  "longitude": 103.86458561298875
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "races": {
+      "data": [
+        {
+          "id": "431",
+          "attributes": {
+            "type": "Q1",
+            "startTime": "2025-10-04T13:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "65"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "4"
+              }
+            }
+          }
+        },
+        {
+          "id": "434",
+          "attributes": {
+            "type": "Race",
+            "startTime": "2025-10-05T12:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "65"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "5"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
