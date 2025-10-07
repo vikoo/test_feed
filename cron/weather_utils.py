@@ -592,6 +592,7 @@ weather_code_to_icon_mapping = {
     "10000": "10000_clear_large@2x.png",
     "10001": "10001_clear_large@2x.png",
     "10010": "10010_cloudy_large@2x.png",
+    "10011": "10010_cloudy_large@2x.png",
     "11000": "11000_mostly_clear_large@2x.png",
     "11001": "11001_mostly_clear_large@2x.png",
     "11010": "11010_partly_cloudy_large@2x.png",
