@@ -38,15 +38,18 @@ def fetch_hourly_weather(lat: float, lon: float) -> str:
 BASE_URL = "https://github.com/Tomorrow-IO-API/tomorrow-weather-codes/blob/master/V2_icons/large/png/"
 def get_icon_url(code: str, lat: float, lon: float, time_str: str) -> str:
     filename = weather_code_to_icon_mapping.get(code)
+    print(f"icon file name: ${filename}")
     if not filename:
         # if file name not found then it's a generic code.
         # we need to append 0 for day and 1 for night to get the icon.
         is_day = is_day_or_night(lat, lon, time_str)
+        print(f"is_day: ${is_day}")
         if is_day == "day":
             filename = weather_code_to_icon_mapping.get(code + "0")
         else:
             filename = weather_code_to_icon_mapping.get(code + "1")
 
+        print(f"new icon file name: ${filename}")
         if not filename:
             return ""
         return BASE_URL + filename + "?raw=true"
