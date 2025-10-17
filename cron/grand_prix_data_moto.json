@@ -1,1 +1,136 @@
-""
+{
+  "errors": [
+    {
+      "message": "Forbidden access",
+      "extensions": {
+        "error": {
+          "name": "ForbiddenError",
+          "message": "Forbidden access",
+          "details": {}
+        },
+        "code": "FORBIDDEN"
+      }
+    }
+  ],
+  "data": {
+    "grandPrixes": {
+      "data": [
+        {
+          "id": "39",
+          "attributes": {
+            "name": "Australia GP 25",
+            "startDate": "2025-10-16T23:45:00.000Z",
+            "fullName": "AUSTRALIAN GRAND PRIX",
+            "endDate": "2025-10-19T03:45:00.000Z",
+            "round": "19",
+            "season": null,
+            "track": {
+              "data": {
+                "id": "18",
+                "attributes": {
+                  "name": "Phillip Island",
+                  "imageOutline": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/tracks/phillip_australia.png",
+                  "image": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/tracks/phillip_australia.png",
+                  "imageFancy": null,
+                  "city": "Victoria",
+                  "country": "Australia",
+                  "latitude": -38.501170305726546,
+                  "longitude": 145.23219955210243
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "races": {
+      "data": [
+        {
+          "id": "314",
+          "attributes": {
+            "type": "PRACTICE",
+            "startTime": "2025-10-17T04:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "39"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "11"
+              }
+            }
+          }
+        },
+        {
+          "id": "316",
+          "attributes": {
+            "type": "QNR1",
+            "startTime": "2025-10-17T23:50:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "39"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "12"
+              }
+            }
+          }
+        },
+        {
+          "id": "317",
+          "attributes": {
+            "type": "QNR2",
+            "startTime": "2025-10-18T00:15:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "39"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "13"
+              }
+            }
+          }
+        },
+        {
+          "id": "318",
+          "attributes": {
+            "type": "Sprint",
+            "startTime": "2025-10-18T04:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "39"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "14"
+              }
+            }
+          }
+        },
+        {
+          "id": "320",
+          "attributes": {
+            "type": "Race",
+            "startTime": "2025-10-19T03:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "39"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "15"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
