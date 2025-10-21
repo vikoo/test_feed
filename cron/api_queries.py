@@ -115,9 +115,6 @@ query_get_latest_grand_prixes = """
         races(
             filters: {
                 grandPrix: {
-                    startDate: {
-                        lte: $currentDate
-                    },
                     endDate: {
                         gte: $currentDate
                     }
