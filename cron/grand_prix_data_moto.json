@@ -44,7 +44,93 @@
       ]
     },
     "races": {
-      "data": []
+      "data": [
+        {
+          "id": "322",
+          "attributes": {
+            "type": "PRACTICE",
+            "startTime": "2025-10-24T07:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "40"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "16"
+              }
+            }
+          }
+        },
+        {
+          "id": "324",
+          "attributes": {
+            "type": "QNR1",
+            "startTime": "2025-10-25T02:50:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "40"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "17"
+              }
+            }
+          }
+        },
+        {
+          "id": "325",
+          "attributes": {
+            "type": "QNR2",
+            "startTime": "2025-10-25T03:15:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "40"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "18"
+              }
+            }
+          }
+        },
+        {
+          "id": "326",
+          "attributes": {
+            "type": "Sprint",
+            "startTime": "2025-10-25T07:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "40"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "19"
+              }
+            }
+          }
+        },
+        {
+          "id": "328",
+          "attributes": {
+            "type": "Race",
+            "startTime": "2025-10-26T07:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "40"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "20"
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }
