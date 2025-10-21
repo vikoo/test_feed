@@ -123,6 +123,9 @@ query_get_latest_grand_prixes = """
                     notIn: ["FP1","FP2","FP3","Q2","Q3","SQ2","SQ3"]
                 }
             },
+            pagination: {
+                limit: 5
+            }
             sort: "startTime"
         ) {
             data {
