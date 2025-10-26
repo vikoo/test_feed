@@ -48,7 +48,7 @@ query_old_feeds = """
               feeds(
                     filters: { pubDate: { lte: $cutoffDate } }
                     pagination: { limit: $limit, start: $start }
-                    sort: "pubDate:asc"
+                    sort: ["pubDate:asc", "id:asc"]
               ) {
                     data {
                         id
@@ -61,7 +61,7 @@ query_old_votes = """
             votes(
                 filters: { updatedAt: { lte: $cutoffDate } }
                 pagination: { limit: $limit, start: $start }
-                sort: "updatedAt:asc"
+                sort: ["updatedAt:asc", "id:asc"]
             ) {
                 data {
                     id
@@ -75,7 +75,7 @@ query_old_vote_counts = """
             voteCounts(
                 filters: { updatedAt: { lte: $cutoffDate } }
                 pagination: { limit: $limit, start: $start }
-                sort: "updatedAt:asc"
+                sort: ["updatedAt:asc", "id:asc"]
             ) {
                 data {
                     id

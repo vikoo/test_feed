@@ -88,7 +88,7 @@ def fetch_and_clean_vote_counts(is_f1_feed: bool):
 
 
 if __name__ == "__main__":
-  # print(f"------------- FETCHING F1 FEEDS ------------------")
+  print(f"------------- FETCHING F1 FEEDS ------------------")
   fetch_and_clean_feeds(True)
   print(f"------------- FETCHING MOTO GP FEEDS ------------------")
   fetch_and_clean_feeds(False)
