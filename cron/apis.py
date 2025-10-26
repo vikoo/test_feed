@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 from googletrans import Translator
+import re
 
 from cron.api_queries import query_get_latest_grand_prixes, mutation_post_feed, mutation_update_config, \
     query_get_config, mutation_post_weather, mutation_update_race_with_weather, mutation_update_weather, \
@@ -59,7 +60,7 @@ async def post_feed(is_f1_feed, feed, feed_source):
     end_point = get_graphql_endpoint(is_f1_feed)
 
     feed_map = {'title': feed.title}
-    summary = feed.summary.replace("<br>", "").replace("<br />", "").replace("<br/>", "").replace("<BR>", "").replace("<BR/>", "").replace("<BR />", "")
+    summary = process_feed_desc(feed.summary)
     feed_map['description'] = summary
     feed_map['guid'] = feed.id
 
@@ -162,6 +163,22 @@ def delete_feed(is_f1_feed: bool, feed_id):
     resp = requests.post(end_point, json={"query": mutation_delete_feed, "variables": variables}, headers=get_headers(is_f1_feed))
     resp.raise_for_status()
     return resp.json()
+
+def process_feed_desc(description: str) -> str:
+    """
+    Removes <img> and <br> tags (in any case or format) from the given text.
+    """
+    if not description:
+        return ""
+
+    # Remove all <img ...> tags
+    description = re.sub(r'<img[^>]*>', '', description, flags=re.IGNORECASE)
+
+    # Remove all <br>, <br/>, <br /> (case-insensitive)
+    description = re.sub(r'<br\s*/?>', '', description, flags=re.IGNORECASE)
+
+    return description.strip()
+
 #----------------------------------------------------------------------------------------------------------------
 # weather relate code
 #----------------------------------------------------------------------------------------------------------------
