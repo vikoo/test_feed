@@ -1,17 +1,4 @@
 {
-  "errors": [
-    {
-      "message": "Forbidden access",
-      "extensions": {
-        "error": {
-          "name": "ForbiddenError",
-          "message": "Forbidden access",
-          "details": {}
-        },
-        "code": "FORBIDDEN"
-      }
-    }
-  ],
   "data": {
     "grandPrixes": {
       "data": [
@@ -19,11 +6,17 @@
           "id": "67",
           "attributes": {
             "name": "Mexico GP 25",
-            "startDate": "2025-10-23T18:30:00.000Z",
+            "startDate": "2025-10-24T18:30:00.000Z",
             "fullName": "FORMULA 1 GRAN PREMIO DE LA CIUDAD DE MÉXICO 2025",
-            "endDate": "2025-10-25T20:00:00.000Z",
+            "endDate": "2025-10-26T21:30:00.000Z",
             "round": "20",
-            "season": null,
+            "season": {
+              "data": {
+                "attributes": {
+                  "year": "2025"
+                }
+              }
+            },
             "track": {
               "data": {
                 "id": "23",
