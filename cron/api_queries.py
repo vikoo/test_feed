@@ -56,9 +56,57 @@ query_old_feeds = """
               }
         }
 """
+query_old_votes = """
+        query GetOldVotes($cutoffDate: DateTime!, $limit: Int!, $start: Int!) {
+            votes(
+                filters: { updatedAt: { lte: $cutoffDate } }
+                pagination: { limit: $limit, start: $start }
+                sort: "updatedAt:asc"
+            ) {
+                data {
+                    id
+                }
+            }
+        }
+"""
+
+query_old_vote_counts = """
+        query GetOldVoteCounts($cutoffDate: DateTime!, $limit: Int!, $start: Int!) {
+            voteCounts(
+                filters: { updatedAt: { lte: $cutoffDate } }
+                pagination: { limit: $limit, start: $start }
+                sort: "updatedAt:asc"
+            ) {
+                data {
+                    id
+                }
+            }
+        }
+"""
+
 mutation_delete_feed = """
         mutation DeleteFeed($id: ID!) {
             deleteFeed(id: $id) {
+                data {
+                    id
+                }
+            }
+        }
+"""
+
+mutation_delete_vote = """
+        mutation DeleteVote($id: ID!) {
+            deleteVote(id: $id) {
+                data {
+                    id
+                }
+            }
+        }
+"""
+
+mutation_delete_vote_count = """
+        mutation DeleteVoteCount($id: ID!) {
+            deleteVoteCount(id: $id) {
                 data {
                     id
                 }

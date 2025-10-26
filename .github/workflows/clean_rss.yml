@@ -2,7 +2,7 @@ name: Cleanup old feeds
 
 on:
   schedule:
-    - cron: "0 10 * * *"  # runs every day at 10:00 UTC
+    - cron: '0 0,8,16 * * *'  # Runs at 00:00, 08:00, and 16:00 UTC
 
   workflow_dispatch:     # Allows manual trigger from the GitHub Actions tab
 

@@ -4,7 +4,8 @@ import re
 
 from cron.api_queries import query_get_latest_grand_prixes, mutation_post_feed, mutation_update_config, \
     query_get_config, mutation_post_weather, mutation_update_race_with_weather, mutation_update_weather, \
-    query_old_feeds, mutation_delete_feed, mutation_update_feed
+    query_old_feeds, mutation_delete_feed, mutation_update_feed, query_old_votes, mutation_delete_vote, \
+    query_old_vote_counts, mutation_delete_vote_count
 from cron.utils import *
 import requests
 import json
@@ -157,10 +158,40 @@ def fetch_old_feeds(is_f1_feed: bool, cutoff_date_str: str, start=0, limit=50):
     resp.raise_for_status()
     return resp.json()["data"]["feeds"]["data"]
 
+def fetch_old_votes(is_f1_feed: bool, cutoff_date_str: str, start=0, limit=50):
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = {"cutoffDate": cutoff_date_str, "limit": limit, "start": start}
+    resp = requests.post(end_point, json={"query": query_old_votes, "variables": variables}, headers=get_headers(is_f1_feed))
+    resp.raise_for_status()
+    print(f"json: ${resp.json()}")
+    return resp.json()["data"]["votes"]["data"]
+
+def fetch_old_vote_counts(is_f1_feed: bool, cutoff_date_str: str, start=0, limit=50):
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = {"cutoffDate": cutoff_date_str, "limit": limit, "start": start}
+    resp = requests.post(end_point, json={"query": query_old_vote_counts, "variables": variables}, headers=get_headers(is_f1_feed))
+    resp.raise_for_status()
+    print(f"json: ${resp.json()}")
+    return resp.json()["data"]["voteCounts"]["data"]
+
 def delete_feed(is_f1_feed: bool, feed_id):
     end_point = get_graphql_endpoint(is_f1_feed)
     variables = {"id": feed_id}
     resp = requests.post(end_point, json={"query": mutation_delete_feed, "variables": variables}, headers=get_headers(is_f1_feed))
+    resp.raise_for_status()
+    return resp.json()
+
+def delete_vote(is_f1_feed: bool, feed_id):
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = {"id": feed_id}
+    resp = requests.post(end_point, json={"query": mutation_delete_vote, "variables": variables}, headers=get_headers(is_f1_feed))
+    resp.raise_for_status()
+    return resp.json()
+
+def delete_vote_count(is_f1_feed: bool, feed_id):
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = {"id": feed_id}
+    resp = requests.post(end_point, json={"query": mutation_delete_vote_count, "variables": variables}, headers=get_headers(is_f1_feed))
     resp.raise_for_status()
     return resp.json()
 
