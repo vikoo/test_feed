@@ -67,7 +67,9 @@ def load_grand_prix(is_for_f1: bool) :
                     print("No weather data available")
 
             else:
+                print(" weather: start time", start_time)
                 weather_obj = get_weather_for_time(hourly_weather, start_time)
+                print(" weather:", weather_obj)
                 if weather_obj:
                     print("Closest weather time:", weather_obj["time"])
                     print("Temperature:", weather_obj["values"]["temperature"])

@@ -137,6 +137,7 @@ def convert_weather_api_json_to_strapi_json(weather_json: str, race_id: str, lat
     weather_map['windDirection'] = weather_json["values"]["windDirection"]
     weather_map['visibility'] = weather_json["values"]["visibility"]
     weather_map['time'] = weather_json["time"]
+    weather_map['precipitationProbability'] = weather_json["values"]["precipitationProbability"]
     weather_code = str(weather_json["values"]["weatherCode"])
     weather_map['weatherDesc'] = get_weather_desc(weather_code)
     weather_map['cloudPercentage'] = weather_json["values"]["cloudBase"]
