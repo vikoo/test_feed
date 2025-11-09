@@ -1,1 +1,129 @@
-""
+{
+  "data": {
+    "grandPrixes": {
+      "data": [
+        {
+          "id": "42",
+          "attributes": {
+            "name": "Valenciana GP 25",
+            "startDate": "2025-11-14T09:45:00.000Z",
+            "fullName": "GRAND PRIX OF THE VALENCIAN COMMUNITY",
+            "endDate": "2025-11-16T13:45:00.000Z",
+            "round": "22",
+            "season": {
+              "data": {
+                "attributes": {
+                  "year": "2025"
+                }
+              }
+            },
+            "track": {
+              "data": {
+                "id": "20",
+                "attributes": {
+                  "name": "Circuit Ricardo Tormo",
+                  "imageOutline": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/tracks/ricardotormo_valencia.png",
+                  "image": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/tracks/ricardotormo_valencia.png",
+                  "imageFancy": null,
+                  "city": null,
+                  "country": "Valencia",
+                  "latitude": 39.484827117416735,
+                  "longitude": -0.626201737052497
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "races": {
+      "data": [
+        {
+          "id": "338",
+          "attributes": {
+            "type": "PRACTICE",
+            "startTime": "2025-11-14T14:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "42"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "2"
+              }
+            }
+          }
+        },
+        {
+          "id": "340",
+          "attributes": {
+            "type": "QNR1",
+            "startTime": "2025-11-15T09:50:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "42"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "3"
+              }
+            }
+          }
+        },
+        {
+          "id": "341",
+          "attributes": {
+            "type": "QNR2",
+            "startTime": "2025-11-15T10:15:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "42"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "4"
+              }
+            }
+          }
+        },
+        {
+          "id": "342",
+          "attributes": {
+            "type": "Sprint",
+            "startTime": "2025-11-15T14:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "42"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "5"
+              }
+            }
+          }
+        },
+        {
+          "id": "344",
+          "attributes": {
+            "type": "Race",
+            "startTime": "2025-11-16T13:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "42"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "6"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
