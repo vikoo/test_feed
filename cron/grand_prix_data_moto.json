@@ -23,9 +23,9 @@
                 "attributes": {
                   "name": "Circuit Ricardo Tormo",
                   "imageOutline": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/tracks/ricardotormo_valencia.png",
-                  "image": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/tracks/ricardotormo_valencia.png",
+                  "image": "https://photos.motogp.com/events-admin/7/9/795839a0-8faa-4f4e-a574-8dce32cfc560/info/val-info.svg",
                   "imageFancy": null,
-                  "city": null,
+                  "city": "Cheste",
                   "country": "Valencia",
                   "latitude": 39.484827117416735,
                   "longitude": -0.626201737052497
