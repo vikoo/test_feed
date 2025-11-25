@@ -151,9 +151,9 @@ def fetch_primary_image(url: str):
         print(f"Error fetching primary image: {e}")
     return None
 
-def fetch_old_feeds(is_f1_feed: bool, cutoff_date_str: str, start=0, limit=50):
+def fetch_old_feeds(is_f1_feed: bool, cutoff_date_str: str, start=0, limit=50, lang: str = "en"):
     end_point = get_graphql_endpoint(is_f1_feed)
-    variables = {"cutoffDate": cutoff_date_str, "limit": limit, "start": start}
+    variables = {"cutoffDate": cutoff_date_str, "limit": limit, "start": start, "locale": lang}
     resp = requests.post(end_point, json={"query": query_old_feeds, "variables": variables}, headers=get_headers(is_f1_feed))
     resp.raise_for_status()
     return resp.json()["data"]["feeds"]["data"]

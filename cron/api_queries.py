@@ -44,11 +44,12 @@ mutation_update_feed = """
         }
 """
 query_old_feeds = """
-        query GetOldFeeds($cutoffDate: DateTime!, $limit: Int!, $start: Int!) {
+        query GetOldFeeds($cutoffDate: DateTime!, $limit: Int!, $start: Int!, $locale: I18NLocaleCode) {
               feeds(
                     filters: { pubDate: { lte: $cutoffDate } }
                     pagination: { limit: $limit, start: $start }
-                    sort: ["pubDate:asc", "id:asc"]
+                    sort: ["pubDate:asc", "id:asc"],
+                    locale: $locale
               ) {
                     data {
                         id

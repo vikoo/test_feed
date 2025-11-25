@@ -6,9 +6,9 @@ from dotenv import load_dotenv
 # Load environment variables from .env file - this is for local setup of token
 load_dotenv()
 
-def fetch_and_clean_feeds(is_f1_feed: bool):
+def fetch_and_clean_feeds(is_f1_feed: bool, lang: str = "en"):
   # Cutoff: 20 days ago
-  cutoff_date = datetime.now(timezone.utc) - timedelta(days=15)
+  cutoff_date = datetime.now(timezone.utc) - timedelta(days=10)
 
   # Format as "YYYY-MM-DDTHH:MM:SS.sssZ"
   cutoff_date_str = cutoff_date.strftime("%Y-%m-%dT%H:%M:%S.000Z")
@@ -18,7 +18,7 @@ def fetch_and_clean_feeds(is_f1_feed: bool):
   total_deleted = 0
 
   while True:
-    feeds = fetch_old_feeds(is_f1_feed, cutoff_date_str, start=start, limit=limit)
+    feeds = fetch_old_feeds(is_f1_feed, cutoff_date_str, start=start, limit=limit, lang= lang)
     if not feeds:
       break
 
@@ -30,7 +30,7 @@ def fetch_and_clean_feeds(is_f1_feed: bool):
 
     start += limit
 
-  print(f"✅ Finished cleanup. Deleted {total_deleted} old feeds.")
+  print(f"✅ Finished cleanup. Deleted {total_deleted} old feeds for locale {lang}")
 
 
 def fetch_and_clean_votes(is_f1_feed: bool):
@@ -89,9 +89,13 @@ def fetch_and_clean_vote_counts(is_f1_feed: bool):
 
 if __name__ == "__main__":
   print(f"------------- FETCHING F1 FEEDS ------------------")
-  fetch_and_clean_feeds(True)
+  locales_updated = locales
+  locales_updated.add("en")
+  for locale in locales_updated:
+    fetch_and_clean_feeds(True, lang= locale)
   print(f"------------- FETCHING MOTO GP FEEDS ------------------")
-  fetch_and_clean_feeds(False)
+  for locale in locales_updated:
+    fetch_and_clean_feeds(False, lang= locale)
   print(f"------------- Cleaning Votes ------------------")
   print(f"------------- FETCHING F1 votes ------------------")
   fetch_and_clean_votes(True)
