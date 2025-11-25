@@ -3,13 +3,13 @@
     "grandPrixes": {
       "data": [
         {
-          "id": "68",
+          "id": "69",
           "attributes": {
-            "name": "Brazil GP 25",
-            "startDate": "2025-11-07T04:00:00.000Z",
-            "fullName": "FORMULA 1 LENOVO GRANDE PRÊMIO DE SÃO PAULO 2025",
-            "endDate": "2025-11-09T17:00:00.000Z",
-            "round": "21",
+            "name": "Las Vegas GP 25",
+            "startDate": "2025-11-20T18:30:00.000Z",
+            "fullName": "FORMULA 1 HEINEKEN SILVER LAS VEGAS GRAND PRIX 2025",
+            "endDate": "2025-11-23T06:00:00.000Z",
+            "round": "22",
             "season": {
               "data": {
                 "attributes": {
@@ -19,16 +19,16 @@
             },
             "track": {
               "data": {
-                "id": "24",
+                "id": "7",
                 "attributes": {
-                  "name": "Autódromo José Carlos Pace",
-                  "imageOutline": "https://media.formula1.com/image/upload/content/dam/fom-website/2018-redesign-assets/Track%20icons%204x3/Brazil%20carbon.png.transform/3col-retina/image.png",
-                  "image": "https://media.formula1.com/image/upload/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Brazil_Circuit.png.transform/7col-retina/image.png",
+                  "name": "Las Vegas Strip Circuit",
+                  "imageOutline": "https://media.formula1.com/image/upload/f_auto/q_auto/v1677249931/content/dam/fom-website/2018-redesign-assets/Track%20icons%204x3/Las%20Vegas%20carbon.png.transform/3col-retina/image.png",
+                  "image": "https://media.formula1.com/image/upload/f_auto/q_auto/v1677249930/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Las_Vegas_Circuit.png.transform/7col-retina/image.png",
                   "imageFancy": null,
-                  "city": "São Paulo",
-                  "country": "Brazil",
-                  "latitude": -23.70445054754647,
-                  "longitude": -46.69892188051731
+                  "city": "Las Vegas",
+                  "country": "USA",
+                  "latitude": 36.109587932991076,
+                  "longitude": -115.16239831098954
                 }
               }
             }
@@ -38,74 +38,6 @@
     },
     "races": {
       "data": [
-        {
-          "id": "452",
-          "attributes": {
-            "type": "SQ1",
-            "startTime": "2025-11-07T18:30:00.000Z",
-            "grandPrix": {
-              "data": {
-                "id": "68"
-              }
-            },
-            "weather": {
-              "data": {
-                "id": "12"
-              }
-            }
-          }
-        },
-        {
-          "id": "455",
-          "attributes": {
-            "type": "Sprint",
-            "startTime": "2025-11-08T14:00:00.000Z",
-            "grandPrix": {
-              "data": {
-                "id": "68"
-              }
-            },
-            "weather": {
-              "data": {
-                "id": "13"
-              }
-            }
-          }
-        },
-        {
-          "id": "456",
-          "attributes": {
-            "type": "Q1",
-            "startTime": "2025-11-08T18:00:00.000Z",
-            "grandPrix": {
-              "data": {
-                "id": "68"
-              }
-            },
-            "weather": {
-              "data": {
-                "id": "14"
-              }
-            }
-          }
-        },
-        {
-          "id": "459",
-          "attributes": {
-            "type": "Race",
-            "startTime": "2025-11-09T17:00:00.000Z",
-            "grandPrix": {
-              "data": {
-                "id": "68"
-              }
-            },
-            "weather": {
-              "data": {
-                "id": "15"
-              }
-            }
-          }
-        },
         {
           "id": "463",
           "attributes": {
@@ -118,7 +50,75 @@
             },
             "weather": {
               "data": {
-                "id": "16"
+                "id": "20"
+              }
+            }
+          }
+        },
+        {
+          "id": "466",
+          "attributes": {
+            "type": "Race",
+            "startTime": "2025-11-23T04:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "69"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "21"
+              }
+            }
+          }
+        },
+        {
+          "id": "468",
+          "attributes": {
+            "type": "SQ1",
+            "startTime": "2025-11-28T17:30:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "70"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "22"
+              }
+            }
+          }
+        },
+        {
+          "id": "471",
+          "attributes": {
+            "type": "Sprint",
+            "startTime": "2025-11-29T14:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "70"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "23"
+              }
+            }
+          }
+        },
+        {
+          "id": "472",
+          "attributes": {
+            "type": "Q1",
+            "startTime": "2025-11-29T18:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "70"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "24"
               }
             }
           }
