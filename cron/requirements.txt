@@ -5,4 +5,4 @@ python-dotenv
 astral
 pytz
 googletrans==4.0.0-rc1
-httpx==0.13.3
+httpx==0.23.3
