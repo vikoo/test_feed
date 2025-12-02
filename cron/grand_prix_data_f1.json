@@ -3,13 +3,13 @@
     "grandPrixes": {
       "data": [
         {
-          "id": "69",
+          "id": "71",
           "attributes": {
-            "name": "Las Vegas GP 25",
-            "startDate": "2025-11-20T18:30:00.000Z",
-            "fullName": "FORMULA 1 HEINEKEN SILVER LAS VEGAS GRAND PRIX 2025",
-            "endDate": "2025-11-23T06:00:00.000Z",
-            "round": "22",
+            "name": "Abu Dhabi GP 25",
+            "startDate": "2025-12-05T09:30:00.000Z",
+            "fullName": "FORMULA 1 ETIHAD AIRWAYS ABU DHABI GRAND PRIX 2025",
+            "endDate": "2025-12-07T14:30:00.000Z",
+            "round": "24",
             "season": {
               "data": {
                 "attributes": {
@@ -19,16 +19,16 @@
             },
             "track": {
               "data": {
-                "id": "7",
+                "id": "6",
                 "attributes": {
-                  "name": "Las Vegas Strip Circuit",
-                  "imageOutline": "https://media.formula1.com/image/upload/f_auto/q_auto/v1677249931/content/dam/fom-website/2018-redesign-assets/Track%20icons%204x3/Las%20Vegas%20carbon.png.transform/3col-retina/image.png",
-                  "image": "https://media.formula1.com/image/upload/f_auto/q_auto/v1677249930/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Las_Vegas_Circuit.png.transform/7col-retina/image.png",
+                  "name": "Yas Marina Circuit",
+                  "imageOutline": "https://media.formula1.com/content/dam/fom-website/2018-redesign-assets/Track%20icons%204x3/Abu%20Dhabi%20carbon.png.transform/2col-retina/image.png",
+                  "image": "https://media.formula1.com/image/upload/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Abu_Dhabi_Circuit.png.transform/7col-retina/image.png",
                   "imageFancy": null,
-                  "city": "Las Vegas",
-                  "country": "USA",
-                  "latitude": 36.109587932991076,
-                  "longitude": -115.16239831098954
+                  "city": "Yas Island",
+                  "country": "Abu Dhabi",
+                  "latitude": 24.46983386853009,
+                  "longitude": 54.605630450804064
                 }
               }
             }
@@ -39,86 +39,35 @@
     "races": {
       "data": [
         {
-          "id": "463",
+          "id": "479",
           "attributes": {
             "type": "Q1",
-            "startTime": "2025-11-22T04:00:00.000Z",
+            "startTime": "2025-12-06T14:00:00.000Z",
             "grandPrix": {
               "data": {
-                "id": "69"
+                "id": "71"
               }
             },
             "weather": {
               "data": {
-                "id": "20"
+                "id": "25"
               }
             }
           }
         },
         {
-          "id": "466",
+          "id": "482",
           "attributes": {
             "type": "Race",
-            "startTime": "2025-11-23T04:00:00.000Z",
+            "startTime": "2025-12-07T13:00:00.000Z",
             "grandPrix": {
               "data": {
-                "id": "69"
+                "id": "71"
               }
             },
             "weather": {
               "data": {
-                "id": "21"
-              }
-            }
-          }
-        },
-        {
-          "id": "468",
-          "attributes": {
-            "type": "SQ1",
-            "startTime": "2025-11-28T17:30:00.000Z",
-            "grandPrix": {
-              "data": {
-                "id": "70"
-              }
-            },
-            "weather": {
-              "data": {
-                "id": "22"
-              }
-            }
-          }
-        },
-        {
-          "id": "471",
-          "attributes": {
-            "type": "Sprint",
-            "startTime": "2025-11-29T14:00:00.000Z",
-            "grandPrix": {
-              "data": {
-                "id": "70"
-              }
-            },
-            "weather": {
-              "data": {
-                "id": "23"
-              }
-            }
-          }
-        },
-        {
-          "id": "472",
-          "attributes": {
-            "type": "Q1",
-            "startTime": "2025-11-29T18:00:00.000Z",
-            "grandPrix": {
-              "data": {
-                "id": "70"
-              }
-            },
-            "weather": {
-              "data": {
-                "id": "24"
+                "id": "26"
               }
             }
           }

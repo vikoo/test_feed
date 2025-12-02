@@ -5,4 +5,3 @@ python-dotenv
 astral
 pytz
 googletrans-py
-httpx==0.23.3
