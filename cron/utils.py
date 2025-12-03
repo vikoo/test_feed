@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timezone
+from datetime import datetime
 from dotenv import load_dotenv
 
 # Load environment variables from .env file - this is for local setup of token
@@ -76,9 +76,3 @@ def get_epoch(date_str) :
     # Convert the datetime to an epoch timestamp
     epoch_timestamp = dt.timestamp()
     return epoch_timestamp
-
-def current_time_utc_iso() -> str:
-    """
-    Return current UTC time in format 'YYYY-MM-DDTHH:MM:SSZ'
-    """
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")

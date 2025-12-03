@@ -36,4 +36,4 @@ jobs:
           F1_TOKEN: ${{ secrets.F1_TOKEN }}
           OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
           TOMORROW_IO_API_KEY: ${{ secrets.TOMORROW_IO_API_KEY }}
-        run: python -m cron.rss
+        run: python -m cron.rss.rss

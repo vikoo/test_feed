@@ -1,8 +1,5 @@
-from datetime import datetime, timedelta
-import json, os, requests, time
-
-from cron.apis import get_upcoming_races, update_weather, create_weather, update_weather_in_race
-from cron.weather_utils import *
+from cron.strapi_api.apis import get_upcoming_races, update_weather, create_weather, update_weather_in_race
+from cron.weather.weather_utils import *
 
 # Load environment variables from .env file - this is for local setup of token
 load_dotenv()
@@ -94,9 +91,9 @@ def load_grand_prix(is_for_f1: bool) :
 
 if __name__ == "__main__":
     print(f"------------- FETCHING F1 Weather ------------------")
-    load_grand_prix(True)
+    load_grand_prix(is_for_f1=True)
     print(f"------------- FETCHING Moto GP Weather ------------------")
-    load_grand_prix(False)
+    load_grand_prix(is_for_f1=False)
 
 
 

@@ -258,10 +258,11 @@ def check_json_outdated(data: str) -> bool:
 def save_grandprix_json(data: str, is_for_f1: bool) -> str:
 
     # Ensure cron folder exists
-    os.makedirs("cron", exist_ok=True)
+    weather_dir = os.path.join("cron", "weather")
+    os.makedirs(weather_dir, exist_ok=True)
 
     # Build path
-    filepath = os.path.join("cron", get_local_json_file_name(is_for_f1))
+    filepath = os.path.join(weather_dir, get_local_json_file_name(is_for_f1))
 
     # Delete file if it exists
     if os.path.exists(filepath):
@@ -279,7 +280,8 @@ def read_grand_prix_json(is_for_f1: bool):
     Read JSON data from the cron/ folder.
     Returns an empty dict {} if file does not exist or file is empty/invalid.
     """
-    filepath = os.path.join("cron", get_local_json_file_name(is_for_f1))
+    weather_dir = os.path.join("cron", "weather")
+    filepath = os.path.join(weather_dir, get_local_json_file_name(is_for_f1))
 
     # Check if file exists
     if not os.path.exists(filepath):
@@ -297,10 +299,11 @@ def read_grand_prix_json(is_for_f1: bool):
 def delete_grandprix_json(is_for_f1: bool) -> str:
 
     # Ensure cron folder exists
-    os.makedirs("cron", exist_ok=True)
+    weather_dir = os.path.join("cron", "weather")
+    os.makedirs(weather_dir, exist_ok=True)
 
     # Build path
-    filepath = os.path.join("cron", get_local_json_file_name(is_for_f1))
+    filepath = os.path.join(weather_dir, get_local_json_file_name(is_for_f1))
 
     # Delete file if it exists
     if os.path.exists(filepath):

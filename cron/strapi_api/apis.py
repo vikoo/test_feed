@@ -1,22 +1,20 @@
 from bs4 import BeautifulSoup
 from googletrans import Translator
-import re
 
-from cron.api_queries import query_get_latest_grand_prixes, mutation_post_feed, mutation_update_config, \
+from cron.strapi_api.api_queries import query_get_latest_grand_prixes, mutation_post_feed, mutation_update_config, \
     query_get_config, mutation_post_weather, mutation_update_race_with_weather, mutation_update_weather, \
-    query_old_feeds, mutation_delete_feed, mutation_update_feed, query_old_votes, mutation_delete_vote, \
+    query_old_feeds, mutation_delete_feed, query_old_votes, mutation_delete_vote, \
     query_old_vote_counts, mutation_delete_vote_count
 from cron.utils import *
 import requests
-import json
-from datetime import datetime, timedelta
+from datetime import datetime
 
-from cron.weather_utils import get_icon_url, get_weather_desc, convert_weather_api_json_to_strapi_json
+from cron.weather.weather_utils import convert_weather_api_json_to_strapi_json
 
 #----------------------------------------------------------------------------------------------------------------
 # common code
 #----------------------------------------------------------------------------------------------------------------
-def get_headers(is_f1_feed: bool) -> str:
+def get_headers(is_f1_feed: bool) -> dict[str, str]:
     token = get_graphql_token(is_f1_feed)
     headers = {
         "Content-Type": "application/json",
@@ -36,7 +34,7 @@ def get_config(is_f1_feed: bool) -> str:
     print(config_json)
     return config_json
 
-def update_config(is_f1_feed, config_json_str) -> str:
+def update_config(is_f1_feed, config_json_str) -> None:
     end_point = get_graphql_endpoint(is_f1_feed)
 
     # Define new values for feedJson
@@ -215,7 +213,7 @@ def process_feed_desc(description: str) -> str:
 #----------------------------------------------------------------------------------------------------------------
 def get_upcoming_races(is_f1_feed) -> str:
     end_point = get_graphql_endpoint(is_f1_feed)
-    current_date = datetime.utcnow()
+    current_date =  datetime.now(timezone.utc)
     current_date_str = current_date.isoformat() + "Z"
     variables = {
         "currentDate": current_date_str,

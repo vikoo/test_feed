@@ -1,5 +1,4 @@
-import feedparser
-from cron.apis import *
+from cron.strapi_api.apis import *
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 
