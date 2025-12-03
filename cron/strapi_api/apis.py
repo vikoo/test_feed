@@ -7,7 +7,8 @@ from cron.strapi_api.api_queries import query_get_latest_grand_prixes, mutation_
     query_old_vote_counts, mutation_delete_vote_count
 from cron.utils import *
 import requests
-from datetime import datetime
+import re
+from datetime import datetime, timezone
 
 from cron.weather.weather_utils import convert_weather_api_json_to_strapi_json
 
