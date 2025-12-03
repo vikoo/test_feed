@@ -112,29 +112,32 @@ async def post_feed(is_f1_feed, feed, feed_source):
 
     # Translate title and description for other locales
     for locale in locales:
+        try:
+            translated_title_obj = await translator.translate(feed_map["title"], dest=locale)
+            translated_desc_obj = await translator.translate(feed_map["description"], dest=locale)
 
-        translated_title_obj = await translator.translate(feed_map["title"], dest=locale)
-        translated_desc_obj = await translator.translate(feed_map["description"], dest=locale)
+            translated_title = translated_title_obj.text
+            translated_desc = translated_desc_obj.text
+            print(f"{locale} : title: {translated_title}")
 
-        translated_title = translated_title_obj.text
-        translated_desc = translated_desc_obj.text
-        print(f"{locale} : title: {translated_title}")
+            updated_map = feed_map.copy()
+            updated_map['title'] = translated_title
+            updated_map['description'] = translated_desc
+            updated_map['guid'] = feed_map['guid'] + locale
 
-        updated_map = feed_map.copy()
-        updated_map['title'] = translated_title
-        updated_map['description'] = translated_desc
-        updated_map['guid'] = feed_map['guid'] + locale
-
-        variables_update = {"input": updated_map, "locale": locale}
-        # variables_update = {"input": updated_map, "locale": locale, "feedId": feed_id}
-        # print(f"variable : {variables_update}")
-        update_response = requests.post(
-            end_point,
-            json={"query": mutation_post_feed, "variables": variables_update},
-            # json={"query": mutation_update_feed, "variables": variables_update},
-            headers=get_headers(is_f1_feed),
-        )
-        print(f"Update Feed [{locale}] Response:", update_response.json())
+            variables_update = {"input": updated_map, "locale": locale}
+            # variables_update = {"input": updated_map, "locale": locale, "feedId": feed_id}
+            # print(f"variable : {variables_update}")
+            update_response = requests.post(
+                end_point,
+                json={"query": mutation_post_feed, "variables": variables_update},
+                # json={"query": mutation_update_feed, "variables": variables_update},
+                headers=get_headers(is_f1_feed),
+            )
+            print(f"Update Feed [{locale}] Response:", update_response.json())
+        except Exception as e:
+            print(f"⚠️ Translation failed for locale {locale}: {e}")
+            print(f"   Skipping {locale} translation for this feed")
 
 # Fetch primary image from feed.link if feed.links is empty
 def fetch_primary_image(url: str):

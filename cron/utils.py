@@ -13,7 +13,7 @@ f1_graphql_token = os.getenv("F1_TOKEN")
 moto_graphql_end_point = "https://api.wheelie.club/graphql"
 moto_graphql_token = os.getenv("MOTO_GP_TOKEN")
 
-locales = {"de", "es", "fr", "it", "ja", "pt", "zh", "ru", "ko"}
+locales = {"de", "es", "fr", "it", "ja", "pt", "ru", "ko"}
 # locales = {"it"}
 
 def get_graphql_endpoint(is_f1_feed):
