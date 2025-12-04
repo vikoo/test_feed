@@ -1,7 +1,7 @@
 {
   "errors": [
     {
-      "message": "Variable \"$currentDate\" got invalid value \"2025-12-04T12:46:31.201758+00:00Z\"; DateTime cannot represent an invalid date-time-string 2025-12-04T12:46:31.201758+00:00Z.",
+      "message": "Variable \"$currentDate\" got invalid value \"2025-12-04T14:22:34.682912+00:00Z\"; DateTime cannot represent an invalid date-time-string 2025-12-04T14:22:34.682912+00:00Z.",
       "locations": [
         {
           "line": 2,
@@ -12,7 +12,7 @@
         "code": "BAD_USER_INPUT",
         "exception": {
           "stacktrace": [
-            "GraphQLError: Variable \"$currentDate\" got invalid value \"2025-12-04T12:46:31.201758+00:00Z\"; DateTime cannot represent an invalid date-time-string 2025-12-04T12:46:31.201758+00:00Z.",
+            "GraphQLError: Variable \"$currentDate\" got invalid value \"2025-12-04T14:22:34.682912+00:00Z\"; DateTime cannot represent an invalid date-time-string 2025-12-04T14:22:34.682912+00:00Z.",
             "    at /opt/node_modules/graphql/execution/values.js:116:15",
             "    at coerceInputValueImpl (/opt/node_modules/graphql/utilities/coerceInputValue.js:131:9)",
             "    at coerceInputValueImpl (/opt/node_modules/graphql/utilities/coerceInputValue.js:54:14)",
