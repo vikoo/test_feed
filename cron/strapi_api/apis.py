@@ -1,10 +1,11 @@
 from bs4 import BeautifulSoup
 from googletrans import Translator
 
-from cron.strapi_api.api_queries import query_get_latest_grand_prixes, mutation_post_feed, mutation_update_config, \
+from cron.strapi_api.api_queries import query_get_latest_grand_prixes, mutation_post_feed, \
+    mutation_update_config_for_feeds, \
     query_get_config, mutation_post_weather, mutation_update_race_with_weather, mutation_update_weather, \
     query_old_feeds, mutation_delete_feed, query_old_votes, mutation_delete_vote, \
-    query_old_vote_counts, mutation_delete_vote_count
+    query_old_vote_counts, mutation_delete_vote_count, query_get_seasons, query_get_grand_prixes_for_year
 from cron.utils import *
 import requests
 import re
@@ -28,6 +29,13 @@ def get_headers(is_f1_feed: bool) -> dict[str, str]:
 #----------------------------------------------------------------------------------------------------------------
 def get_config(is_f1_feed: bool) -> str:
     end_point = get_graphql_endpoint(is_f1_feed)
+    response = requests.post(end_point, json={'query': query_get_config}, headers=get_headers(is_f1_feed))
+    config_json = response.json()['data']['config']['data']['attributes']
+    print(config_json)
+    return config_json
+
+def get_config_for_feeds(is_f1_feed: bool) -> str:
+    end_point = get_graphql_endpoint(is_f1_feed)
 
     response = requests.post(end_point, json={'query': query_get_config}, headers=get_headers(is_f1_feed))
     print(response.json())
@@ -35,7 +43,7 @@ def get_config(is_f1_feed: bool) -> str:
     print(config_json)
     return config_json
 
-def update_config(is_f1_feed, config_json_str) -> None:
+def update_config_for_feeds(is_f1_feed, config_json_str) -> None:
     end_point = get_graphql_endpoint(is_f1_feed)
 
     # Define new values for feedJson
@@ -46,10 +54,10 @@ def update_config(is_f1_feed, config_json_str) -> None:
     }}
   }}
   """
-    print(f"------> config_json_str: {config_json_str}")
-    print(f"------> variables: {variables}")
+    print(f"------> update_config_for_feeds config_json_str: {config_json_str}")
+    print(f"------> update_config_for_feeds variables: {variables}")
 
-    response = requests.post(end_point, json={"query": mutation_update_config, "variables": variables}, headers=get_headers(is_f1_feed))
+    response = requests.post(end_point, json={"query": mutation_update_config_for_feeds, "variables": variables}, headers=get_headers(is_f1_feed))
     print(response.json())
 
 #----------------------------------------------------------------------------------------------------------------
@@ -210,6 +218,9 @@ def process_feed_desc(description: str) -> str:
     # Remove all <br>, <br/>, <br /> (case-insensitive)
     description = re.sub(r'<br\s*/?>', '', description, flags=re.IGNORECASE)
 
+    # Remove <a ...>...</a> including inner text
+    description = re.sub(r'<a\b[^>]*>.*?</a>', '', description, flags=re.IGNORECASE | re.DOTALL)
+
     return description.strip()
 
 #----------------------------------------------------------------------------------------------------------------
@@ -222,6 +233,7 @@ def get_upcoming_races(is_f1_feed) -> str:
     variables = {
         "currentDate": current_date_str,
     }
+    print(f"get_upcoming_races ------> variables: {variables}")
 
     response = requests.post(end_point, json={'query': query_get_latest_grand_prixes, "variables": variables}, headers=get_headers(is_f1_feed))
     data = response.json()
@@ -238,7 +250,7 @@ def create_weather(is_f1_feed: bool, weather_json: str, race_id: str, lat: float
       }}
       """
 
-    print(f"------> variables: {variables}")
+    print(f"create_weather ------> variables: {variables}")
     response = requests.post(end_point, json={'query': mutation_post_weather, "variables": variables}, headers=get_headers(is_f1_feed))
     data = response.json()
     print(f"create weather---> {data}")
@@ -252,7 +264,7 @@ def update_weather_in_race(is_f1_feed: bool, weather_id: str, race_id: str) -> s
         "weatherId": weather_id,
         "raceId": race_id,
     }
-    print(f"------> variables: {variables}")
+    print(f"update_weather_in_race ------> variables: {variables}")
     response = requests.post(end_point, json={'query': mutation_update_race_with_weather, "variables": variables}, headers=get_headers(is_f1_feed))
     data = response.json()
     print(f"update weather in race---> {data}")
@@ -268,8 +280,31 @@ def update_weather(is_f1_feed: bool, weather_id: str, weather_json: str, race_id
         "id": {weather_id}
       }}
       """
-    print(f"------> variables: {variables}")
+    print(f"update_weather ------> variables: {variables}")
     response = requests.post(end_point, json={'query': mutation_update_weather, "variables": variables}, headers=get_headers(is_f1_feed))
     data = response.json()
     print(f"update weather ---> {data}")
+    return response.json()
+
+
+#----------------------------------------------------------------------------------------------------------------
+# schedule relate code
+#----------------------------------------------------------------------------------------------------------------
+def get_seasons(is_f1_feed: bool) -> str:
+    end_point = get_graphql_endpoint(is_f1_feed)
+    print(f"fetching seasons -->")
+    response = requests.post(end_point, json={'query': query_get_seasons}, headers=get_headers(is_f1_feed))
+    print(response.json())
+    return response.json()
+
+def get_grand_prix_races_for_year(is_f1_feed: bool, year: str) -> str:
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = {
+        "season": year,
+    }
+    print(f"get_grand_prix_races_for_year --> variables: {variables}")
+
+    response = requests.post(end_point, json={'query': query_get_grand_prixes_for_year, "variables": variables}, headers=get_headers(is_f1_feed))
+    data = response.json()
+    print(f"get_grand_prix_races_for_year ---> {data}")
     return response.json()

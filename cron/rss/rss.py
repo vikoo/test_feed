@@ -14,7 +14,7 @@ print("Using Token 2:", moto_graphql_token[:5] + "*****")
 
 def fetch_and_process_feeds(is_f1_feed: bool):
   # GET CONFIG
-  config = get_config(is_f1_feed)
+  config = get_config_for_feeds(is_f1_feed)
 
   feed_update_map = {}
   # GET LAST FEED TIME
@@ -98,7 +98,7 @@ def fetch_and_process_feeds(is_f1_feed: bool):
     feed_update_map[feed_source] = feed_date
 
   json_str = json.dumps(feed_update_map)
-  update_config(is_f1_feed, json_str)
+  update_config_for_feeds(is_f1_feed, json_str)
 
 def process_feed(is_f1_feed: bool, feed, feed_source):
   asyncio.run(post_feed(is_f1_feed, feed, feed_source))

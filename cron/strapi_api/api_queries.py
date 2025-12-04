@@ -4,6 +4,14 @@ query_get_config = """
                 data {
                     id
                     attributes {
+                        driverStandingsForSeasonJson
+                        teamStandingsForSeasonJson
+                        raceResultFastestLapForGrandPrixJson
+                        driverTeamTrackSeasonTyre
+                        grandPrixRace
+                        chassisSeasonGrid
+                        imageFromServer
+                        apiFromServer
                         feedJson
                     }
                 }
@@ -11,7 +19,7 @@ query_get_config = """
           }
           """
 
-mutation_update_config = """
+mutation_update_config_for_feeds = """
           mutation UpdateConfig($input: ConfigInput!) {
             updateConfig(data: $input) {
                 data {
@@ -229,6 +237,75 @@ mutation_update_race_with_weather = """
             ) {
                 data {
                     id
+                }
+            }
+        }
+        """
+
+query_get_seasons = """
+        query GetSeasons {
+            seasons {
+                data {
+                    id
+                    attributes {
+                        year
+                        name
+                    }
+                }
+            }
+        }
+        """
+
+query_get_grand_prixes_for_year = """
+        query GetGrandPrixRacesQuery($season:String!) {
+            grandPrixes(filters: { season: { year: { eq: $season} } }, sort: "startDate:asc", pagination: {limit: 100}) {
+                data {
+                    id
+                    attributes {
+                        name
+                        fullName
+                        shortName
+                        startDate
+                        endDate
+                        length
+                        distance
+                        laps
+                        round
+                        track {
+                            data {
+                                id
+                                attributes {
+                                    name
+                                    imageOutline
+                                    image
+                                    imageFancy
+                                    city
+                                    country
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            races(filters: { grandPrix: {season: { year: { eq: $season} } } }, sort: "startTime:asc", pagination: {limit: 500}) {
+                data {
+                    id
+                    attributes {
+                        identifier
+                        startTime
+                        type
+                        highlights
+                        grandPrix {
+                            data {
+                                id
+                                attributes {
+                                    name
+                                    fullName
+                                    shortName
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
