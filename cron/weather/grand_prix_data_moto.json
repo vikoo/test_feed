@@ -1,37 +1,129 @@
 {
-  "errors": [
-    {
-      "message": "Variable \"$currentDate\" got invalid value \"2025-12-05T19:12:51.630069+00:00Z\"; DateTime cannot represent an invalid date-time-string 2025-12-05T19:12:51.630069+00:00Z.",
-      "locations": [
+  "data": {
+    "grandPrixes": {
+      "data": [
         {
-          "line": 2,
-          "column": 35
+          "id": "43",
+          "attributes": {
+            "name": "THAILAND GP 26",
+            "startDate": "2026-02-27T01:00:00.000Z",
+            "fullName": "BURIRAM",
+            "endDate": "2026-03-01T11:00:00.000Z",
+            "round": "01",
+            "season": {
+              "data": {
+                "attributes": {
+                  "year": "2026"
+                }
+              }
+            },
+            "track": {
+              "data": {
+                "id": "1",
+                "attributes": {
+                  "name": "Chang International Circuit",
+                  "imageOutline": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/tracks/chang_thailand.png",
+                  "image": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/wheelie/tracks/detailed/chang_thailand.png",
+                  "imageFancy": null,
+                  "city": "Buriram",
+                  "country": "Thailand",
+                  "latitude": 14.95811075671484,
+                  "longitude": 103.08484915515275
+                }
+              }
+            }
+          }
         }
-      ],
-      "extensions": {
-        "code": "BAD_USER_INPUT",
-        "exception": {
-          "stacktrace": [
-            "GraphQLError: Variable \"$currentDate\" got invalid value \"2025-12-05T19:12:51.630069+00:00Z\"; DateTime cannot represent an invalid date-time-string 2025-12-05T19:12:51.630069+00:00Z.",
-            "    at /opt/node_modules/graphql/execution/values.js:116:15",
-            "    at coerceInputValueImpl (/opt/node_modules/graphql/utilities/coerceInputValue.js:131:9)",
-            "    at coerceInputValueImpl (/opt/node_modules/graphql/utilities/coerceInputValue.js:54:14)",
-            "    at coerceInputValue (/opt/node_modules/graphql/utilities/coerceInputValue.js:37:10)",
-            "    at _loop (/opt/node_modules/graphql/execution/values.js:109:69)",
-            "    at coerceVariableValues (/opt/node_modules/graphql/execution/values.js:121:16)",
-            "    at getVariableValues (/opt/node_modules/graphql/execution/values.js:50:19)",
-            "    at buildExecutionContext (/opt/node_modules/graphql/execution/execute.js:203:61)",
-            "    at executeImpl (/opt/node_modules/graphql/execution/execute.js:101:20)",
-            "    at execute (/opt/node_modules/graphql/execution/execute.js:60:35)",
-            "    at execute (/opt/node_modules/apollo-server-core/dist/requestPipeline.js:205:48)",
-            "    at processGraphQLRequest (/opt/node_modules/apollo-server-core/dist/requestPipeline.js:148:34)",
-            "    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)",
-            "    at async processHTTPRequest (/opt/node_modules/apollo-server-core/dist/runHttpQuery.js:221:30)",
-            "    at async /opt/node_modules/apollo-server-koa/dist/ApolloServer.js:83:59",
-            "    at async bodyParser (/opt/node_modules/koa-bodyparser/index.js:78:5)"
-          ]
+      ]
+    },
+    "races": {
+      "data": [
+        {
+          "id": "346",
+          "attributes": {
+            "type": "PRACTICE",
+            "startTime": "2026-02-27T08:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "43"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "7"
+              }
+            }
+          }
+        },
+        {
+          "id": "348",
+          "attributes": {
+            "type": "QNR1",
+            "startTime": "2026-02-28T03:50:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "43"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "8"
+              }
+            }
+          }
+        },
+        {
+          "id": "349",
+          "attributes": {
+            "type": "QNR2",
+            "startTime": "2026-02-28T04:15:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "43"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "9"
+              }
+            }
+          }
+        },
+        {
+          "id": "350",
+          "attributes": {
+            "type": "Sprint",
+            "startTime": "2026-02-28T08:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "43"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "10"
+              }
+            }
+          }
+        },
+        {
+          "id": "351",
+          "attributes": {
+            "type": "Race",
+            "startTime": "2026-03-01T08:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "43"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "11"
+              }
+            }
+          }
         }
-      }
+      ]
     }
-  ]
+  }
 }
