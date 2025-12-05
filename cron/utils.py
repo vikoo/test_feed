@@ -76,3 +76,6 @@ def get_epoch(date_str) :
     # Convert the datetime to an epoch timestamp
     epoch_timestamp = dt.timestamp()
     return epoch_timestamp
+
+def get_current_epoch() :
+    return str(int(datetime.now().timestamp() * 1000))

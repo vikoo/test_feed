@@ -32,6 +32,34 @@ mutation_update_config_for_feeds = """
           }
           """
 
+mutation_update_config_for_season = """
+          mutation UpdateConfig($input: ConfigInput!) {
+            updateConfig(data: $input) {
+                data {
+                    id
+                    attributes {
+                        driverTeamTrackSeasonTyre
+                        driverStandingsForSeasonJson
+                        teamStandingsForSeasonJson
+                    }
+                }
+            }
+          }
+          """
+
+mutation_update_config_for_gp = """
+          mutation UpdateConfig($input: ConfigInput!) {
+            updateConfig(data: $input) {
+                data {
+                    id
+                    attributes {
+                        grandPrixRace
+                    }
+                }
+            }
+          }
+          """
+
 mutation_post_feed = """
         mutation PostFeed($input: FeedInput!, $locale: I18NLocaleCode) {
             createFeed(data: $input, locale: $locale) {
@@ -244,11 +272,24 @@ mutation_update_race_with_weather = """
 
 query_get_seasons = """
         query GetSeasons {
-            seasons {
+            seasons(pagination: {limit: 50}) {
                 data {
                     id
                     attributes {
                         year
+                        name
+                    }
+                }
+            }
+        }
+        """
+
+query_get_tracks = """
+        query GetTracks {
+            tracks(pagination: {limit: 50}) {
+                data {
+                    id
+                    attributes {
                         name
                     }
                 }
@@ -276,11 +317,6 @@ query_get_grand_prixes_for_year = """
                                 id
                                 attributes {
                                     name
-                                    imageOutline
-                                    image
-                                    imageFancy
-                                    city
-                                    country
                                 }
                             }
                         }
@@ -298,11 +334,6 @@ query_get_grand_prixes_for_year = """
                         grandPrix {
                             data {
                                 id
-                                attributes {
-                                    name
-                                    fullName
-                                    shortName
-                                }
                             }
                         }
                     }
@@ -310,3 +341,46 @@ query_get_grand_prixes_for_year = """
             }
         }
         """
+
+mutation_post_season = """
+        mutation PostSeason($input: SeasonInput!) {
+            createSeason(data: $input) {
+                data {
+                    id
+                }
+            }
+        }
+        """
+
+mutation_post_grand_prix = """
+        mutation PostGrandPrix($input: GrandPrixInput!) {
+            createGrandPrix(data: $input) {
+                data {
+                    id
+                }
+            }
+        }
+        """
+
+mutation_post_race = """
+        mutation PostRace($input: RaceInput!) {
+            createRace(data: $input) {
+                data {
+                    id
+                }
+            }
+        }
+        """
+
+mutation_update_race_with_time = """
+          mutation UpdateRace($raceId: ID!,$startTime: DateTime!) {
+                updateRace(
+                    id: $raceId,
+                    data: {startTime: $startTime}
+                ) {
+                    data {
+                        id
+                    }
+                }
+        }
+          """

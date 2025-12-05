@@ -5,10 +5,13 @@ from cron.strapi_api.api_queries import query_get_latest_grand_prixes, mutation_
     mutation_update_config_for_feeds, \
     query_get_config, mutation_post_weather, mutation_update_race_with_weather, mutation_update_weather, \
     query_old_feeds, mutation_delete_feed, query_old_votes, mutation_delete_vote, \
-    query_old_vote_counts, mutation_delete_vote_count, query_get_seasons, query_get_grand_prixes_for_year
+    query_old_vote_counts, mutation_delete_vote_count, query_get_seasons, query_get_grand_prixes_for_year, \
+    mutation_post_season, mutation_update_config_for_season, query_get_tracks, mutation_post_grand_prix, \
+    mutation_post_race, mutation_update_race_with_time, mutation_update_config_for_gp
 from cron.utils import *
 import requests
 import re
+import json
 from datetime import datetime, timezone
 
 from cron.weather.weather_utils import convert_weather_api_json_to_strapi_json
@@ -297,7 +300,14 @@ def get_seasons(is_f1_feed: bool) -> str:
     print(response.json())
     return response.json()
 
-def get_grand_prix_races_for_year(is_f1_feed: bool, year: str) -> str:
+def get_tracks(is_f1_feed: bool) -> str:
+    end_point = get_graphql_endpoint(is_f1_feed)
+    print(f"fetching tracks -->")
+    response = requests.post(end_point, json={'query': query_get_tracks}, headers=get_headers(is_f1_feed))
+    # print(response.json())
+    return response.json()
+
+def get_grand_prix_races_for_year(is_f1_feed: bool, year: str):
     end_point = get_graphql_endpoint(is_f1_feed)
     variables = {
         "season": year,
@@ -306,5 +316,112 @@ def get_grand_prix_races_for_year(is_f1_feed: bool, year: str) -> str:
 
     response = requests.post(end_point, json={'query': query_get_grand_prixes_for_year, "variables": variables}, headers=get_headers(is_f1_feed))
     data = response.json()
-    print(f"get_grand_prix_races_for_year ---> {data}")
+    grand_prixes = data.get("data", {}).get("grandPrixes", {}).get("data", [])
+    races = data.get("data", {}).get("races", {}).get("data", [])
+    print(f"grand_prixes: {grand_prixes}")
+    print(f"races: {races}")
+    return grand_prixes, races
+
+def create_season(is_f1_feed: bool, season_year: str) -> str:
+    # Define GraphQL endpoint
+    end_point = get_graphql_endpoint(is_f1_feed)
+    season = {
+        "year": season_year,
+        "name": f"{season_year} Season"
+    }
+    json_str = json.dumps(season)
+    variables = f"""
+      {{
+        "input": {json_str}
+      }}
+      """
+
+    print(f"create_season ------> variables: {variables}")
+    response = requests.post(end_point, json={'query': mutation_post_season, "variables": variables}, headers=get_headers(is_f1_feed))
+    data = response.json()
+    print(f"create_season---> {data}")
+    season_id = data['data']['createSeason']['data']['id']
+    print(season_id)
+    return season_id
+
+
+def update_config_for_season(is_f1_feed: bool, driver_standings_json_str: str, team_standings_json_str: str) -> None:
+    end_point = get_graphql_endpoint(is_f1_feed)
+
+    # Define new values for feedJson
+    variables = f"""
+    {{
+        "input": {{
+          "driverStandingsForSeasonJson": {driver_standings_json_str},
+          "teamStandingsForSeasonJson": {team_standings_json_str},
+          "driverTeamTrackSeasonTyre": "{get_current_epoch()}"
+        }}
+    }}
+  """
+    print(f"------> update_config_for_season variables: {variables}")
+
+    response = requests.post(end_point, json={"query": mutation_update_config_for_season, "variables": variables}, headers=get_headers(is_f1_feed))
+    print(response.json())
+
+def update_config_for_gp(is_f1_feed: bool) -> None:
+    end_point = get_graphql_endpoint(is_f1_feed)
+
+    # Define new values for feedJson
+    variables = f"""
+    {{
+        "input": {{
+          "grandPrixRace": "{get_current_epoch()}"
+        }}
+    }}
+  """
+    print(f"------> update_config_for_gp variables: {variables}")
+
+    response = requests.post(end_point, json={"query": mutation_update_config_for_gp, "variables": variables}, headers=get_headers(is_f1_feed))
+    print(response.json())
+
+def create_grand_prix(is_f1_feed: bool, json_str: str) -> str:
+    # Define GraphQL endpoint
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = f"""
+      {{
+        "input": {json_str}
+      }}
+      """
+
+    print(f"create_grand_prix ------> variables: {variables}")
+    response = requests.post(end_point, json={'query': mutation_post_grand_prix, "variables": variables}, headers=get_headers(is_f1_feed))
+    print(f"create_grand_prix response: {response}")
+    data = response.json()
+    print(f"create_grand_prix---> {data}")
+    gp_id = data['data']['createGrandPrix']['data']['id']
+    print(f"gP ID: {gp_id}")
+    return gp_id
+
+def create_race(is_f1_feed: bool, json_str: str) -> str:
+    # Define GraphQL endpoint
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = f"""
+      {{
+        "input": {json_str}
+      }}
+      """
+
+    print(f"create_race ------> variables: {variables}")
+    response = requests.post(end_point, json={'query': mutation_post_race, "variables": variables}, headers=get_headers(is_f1_feed))
+    data = response.json()
+    print(f"create_race---> {data}")
+    race_id = data['data']['createRace']['data']['id']
+    print(f"race ID: {race_id}")
+    return race_id
+
+def update_time_in_race(is_f1_feed: bool, start_time: str, race_id: str) -> str:
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = {
+        "startTime": start_time,
+        "raceId": race_id,
+    }
+    print(f"update_time_in_race ------> variables: {variables}")
+    response = requests.post(end_point, json={'query': mutation_update_race_with_time, "variables": variables}, headers=get_headers(is_f1_feed))
+    data = response.json()
+    print(f"update_time_in_race in race---> {data}")
     return response.json()

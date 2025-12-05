@@ -86,7 +86,7 @@ def load_grand_prix(is_for_f1: bool) :
                     print(f"creating the new weather entry in strapi")
                     weather_id = create_weather(is_for_f1, weather_obj, race_id, latitude, longitude)
                     update_weather_in_race(is_for_f1, weather_id, race_id)
-                    delete_grandprix_json(is_for_f1)
+                    delete_grandprix_json_file(is_for_f1)
 
 
 if __name__ == "__main__":

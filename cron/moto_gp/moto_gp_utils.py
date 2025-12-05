@@ -30,13 +30,13 @@ def normalize_iso_timezone(dt_str: str) -> str:
     return dt_str
 
 
-def to_utc(dt_str):
+def to_utc(dt_str: str) -> str:
     if not dt_str:
-        return None
+        return ""
 
     dt_str = normalize_iso_timezone(dt_str)
     if not dt_str:
-        return None
+        return ""
 
     dt = datetime.fromisoformat(dt_str)
 

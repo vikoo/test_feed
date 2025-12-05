@@ -296,7 +296,7 @@ def read_grand_prix_json(is_for_f1: bool):
         # If file is empty or invalid JSON
         return {}
 
-def delete_grandprix_json(is_for_f1: bool) -> str:
+def delete_grandprix_json_file(is_for_f1: bool) -> str:
 
     # Ensure cron folder exists
     weather_dir = os.path.join("cron", "weather")
