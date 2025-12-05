@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 
 # Load environment variables from .env file - this is for local setup of token
@@ -79,3 +79,7 @@ def get_epoch(date_str) :
 
 def get_current_epoch() :
     return str(int(datetime.now().timestamp() * 1000))
+
+def current_datetime_iso() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+

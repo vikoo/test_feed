@@ -373,14 +373,118 @@ mutation_post_race = """
         """
 
 mutation_update_race_with_time = """
-          mutation UpdateRace($raceId: ID!,$startTime: DateTime!) {
+          mutation UpdateRace($raceId: ID!,$startTime: DateTime!, $siteEventId: String!) {
                 updateRace(
                     id: $raceId,
-                    data: {startTime: $startTime}
+                    data: {
+                        startTime: $startTime,
+                        siteEventId: $siteEventId
+                    }
                 ) {
                     data {
                         id
                     }
                 }
-        }
+          }
           """
+
+
+mutation_get_latest_past_race_entry = """
+        query GetLatestRaceQuery($currentDate: DateTime!) {
+            races(
+                filters: {
+                    grandPrix: {
+                        endDate: {
+                            lte: $currentDate
+                        }
+                    },
+                    type: {
+                        notIn: ["Q1","Q2","SQ1","SQ2"]
+                    }
+                },
+                pagination: {
+                    limit: 1
+                }
+                sort: "startTime:desc"
+            ) {
+                data {
+                    id
+                    attributes {
+                        type
+                        startTime
+                        siteEventId
+                        grandPrix {
+                            data {
+                                id
+                                attributes {
+                                    fullName
+                                    shortName
+                                    siteEventId
+                                    season {
+                                        data {
+                                            id
+                                            attributes {
+                                                year
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+"""
+
+query_race_results_for_race_event = """
+        query GetRaceResults($raceId:ID!) {
+            raceResults(
+                filters: {
+                    race: {
+                        id: {
+                            eq: $raceId
+                        }
+                    }
+                },
+                pagination: { limit: 30}
+                sort: "position:asc"
+            ) {
+                data {
+                    id
+                }
+            }
+        }
+"""
+
+query_season_grid = """
+        query GetSeasonGridQuery($season:String!) {
+            seasonGrids(filters: { season: { year: { eq: $season} } }, pagination: {pageSize: 60}) {
+                data {
+                    id
+                    attributes {
+                        driverNumber
+                        driver {
+                            data {
+                                id
+                                attributes {
+                                    number
+                                }
+                            }
+                        }
+                        isOldGrid
+                    }
+                }
+            }
+        }
+"""
+
+mutation_post_race_result = """
+        mutation PostRaceResults($input: RaceResultInput!) {
+            createRaceResult(data: $input) {
+                data {
+                    id
+                }
+            }
+        }
+"""

@@ -123,6 +123,7 @@ def create_gp_entry(season_id, track_map, event, event_year):
         "fullName": event.get("name"),
         "round": event.get("sequence"),
         "shortName": event.get("shortname"),
+        "siteEventId": event.get("id")
     }
     grand_prix_id = create_grand_prix(is_f1_feed=False, json_str=json.dumps(grand_prix_json))
     return grand_prix_id
@@ -133,14 +134,15 @@ def create_race_entry(moto_gp_races, grand_prix_id):
             "grandPrix": grand_prix_id,
             "startTime": moto_gp_race.get("date_start_utc"),
             "type":moto_gp_race.get("type"),
-            "identifier": moto_gp_race.get("identifier")
+            "identifier": moto_gp_race.get("identifier"),
+            "siteEventId": moto_gp_race.get("id")
         }
         create_race(is_f1_feed=False, json_str=json.dumps(race_json))
 
 def update_race_entry(moto_gp_races, strapi_races_map):
     for moto_gp_race in moto_gp_races:
         strapi_race = strapi_races_map.get(moto_gp_race.get("type"))
-        update_time_in_race(is_f1_feed=False, race_id=strapi_race["id"], start_time=moto_gp_race.get("date_start_utc"))
+        update_time_in_race(is_f1_feed=False, race_id=strapi_race["id"], start_time=moto_gp_race.get("date_start_utc"), site_event_id=moto_gp_race.get("id"))
 
 def filter_races_by_grand_prix_as_dict(races: list, grand_prix_id: str) -> dict:
     return {

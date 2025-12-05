@@ -7,7 +7,8 @@ from cron.strapi_api.api_queries import query_get_latest_grand_prixes, mutation_
     query_old_feeds, mutation_delete_feed, query_old_votes, mutation_delete_vote, \
     query_old_vote_counts, mutation_delete_vote_count, query_get_seasons, query_get_grand_prixes_for_year, \
     mutation_post_season, mutation_update_config_for_season, query_get_tracks, mutation_post_grand_prix, \
-    mutation_post_race, mutation_update_race_with_time, mutation_update_config_for_gp
+    mutation_post_race, mutation_update_race_with_time, mutation_update_config_for_gp, \
+    mutation_get_latest_past_race_entry, query_race_results_for_race_event, query_season_grid, mutation_post_race_result
 from cron.utils import *
 import requests
 import re
@@ -231,8 +232,7 @@ def process_feed_desc(description: str) -> str:
 #----------------------------------------------------------------------------------------------------------------
 def get_upcoming_races(is_f1_feed) -> str:
     end_point = get_graphql_endpoint(is_f1_feed)
-    current_date =  datetime.now(timezone.utc)
-    current_date_str = current_date.isoformat() + "Z"
+    current_date_str =  current_datetime_iso()
     variables = {
         "currentDate": current_date_str,
     }
@@ -291,7 +291,7 @@ def update_weather(is_f1_feed: bool, weather_id: str, weather_json: str, race_id
 
 
 #----------------------------------------------------------------------------------------------------------------
-# schedule relate code
+# schedule relate code - for moto gp
 #----------------------------------------------------------------------------------------------------------------
 def get_seasons(is_f1_feed: bool) -> str:
     end_point = get_graphql_endpoint(is_f1_feed)
@@ -414,14 +414,89 @@ def create_race(is_f1_feed: bool, json_str: str) -> str:
     print(f"race ID: {race_id}")
     return race_id
 
-def update_time_in_race(is_f1_feed: bool, start_time: str, race_id: str) -> str:
+def update_time_in_race(is_f1_feed: bool, start_time: str, race_id: str, site_event_id: str) -> str:
     end_point = get_graphql_endpoint(is_f1_feed)
     variables = {
         "startTime": start_time,
         "raceId": race_id,
+        "siteEventId": site_event_id
     }
     print(f"update_time_in_race ------> variables: {variables}")
     response = requests.post(end_point, json={'query': mutation_update_race_with_time, "variables": variables}, headers=get_headers(is_f1_feed))
     data = response.json()
     print(f"update_time_in_race in race---> {data}")
     return response.json()
+
+#----------------------------------------------------------------------------------------------------------------
+# data upload relate code
+#----------------------------------------------------------------------------------------------------------------
+def get_latest_past_race(is_f1_feed: bool) -> str:
+    end_point = get_graphql_endpoint(is_f1_feed)
+    current_date_str =  current_datetime_iso()
+    variables = {
+        "currentDate": current_date_str,
+    }
+    print(f"get_latest_past_race ------> variables: {variables}")
+
+    response = requests.post(end_point, json={'query': mutation_get_latest_past_race_entry, "variables": variables}, headers=get_headers(is_f1_feed))
+    data = response.json()
+    print(f"get_latest_past_race ---> {data}")
+    return response.json()
+
+def get_race_results_for_race_event(is_f1_feed: bool, race_id: str) -> str:
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = {
+        "raceId": race_id
+    }
+    print(f"get_race_results_for_race_event ------> variables: {variables}")
+    response = requests.post(end_point, json={'query': query_race_results_for_race_event, "variables": variables}, headers=get_headers(is_f1_feed))
+    data = response.json()
+    print(f"get_race_results_for_race_event ---> {data}")
+    return data
+
+def get_season_grid_map(is_f1_feed: bool, season: str) -> str:
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = {
+        "season": season
+    }
+    print(f"get_season_grid ------> variables: {variables}")
+    response = requests.post(end_point, json={'query': query_season_grid, "variables": variables}, headers=get_headers(is_f1_feed))
+    data = response.json()
+    # print(f"get_season_grid ---> {data}")
+    result = {}
+
+    season_grids = data.get("data", {}).get("seasonGrids", {}).get("data", [])
+
+    for entry in season_grids:
+        attrs = entry.get("attributes", {})
+        is_old = attrs.get("isOldGrid")
+
+        # Skip if isOldGrid is True
+        if is_old is True:
+            continue
+
+        driver_number = attrs.get("driverNumber")
+        entry_id = entry.get("id")
+
+        if driver_number is not None and entry_id is not None:
+            result[driver_number] = entry_id
+
+    print(f"season grid map: {result}")
+    return result
+
+def create_race_result(is_f1_feed: bool, json_str: str) -> str:
+    # Define GraphQL endpoint
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = f"""
+      {{
+        "input": {json_str}
+      }}
+      """
+
+    print(f"create_race_result ------> variables: {variables}")
+    response = requests.post(end_point, json={'query': mutation_post_race_result, "variables": variables}, headers=get_headers(is_f1_feed))
+    data = response.json()
+    print(f"create_race_result---> {data}")
+    race_id = data['data']['createRaceResult']['data']['id']
+    print(f"race ID: {race_id}")
+    return race_id

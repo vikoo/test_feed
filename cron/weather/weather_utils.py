@@ -244,7 +244,7 @@ def check_json_outdated(data: str) -> bool:
         # Get current UTC time
         current_time = datetime.now(timezone.utc)
 
-        if current_time > race_time:
+        if current_time > race_time_plus_3:
             print("✅ Current time is after the race start time. invalidate json and fetch next GP")
             return True
         else:
