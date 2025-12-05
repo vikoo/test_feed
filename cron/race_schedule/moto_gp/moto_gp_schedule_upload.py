@@ -2,8 +2,7 @@ import argparse
 from datetime import datetime, timezone
 
 from cron.moto_gp.moto_gp_api import fetch_moto_gp_schedule_map_with_short_name
-from cron.race_schedule.moto_gp_schedule_utils import valid_year, contains_season, create_season_entry_and_update_config, \
-    get_tracks_map, handle_season_creation, process_strapi_gp_with_moto_gp
+from cron.race_schedule.moto_gp.moto_gp_schedule_utils import valid_year, get_tracks_map, handle_season_creation, process_strapi_gp_with_moto_gp
 from cron.strapi_api.apis import get_grand_prix_races_for_year
 
 

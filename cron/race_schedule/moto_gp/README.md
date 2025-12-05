@@ -1,5 +1,6 @@
 # schedule fetch for wheelie
 
+Please make sure all the Tracks are available in db. It will work even if track is not available.
 to run script
 1. go to root directory and run command
    ```bash
