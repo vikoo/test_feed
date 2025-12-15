@@ -393,17 +393,12 @@ mutation_get_latest_past_race_entry = """
         query GetLatestRaceQuery($currentDate: DateTime!) {
             races(
                 filters: {
-                    grandPrix: {
-                        endDate: {
-                            lte: $currentDate
-                        }
+                    startTime: {
+                        lte: $currentDate
                     },
-                    type: {
-                        notIn: ["Q1","Q2","SQ1","SQ2"]
-                    }
                 },
                 pagination: {
-                    limit: 1
+                    limit: 3
                 }
                 sort: "startTime:desc"
             ) {

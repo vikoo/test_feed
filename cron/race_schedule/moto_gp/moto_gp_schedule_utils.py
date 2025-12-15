@@ -72,6 +72,7 @@ def process_strapi_gp_with_moto_gp(moto_gp_schedule_map_with_short_name, grand_p
             else:
                 update_race_entry(event.get("broadcasts"), filtered_races_from_strapi_map)
                 print(f"races exists strapi. update date time in each entry.")
+        # todo update the gp ids in config
         update_config_for_gp(is_f1_feed=False)
 
     else:
@@ -105,6 +106,8 @@ def process_strapi_gp_with_moto_gp(moto_gp_schedule_map_with_short_name, grand_p
             else:
                 update_race_entry(event.get("broadcasts"), filtered_races_from_strapi_map)
                 print(f"races exists strapi. update date time in each entry.")
+
+        # todo update the gp ids in config
         update_config_for_gp(is_f1_feed=False)
 
     return None

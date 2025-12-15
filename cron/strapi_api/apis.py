@@ -454,7 +454,7 @@ def get_race_results_for_race_event(is_f1_feed: bool, race_id: str) -> str:
     print(f"get_race_results_for_race_event ---> {data}")
     return data
 
-def get_season_grid_map(is_f1_feed: bool, season: str) -> str:
+def get_season_grid_map(is_f1_feed: bool, season: str):
     end_point = get_graphql_endpoint(is_f1_feed)
     variables = {
         "season": season
