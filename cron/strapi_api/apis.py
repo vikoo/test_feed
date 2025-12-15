@@ -498,5 +498,5 @@ def create_race_result(is_f1_feed: bool, json_str: str) -> str:
     data = response.json()
     print(f"create_race_result---> {data}")
     race_id = data['data']['createRaceResult']['data']['id']
-    print(f"race ID: {race_id}")
+    print(f"race result ID: {race_id}")
     return race_id

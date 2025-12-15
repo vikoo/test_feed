@@ -1,7 +1,9 @@
 from cron.data_upload.f1.f1_data_upload_utils import fetch_race_results
 from cron.data_upload.f1.f1_utils import qualifying_1, qualifying_2, sprint_qualifying_1, sprint_qualifying_2, \
     race_type_to_url_map
-from cron.strapi_api.apis import get_latest_past_race, get_race_results_for_race_event, get_season_grid_map
+from cron.strapi_api.apis import get_latest_past_race, get_race_results_for_race_event, get_season_grid_map, \
+    create_race_result
+import json
 
 
 def process():
@@ -38,6 +40,8 @@ def process():
                 print(f"f1_url: {f1_url}")
                 season_grid_map = get_season_grid_map(is_f1_feed=True, season=year)
                 rows = fetch_race_results(f1_url, season_grid_map, race_id, race_type, year, q2_id, q1_id)
+                for row in rows:
+                    create_race_result(is_f1_feed=True, json_str=json.dumps(row))
 
         else:
             print(f"race results already present in strapi. no action needed.")

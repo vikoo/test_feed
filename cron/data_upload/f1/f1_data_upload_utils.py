@@ -54,6 +54,8 @@ def fetch_practice_rows(table_rows, race_id, season_grid_map):
         }
         practice_row.update(time_info)
         print(f"practice_row: {practice_row}")
+        practice_row.pop(DRIVERNUM)
+        practice_row.pop(DRIVERNAME)
         # add the constructed row to the list
         practice_rows.append(practice_row)
     return practice_rows
@@ -87,6 +89,8 @@ def fetch_race_result_rows(table_rows, race_id, race_type, season_grid_map):
         }
         race_row.update(time_info)
         print(f"practice_row: {race_row}")
+        race_row.pop(DRIVERNUM)
+        race_row.pop(DRIVERNAME)
         # add the constructed row to the list
         race_rows.append(race_row)
     return race_rows
@@ -117,6 +121,8 @@ def fetch_quali_rows(row_elements, race_id, race_type, season_grid_map, q2_id, q
             break
 
         print(data)
+        data.pop(DRIVERNUM)
+        data.pop(DRIVERNAME)
         rows.append(data)
 
     # ---------------- Q2 ----------------
@@ -136,6 +142,8 @@ def fetch_quali_rows(row_elements, race_id, race_type, season_grid_map, q2_id, q
             break
 
         print(data)
+        data.pop(DRIVERNUM)
+        data.pop(DRIVERNAME)
         rows.append(data)
 
     # ---------------- Q3 ----------------
@@ -155,6 +163,8 @@ def fetch_quali_rows(row_elements, race_id, race_type, season_grid_map, q2_id, q
             break
 
         print(data)
+        data.pop(DRIVERNUM)
+        data.pop(DRIVERNAME)
         rows.append(data)
 
     return rows
