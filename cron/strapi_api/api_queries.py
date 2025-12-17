@@ -483,3 +483,299 @@ mutation_post_race_result = """
             }
         }
 """
+
+query_race_results_all = """
+        query GetRacesForSeason($season: String!,$limit: Int, $start: Int) {
+            raceResults(
+                pagination: {
+                    limit: $limit,
+                    start: $start
+                }
+                filters: {
+                    race: {
+                        grandPrix: {
+                            season: {
+                                year: {
+                                    eq: $season
+                                }
+                            }
+                        }
+                        type:{
+                            in: ["Race", "Q3","Sprint","SQ3", "QNR1", "QNR2"]
+                        }
+                    }
+                }
+            ) {
+                data {
+                    id
+                    attributes {
+                        race {
+                            data {
+                                attributes {
+                                    type
+                                    grandPrix {
+                                        data {
+                                            id
+                                            attributes {
+                                                round
+                                                name
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        seasonGrid {
+                            data {
+                                id
+                                attributes {
+                                    driver {
+                                        data {
+                                            id
+                                            attributes {
+                                                initials
+                                            }
+                                        }
+                                    }
+                                    chassis {
+                                        data {
+                                            attributes {
+                                                team {
+                                                    data {
+                                                        id
+                                                        attributes {
+                                                            name
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        laps
+                        points
+                        time
+                        position
+                        finalPos
+                        fastestLap
+                        dnf
+                        fantasyPts
+                        sprintFinalPos
+                        classification {
+                            data {
+                                id
+                                attributes {
+                                    type
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+"""
+
+query_driver_and_team_standings = """
+       query GetDriverSeasonStats($season: String!) {
+            driverStandings(
+                filters: {
+                    season: {
+                        year: {
+                            eq: $season
+                        }
+                    }
+                },
+                pagination: {
+                    limit: 50
+                }
+            ) {
+                data {
+                    id
+                    attributes {
+                        season {
+                            data {
+                                id
+                                attributes {
+                                    year
+                                }
+                            }
+                        }
+                        seasonGrid {
+                            data {
+                                id
+                                attributes {
+                                    driver {
+                                        data {
+                                            id
+                                            attributes {
+                                                initials
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        position
+                        points
+                        raceWins
+                        racePoles
+                        sprintWins
+                        sprintPoles
+                        fastestLapsInRace
+                        fastestLapsInSprint
+                        biggestRaceWinMargins
+                        avgPointsPerRace
+                        avgPointsPerSprint
+                        racePodiums
+                        sprintPodiums
+                        dnfInRace
+                        dnfInSprint
+                        avgRaceQualiPosition
+                        avgSprintQualiPosition
+                        avgRaceStartGridPosition
+                        avgSprintStartGridPosition
+                        avgRaceFinishPosition
+                        avgSprintFinishPosition
+                        avgRacePositionGained
+                        avgSprintPositionGained
+                        q3Appearances
+                        sprintQ3Appearances
+                        raceFirstRowStarts
+                        sprintFirstRowStarts
+                        top5FinishInRace
+                        top10FinishInRace
+                        top8FinishInSprint
+                        noOfGPs
+                        racePoints
+                        sprintPoints
+                        bestRaceFinish
+                        bestSprintFinish
+                        bestQualiPos
+                        bestSprintQualiPos
+                        grids {
+                            data {
+                                id
+                                attributes {
+                                    driver {
+                                        data {
+                                            id
+                                            attributes {
+                                                initials
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            teamStandings(
+                filters: {
+                    season: {
+                        year: {
+                            eq: $season
+                        }
+                    }
+                },
+                pagination: {
+                    limit: 50
+                }
+            ) {
+                data {
+                    id
+                    attributes {
+                        seasonGrid {
+                            data {
+                                id
+                                attributes {
+                                    driver {
+                                        data {
+                                            id
+                                            attributes {
+                                                initials
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        season {
+                            data {
+                                id
+                                attributes {
+                                    year
+                                }
+                            }
+                        }
+                        chassis {
+                            data {
+                                id
+                                attributes {
+                                    name
+                                }
+                            }
+                        }
+                        position
+                        points
+                        raceWins
+                        racePoles
+                        sprintWins
+                        sprintPoles
+                        fastestLapsInRace
+                        fastestLapsInSprint
+                        avgPointsPerRace
+                        avgPointsPerSprint
+                        racePodiums
+                        sprintPodiums
+                        dnfInSprint
+                        dnfInRace
+                        avgRaceQualiPosition
+                        avgSprintQualiPosition
+                        avgRaceStartGridPosition
+                        avgSprintStartGridPosition
+                        avgRaceFinishPosition
+                        avgSprintFinishPosition
+                        avgRacePositionGained
+                        avgSprintPositionGained
+                        q3Appearances
+                        sprintQ3Appearances
+                        raceFirstRowStarts
+                        sprintFirstRowStarts
+                        top5FinishInRace
+                        top10FinishInRace
+                        top8FinishInSprint
+                        noOfGPs
+                        racePoints
+                        sprintPoints
+                        bestRaceFinish
+                        bestSprintFinish
+                        bestQualiPos
+                        bestSprintQualiPos
+                    }
+                }
+            }
+        } 
+"""
+
+mutation_update_driver_standing = """
+        mutation UpdateDriverStanding($rowId: ID!, $driverStandingInput: DriverStandingInput!) {
+            updateDriverStanding(id: $rowId, data: $driverStandingInput) {
+                data {
+                    id
+                }
+            }
+        }
+"""
+
+mutation_update_team_standing = """
+        mutation UpdateTeamStanding($rowId: ID!, $teamStandingInput: TeamStandingInput!) {
+            updateTeamStanding(id: $rowId, data: $teamStandingInput) {
+                data {
+                    id
+                }
+            }
+        }
+"""

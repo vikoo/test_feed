@@ -8,7 +8,9 @@ from cron.strapi_api.api_queries import query_get_latest_grand_prixes, mutation_
     query_old_vote_counts, mutation_delete_vote_count, query_get_seasons, query_get_grand_prixes_for_year, \
     mutation_post_season, mutation_update_config_for_season, query_get_tracks, mutation_post_grand_prix, \
     mutation_post_race, mutation_update_race_with_time, mutation_update_config_for_gp, \
-    mutation_get_latest_past_race_entry, query_race_results_for_race_event, query_season_grid, mutation_post_race_result
+    mutation_get_latest_past_race_entry, query_race_results_for_race_event, query_season_grid, \
+    mutation_post_race_result, query_race_results_all, query_driver_and_team_standings, mutation_update_driver_standing, \
+    mutation_update_team_standing
 from cron.utils import *
 import requests
 import re
@@ -500,3 +502,98 @@ def create_race_result(is_f1_feed: bool, json_str: str) -> str:
     race_id = data['data']['createRaceResult']['data']['id']
     print(f"race result ID: {race_id}")
     return race_id
+
+#----------------------------------------------------------------------------------------------------------------
+# stats update relate code
+#----------------------------------------------------------------------------------------------------------------
+def fetch_all_race_results(is_f1_feed: bool, season: str):
+    end_point = get_graphql_endpoint(is_f1_feed)
+    race_results = []
+    chunk_size = 50
+    start = 0
+    while True:
+        variables = {
+            "season": season,
+            "limit": chunk_size,
+            "start": start
+        }
+        print(f"fetch_all_race_results ------> variables: {variables}")
+        response = requests.post(end_point, json={'query': query_race_results_all, "variables": variables}, headers=get_headers(is_f1_feed))
+        response.raise_for_status()
+        data = response.json()
+
+        races = (
+            data.get("data", {})
+            .get("raceResults", {})
+            .get("data", [])
+        )
+
+        print(f"fetched {len(races)} races")
+
+        # 🛑 Stop when no more data
+        if not races:
+            break
+
+        # ✅ Add items, not list
+        race_results.extend(races)
+
+        start += chunk_size
+    return race_results
+
+def fetch_driver_team_standings_for_season(is_f1_feed: bool, season: str) :
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = {
+        "season": season,
+    }
+    print(f"fetch_driver_team_standings_for_season ------> variables: {variables}")
+
+    response = requests.post(end_point, json={'query': query_driver_and_team_standings, "variables": variables}, headers=get_headers(is_f1_feed))
+    response.raise_for_status()
+    result = response.json()
+
+    data = result.get("data", {})
+
+    driver_standings = (
+        data.get("driverStandings", {})
+        .get("data", [])
+    )
+
+    team_standings = (
+        data.get("teamStandings", {})
+        .get("data", [])
+    )
+    # print(f"driver_standings: {driver_standings}")
+    # print(f"######################################")
+    # print(f"team_standings: {team_standings}")
+
+    return driver_standings, team_standings
+
+
+def update_driver_standings(is_f1_feed: bool, json_str: str, row_id: str) -> str:
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = f"""
+      {{
+        "driverStandingInput": {json_str},
+        "row_id": {row_id} 
+      }}
+      """
+    print(f"update_driver_standings ------> variables: {variables}")
+    response = requests.post(end_point, json={'query': mutation_update_driver_standing, "variables": variables}, headers=get_headers(is_f1_feed))
+    data = response.json()
+    print(f"update_driver_standings ---> {data}")
+    return response.json()
+
+
+def update_team_standings(is_f1_feed: bool, json_str: str, row_id: str) -> str:
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = f"""
+      {{
+        "teamStandingInput": {json_str},
+        "row_id": {row_id} 
+      }}
+      """
+    print(f"update_team_standings ------> variables: {variables}")
+    response = requests.post(end_point, json={'query': mutation_update_team_standing, "variables": variables}, headers=get_headers(is_f1_feed))
+    data = response.json()
+    print(f"update_team_standings ---> {data}")
+    return response.json()
