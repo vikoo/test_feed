@@ -140,7 +140,7 @@ def update_stats(season, all_race_results, driver_standings, team_standings):
             print(f"uploading for primary grid id: {driver.get('driver_season_grid_id')}")
             print(f"########################################################")
             print(f"driver: {driver}")
-            # update_driver_standings(is_f1_feed=True, json_str=json.dumps(driver), row_id=driver.get("standings_id"))
+            update_driver_standings(is_f1_feed=True, driver_map=driver, row_id=driver.get("standings_id"))
         else:
             print(f"skip upload for non primary grid id: {driver.get('driver_season_grid_id')}")
 
@@ -193,6 +193,9 @@ def update_stats(season, all_race_results, driver_standings, team_standings):
         team_id_to_stats_map[team_id] = stats
         team_id_to_stats_map[team_id]["avgPointsPerRace"] = avg_points_per_race
         team_id_to_stats_map[team_id]["avgPointsPerSprint"] = avg_points_per_sprint
+        team_id_to_stats_map[team_id]["seasonGrid"] = grid_ids
+        team_id_to_stats_map[team_id]["season"] = standing['attributes']['season']['data']['id']
+        team_id_to_stats_map[team_id]["chassis"] = standing['attributes']['chassis']['data']['id']
 
     teams_list = list(team_id_to_stats_map.values())
 
@@ -209,7 +212,7 @@ def update_stats(season, all_race_results, driver_standings, team_standings):
         print(f"uploading for team standings id: {team.get('standings_id')}")
         print(f"########################################################")
         print(f"team: {team}")
-        # update_team_standings(is_f1_feed=True, json_str=json.dumps(team), row_id=driver.get("standings_id"))
+        update_team_standings(is_f1_feed=True, team_map=team, row_id=team.get("standings_id"))
 
 
     return drivers_list, teams_list

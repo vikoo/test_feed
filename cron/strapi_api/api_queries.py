@@ -779,3 +779,17 @@ mutation_update_team_standing = """
             }
         }
 """
+
+mutation_update_config_for_stats = """
+          mutation UpdateConfig($input: ConfigInput!) {
+            updateConfig(data: $input) {
+                data {
+                    id
+                    attributes {
+                        driverTeamTrackSeasonTyre
+                        driverStandingsForSeasonJson
+                    }
+                }
+            }
+          }
+"""

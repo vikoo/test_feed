@@ -10,7 +10,7 @@ from cron.strapi_api.api_queries import query_get_latest_grand_prixes, mutation_
     mutation_post_race, mutation_update_race_with_time, mutation_update_config_for_gp, \
     mutation_get_latest_past_race_entry, query_race_results_for_race_event, query_season_grid, \
     mutation_post_race_result, query_race_results_all, query_driver_and_team_standings, mutation_update_driver_standing, \
-    mutation_update_team_standing
+    mutation_update_team_standing, mutation_update_config_for_stats
 from cron.utils import *
 import requests
 import re
@@ -569,12 +569,15 @@ def fetch_driver_team_standings_for_season(is_f1_feed: bool, season: str) :
     return driver_standings, team_standings
 
 
-def update_driver_standings(is_f1_feed: bool, json_str: str, row_id: str) -> str:
+def update_driver_standings(is_f1_feed: bool, driver_map, row_id: str) -> str:
     end_point = get_graphql_endpoint(is_f1_feed)
+    driver_map.pop('standings_id', None)  # remove standings_id field if present
+    driver_map.pop('driver_season_grid_id', None)
+    driver_map.pop('is_primary_grid_id', None)
     variables = f"""
       {{
-        "driverStandingInput": {json_str},
-        "row_id": {row_id} 
+        "driverStandingInput": {json.dumps(driver_map)},
+        "rowId": {row_id} 
       }}
       """
     print(f"update_driver_standings ------> variables: {variables}")
@@ -584,16 +587,42 @@ def update_driver_standings(is_f1_feed: bool, json_str: str, row_id: str) -> str
     return response.json()
 
 
-def update_team_standings(is_f1_feed: bool, json_str: str, row_id: str) -> str:
+def update_team_standings(is_f1_feed: bool, team_map, row_id: str) -> str:
     end_point = get_graphql_endpoint(is_f1_feed)
+    team_map.pop('standings_id', None)  # remove standings_id field if present
+    team_map.pop('driver_season_grid_id', None)
+    team_map.pop('is_primary_grid_id', None)
     variables = f"""
       {{
-        "teamStandingInput": {json_str},
-        "row_id": {row_id} 
+        "teamStandingInput": {json.dumps(team_map)},
+        "rowId": "{str(row_id)}"
       }}
       """
+
     print(f"update_team_standings ------> variables: {variables}")
     response = requests.post(end_point, json={'query': mutation_update_team_standing, "variables": variables}, headers=get_headers(is_f1_feed))
     data = response.json()
     print(f"update_team_standings ---> {data}")
-    return response.json()
+    return data
+
+def update_config_for_stats(is_f1_feed: bool, season_year: str):
+    config = get_config(is_f1_feed=is_f1_feed)
+    team_standings_json_str = json.loads(config.get("teamStandingsForSeasonJson"))
+    driver_standings_json_str = json.loads(config.get("driverStandingsForSeasonJson"))
+    epoch = get_current_epoch()
+    team_standings_json_str[season_year] = epoch
+    driver_standings_json_str[season_year] = epoch
+
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = f"""
+    {{
+        "input": {{
+          "driverStandingsForSeasonJson": {json.dumps(driver_standings_json_str)},
+          "teamStandingsForSeasonJson": {json.dumps(team_standings_json_str)}
+        }}
+    }}
+    """
+    print(f"------> update_config_for_stats variables: {variables}")
+
+    response = requests.post(end_point, json={"query": mutation_update_config_for_stats, "variables": variables}, headers=get_headers(is_f1_feed))
+    print(response.json())
