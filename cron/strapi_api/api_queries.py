@@ -412,7 +412,7 @@ mutation_get_latest_past_race_entry = """
                             data {
                                 id
                                 attributes {
-                                    fullName
+                                    name
                                     shortName
                                     siteEventId
                                     season {
@@ -420,6 +420,15 @@ mutation_get_latest_past_race_entry = """
                                             id
                                             attributes {
                                                 year
+                                            }
+                                        }
+                                    }
+                                    track {
+                                        data {
+                                            id
+                                            attributes {
+                                                name
+                                                country
                                             }
                                         }
                                     }

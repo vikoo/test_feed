@@ -8,6 +8,7 @@ from firebase_admin import credentials, messaging
 from dotenv import load_dotenv
 from googletrans import Translator
 
+from cron.notifiaction.notification_message_utils import get_title_body_for_notification
 from cron.utils import locales
 
 topic_prefix_f1 = "ps_";
@@ -84,7 +85,9 @@ async def send_notification_to_topic(is_f1: bool, is_prod: bool, title: str, bod
             print(f"⚠️ Translation failed for locale {locale}: {e}")
             print(f"   Skipping {locale} translation for this notification.")
 
+
 async def send_config_update_notification(is_f1: bool, is_prod: bool, year: str, grand_prix_id: str):
+    # send config update notification
     __init_firebase_admin(is_prod=is_prod)
     if is_f1:
         notification_topic = topic_prefix_f1 + topic_config_update
@@ -104,6 +107,11 @@ async def send_config_update_notification(is_f1: bool, is_prod: bool, year: str,
     # Send the message to the topic
     response = messaging.send(message)
     print(f"Successfully sent message to topic {notification_topic}: {response}")
+
+def send_race_complete_notification(is_f1: bool, race_type: str, grand_prix):
+    print(f"Sending race complete notification...for race type: {race_type}")
+    title, body = get_title_body_for_notification(grand_prix, race_type)
+    asyncio.run(send_notification_to_topic(is_f1=is_f1, is_prod=False, title=title, body=body))
 
 
 if __name__ == "__main__":

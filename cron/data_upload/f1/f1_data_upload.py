@@ -1,6 +1,7 @@
 from cron.data_upload.f1.f1_data_upload_utils import fetch_race_results
 from cron.data_upload.f1.f1_utils import qualifying_1, qualifying_2, sprint_qualifying_1, sprint_qualifying_2, \
     race_type_to_url_map
+from cron.notifiaction.notification_utils import send_race_complete_notification
 from cron.stats_calc.f1.f1_stats_update import process_update_stats
 from cron.strapi_api.apis import get_latest_past_race, get_race_results_for_race_event, get_season_grid_map, \
     create_race_result
@@ -19,11 +20,12 @@ def process():
 
     if race_id:
         race_type = json_data["data"]["races"]["data"][0]["attributes"]["type"]
-
+        grand_prix = json_data["data"]["races"]["data"][0]["attributes"]["grandPrix"]["data"]
         print(f"race_id: {race_id} --- race_type: {race_type}")
         strapi_races = get_race_results_for_race_event(is_f1_feed=True, race_id=race_id)
         race_result_count = len(strapi_races['data']['raceResults']['data'])
         print(f"race_result_count from strapi: {race_result_count}")
+        # send_race_complete_notification(is_f1=True, race_type=race_type, grand_prix=grand_prix)
 
         if race_result_count == 0:
             year = json_data["data"]["races"]["data"][0]["attributes"]["grandPrix"]["data"]["attributes"]["season"]["data"]["attributes"]["year"]
@@ -45,7 +47,14 @@ def process():
                     create_race_result(is_f1_feed=True, json_str=json.dumps(row))
 
                 # update stats after data upload
+                print(f"######################")
+                print(f"updating stats for year: {year}")
                 process_update_stats(season_year=year)
+                # send notification
+                print(f"######################")
+                print(f"sending race complete notification for year: {year}")
+                send_race_complete_notification(is_f1=True, race_type=race_type, grand_prix=grand_prix)
+
 
         else:
             print(f"race results already present in strapi. no action needed.")

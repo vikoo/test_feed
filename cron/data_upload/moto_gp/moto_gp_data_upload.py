@@ -1,4 +1,5 @@
 from cron.moto_gp.moto_gp_api import fetch_season, fetch_event, fetch_session, fetch_race_results
+from cron.notifiaction.notification_utils import send_race_complete_notification
 from cron.strapi_api.apis import get_latest_past_race, get_race_results_for_race_event, get_season_grid_map, \
     create_race_result
 import json
@@ -12,6 +13,7 @@ def process():
 
     race_id = json_data["data"]["races"]["data"][0]["id"]
     race_type = json_data["data"]["races"]["data"][0]["attributes"]["type"]
+    grand_prix = json_data["data"]["races"]["data"][0]["attributes"]["grandPrix"]["data"]
     print(f"race_id: {race_id} --- race_type: {race_type}")
     strapi_races = get_race_results_for_race_event(is_f1_feed=False, race_id=race_id)
     race_result_count = len(strapi_races['data']['raceResults']['data'])
@@ -30,12 +32,12 @@ def process():
         print(f"session_uuid: {session_uuid}")
         moto_gp_race_results = fetch_race_results(session_uuid)
         season_grid_map = get_season_grid_map(is_f1_feed=False, season=year)
-        upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type)
+        upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix)
 
     else:
         print("Race results already exist in Strapi. No need to fetch from MotoGP API.")
 
-def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type):
+def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix):
     classification = moto_gp_race_results.get("classification", [])
     records = moto_gp_race_results.get("records", [])
 
@@ -73,6 +75,13 @@ def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, 
             race_result_json["finalPos"] = index + 11
 
         create_race_result(is_f1_feed=False, json_str=json.dumps(race_result_json))
+
+    print("######################")
+    print(f"updae stats")
+    # todo
+    print("######################")
+    print(f"sending race complete notification")
+    send_race_complete_notification(is_f1=False, race_type=race_type, grand_prix=grand_prix)
 
 
 if __name__ == "__main__":
