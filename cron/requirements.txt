@@ -5,3 +5,4 @@ python-dotenv
 astral
 pytz
 googletrans-py
+firebase-admin
