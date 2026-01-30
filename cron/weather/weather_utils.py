@@ -221,6 +221,13 @@ def check_json_outdated(data: str) -> bool:
         return True
 
     print(f"data to check: {data}")
+
+    # Check if data has the expected structure
+    data_section = data.get("data")
+    if data_section is None:
+        print("No valid data section found, treating as outdated")
+        return True
+
     races = data.get("data", {}).get("races", {}).get("data", [])
 
     # Get the single Race startTime
