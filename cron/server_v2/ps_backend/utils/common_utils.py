@@ -12,7 +12,7 @@ from typing import Dict, List, Optional, Any, Union
 
 import requests
 
-from cron.ps_backend.utils.config import BACKEND_URL, TOKEN
+from cron.server_v2.ps_backend.utils.config import BACKEND_URL, TOKEN
 
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
@@ -23,7 +23,7 @@ class APIError(Exception):
     pass
 
 
-def make_hoopster_api_request(
+def make_ps_api_request(
     endpoint: str,
     method: str = 'GET',
     params: Optional[Dict[str, Any]] = None,
@@ -32,9 +32,9 @@ def make_hoopster_api_request(
     timeout: int = 30
 ) -> Union[Dict[str, Any], List[Any]]:
     """
-    Make a request to the Hoopster backend API.
+    Make a request to the PS backend API.
 
-    This is a general-purpose utility for making API calls to the Hoopster backend.
+    This is a general-purpose utility for making API calls to the PS backend.
     It handles authentication, error handling, and JSON parsing.
 
     Args:
@@ -53,10 +53,10 @@ def make_hoopster_api_request(
 
     Example:
         >>> # GET request
-        >>> result = make_hoopster_api_request('/api/season-types', params={'year': 2024})
+        >>> result = make_ps_api_request('/api/season-types', params={'year': 2024})
         >>>
         >>> # POST request
-        >>> new_data = make_hoopster_api_request(
+        >>> new_data = make_ps_api_request(
         ...     '/api/games',
         ...     method='POST',
         ...     data={'game_id': 123, 'home_team': 'LAL'}
@@ -236,7 +236,7 @@ if __name__ == "__main__":
     try:
         # Test API request
         print("1. Testing API request...")
-        result = make_hoopster_api_request('/api/season-types', params={'year': 2024})
+        result = make_ps_api_request('/api/season-types', params={'year': 2024})
         print(f"   ✓ Success! Found {len(result.get('data', []))} items\n")
 
         # Test safe_get
