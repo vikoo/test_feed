@@ -4,7 +4,7 @@ from cron.strapi_api.apis import get_latest_past_race, get_race_results_for_race
     create_race_result, update_race_result, update_config_for_race_result
 import json
 
-is_update_enabled = True
+is_update_enabled = False
 
 
 def process():
