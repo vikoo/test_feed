@@ -14,7 +14,7 @@ permissions:
   contents: write
 
 jobs:
-  weather:
+  race results:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
@@ -34,6 +34,4 @@ jobs:
           F1_TOKEN: ${{ secrets.F1_TOKEN }}
           OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
           TOMORROW_IO_API_KEY: ${{ secrets.TOMORROW_IO_API_KEY }}
-        run: |
-          python -m cron.data_upload.moto_gp.moto_gp_data_upload
-          python -m cron.data_upload.f1.f1_data_upload
+        run: python -m cron.data_upload.moto_gp.moto_gp_data_upload
