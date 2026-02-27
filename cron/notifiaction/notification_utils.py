@@ -71,8 +71,12 @@ async def send_notification_to_topic(is_f1: bool, is_prod: bool, title: str, bod
     __send_notification_to_topic_lang(is_f1, title, body, "en")
     for locale in locales:
         try:
-            translated_title_obj = translator.translate(title, dest=locale)
-            translated_desc_obj = translator.translate(body, dest=locale)
+            if locale is "zh":
+                translate_locale = locale = "zh-CN"
+            else:
+                translate_locale = locale
+            translated_title_obj = translator.translate(title, dest=translate_locale)
+            translated_desc_obj = translator.translate(body, dest=translate_locale)
 
             translated_title = translated_title_obj.text
             translated_desc = translated_desc_obj.text

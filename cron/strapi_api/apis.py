@@ -10,7 +10,8 @@ from cron.strapi_api.api_queries import query_get_latest_grand_prixes, mutation_
     mutation_post_race, mutation_update_race_with_time, mutation_update_config_for_gp, \
     mutation_get_latest_past_race_entry, query_race_results_for_race_event, query_season_grid, \
     mutation_post_race_result, query_race_results_all, query_driver_and_team_standings, mutation_update_driver_standing, \
-    mutation_update_team_standing, mutation_update_config_for_stats, mutation_update_race_result
+    mutation_update_team_standing, mutation_update_config_for_stats, mutation_update_race_result, \
+    mutation_update_config_for_race_result
 from cron.utils import *
 import requests
 import re
@@ -625,8 +626,25 @@ def update_team_standings(is_f1_feed: bool, team_map, row_id: str) -> str:
 
 def update_config_for_stats(is_f1_feed: bool, season_year: str):
     config = get_config(is_f1_feed=is_f1_feed)
-    team_standings_json_str = json.loads(config.get("teamStandingsForSeasonJson"))
-    driver_standings_json_str = json.loads(config.get("driverStandingsForSeasonJson"))
+
+    # Handle both string and dict types for team standings
+    team_standings_config = config.get("teamStandingsForSeasonJson")
+    if isinstance(team_standings_config, str):
+        team_standings_json_str = json.loads(team_standings_config)
+    elif isinstance(team_standings_config, dict):
+        team_standings_json_str = team_standings_config
+    else:
+        team_standings_json_str = {}
+
+    # Handle both string and dict types for driver standings
+    driver_standings_config = config.get("driverStandingsForSeasonJson")
+    if isinstance(driver_standings_config, str):
+        driver_standings_json_str = json.loads(driver_standings_config)
+    elif isinstance(driver_standings_config, dict):
+        driver_standings_json_str = driver_standings_config
+    else:
+        driver_standings_json_str = {}
+
     epoch = get_current_epoch()
     team_standings_json_str[season_year] = epoch
     driver_standings_json_str[season_year] = epoch
@@ -643,4 +661,34 @@ def update_config_for_stats(is_f1_feed: bool, season_year: str):
     print(f"------> update_config_for_stats variables: {variables}")
 
     response = requests.post(end_point, json={"query": mutation_update_config_for_stats, "variables": variables}, headers=get_headers(is_f1_feed))
+    print(response.json())
+
+
+def update_config_for_race_result(is_f1_feed: bool, gp_id: str):
+    config = get_config(is_f1_feed=is_f1_feed)
+    config_gp = config.get("raceResultFastestLapForGrandPrixJson")
+    print(f"config_gp: {config_gp}")
+
+    # Handle both string and dict types
+    if isinstance(config_gp, str):
+        gp_json = json.loads(config_gp)
+    elif isinstance(config_gp, dict):
+        gp_json = config_gp
+    else:
+        gp_json = {}
+
+    epoch = get_current_epoch()
+    gp_json[gp_id] = epoch
+
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = f"""
+    {{
+        "input": {{
+          "raceResultFastestLapForGrandPrixJson": {json.dumps(gp_json)}
+        }}
+    }}
+    """
+    print(f"------> update_config_for_race_result variables: {variables}")
+
+    response = requests.post(end_point, json={"query": mutation_update_config_for_race_result, "variables": variables}, headers=get_headers(is_f1_feed))
     print(response.json())

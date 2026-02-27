@@ -1,10 +1,10 @@
 from cron.moto_gp.moto_gp_api import fetch_season, fetch_event, fetch_session, fetch_race_results
 from cron.notifiaction.notification_utils import send_race_complete_notification
 from cron.strapi_api.apis import get_latest_past_race, get_race_results_for_race_event, get_season_grid_map, \
-    create_race_result, update_race_result
+    create_race_result, update_race_result, update_config_for_race_result
 import json
 
-is_update_enabled = False
+is_update_enabled = True
 
 
 def process():
@@ -85,6 +85,8 @@ def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, 
 
     fastest_lap_rider_id = None
     fastest_lap_record = None
+    gp_id = grand_prix.get("id")
+    print(f"gp_id: {gp_id} ")
 
     for record in records:
         if record.get("type") == "fastestLap":
@@ -119,6 +121,8 @@ def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, 
 
         if race_type == "QNR1" and index > 1 :
             race_result_json["finalPos"] = index + 11
+
+        print(f"race_result: {race_result_json}")
         if driver_number_to_id_map:
             row_id = driver_number_to_id_map[item["rider"]["number"]]
             print(f" row id: {row_id} for {item["rider"]["number"]}")
@@ -127,8 +131,8 @@ def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, 
             create_race_result(is_f1_feed=False, json_str=json.dumps(race_result_json))
 
     print("######################")
-    print(f"updae stats")
-    # todo
+    print(f"update stats")
+    update_config_for_race_result(is_f1_feed=False, gp_id=gp_id)
     print("######################")
     print(f"sending race complete notification")
     send_race_complete_notification(is_f1=False, race_type=race_type, grand_prix=grand_prix)

@@ -821,3 +821,16 @@ mutation_update_config_for_stats = """
             }
           }
 """
+
+mutation_update_config_for_race_result = """
+          mutation UpdateConfig($input: ConfigInput!) {
+            updateConfig(data: $input) {
+                data {
+                    id
+                    attributes {
+                        raceResultFastestLapForGrandPrixJson
+                    }
+                }
+            }
+          }
+          """

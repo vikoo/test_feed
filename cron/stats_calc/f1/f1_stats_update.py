@@ -6,7 +6,7 @@ from cron.stats_calc.f1.f1_stats_update_utils import update_stats
 from cron.strapi_api.apis import fetch_all_race_results, fetch_driver_team_standings_for_season, update_config_for_stats
 
 
-def process_update_stats(season_year: str):
+def process_update_f1_stats(season_year: str):
     print("Processing F1 stats update...")
     race_results = fetch_all_race_results(is_f1_feed=True, season=season_year)
     print(f"Fetched {len(race_results)}")
@@ -24,4 +24,4 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     year = str(args.year)
-    process_update_stats(season_year = year)
+    process_update_f1_stats(season_year = year)
