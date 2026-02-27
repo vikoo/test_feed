@@ -1,5 +1,6 @@
 from cron.moto_gp.moto_gp_api import fetch_season, fetch_event, fetch_session, fetch_race_results
 from cron.notifiaction.notification_utils import send_race_complete_notification
+from cron.stats_calc.moto_gp.moto_gp_stats_update import process_update_moto_gp_stats
 from cron.strapi_api.apis import get_latest_past_race, get_race_results_for_race_event, get_season_grid_map, \
     create_race_result, update_race_result, update_config_for_race_result
 import json
@@ -23,21 +24,21 @@ def process():
 
     if not is_update_enabled:
         if race_result_count == 0:
-            moto_gp_race_results, season_grid_map = fetch_and_upload_race_data(json_data)
-            upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix)
+            moto_gp_race_results, season_grid_map, year = fetch_and_upload_race_data(json_data)
+            upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year)
         else:
             print("Race results already exist in Strapi. No need to fetch from MotoGP API.")
     else:
         print("UPDATE is enabled")
-        moto_gp_race_results, season_grid_map = fetch_and_upload_race_data(json_data)
+        moto_gp_race_results, season_grid_map, year = fetch_and_upload_race_data(json_data)
         if race_result_count == 0:
-            upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix)
+            upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year)
         else:
             # Convert strapi races to driver number -> race result id mapping
             driver_number_to_id_map = convert_strapi_races_to_driver_map(strapi_races)
             print(f"Driver number to ID map: {driver_number_to_id_map}")
             print("Race results already exist in Strapi. No need to fetch from MotoGP API.")
-            upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, driver_number_to_id_map)
+            upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year, driver_number_to_id_map)
 
 
 def fetch_and_upload_race_data(json_data):
@@ -54,7 +55,7 @@ def fetch_and_upload_race_data(json_data):
     print(f"session_uuid: {session_uuid}")
     moto_gp_race_results = fetch_race_results(session_uuid)
     season_grid_map = get_season_grid_map(is_f1_feed=False, season=year)
-    return moto_gp_race_results, season_grid_map
+    return moto_gp_race_results, season_grid_map, year
 
 def convert_strapi_races_to_driver_map(strapi_races):
     """
@@ -79,7 +80,7 @@ def convert_strapi_races_to_driver_map(strapi_races):
 
     return driver_map
 
-def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, driver_number_to_id_map=None):
+def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year, driver_number_to_id_map=None):
     classification = moto_gp_race_results.get("classification", [])
     records = moto_gp_race_results.get("records", [])
 
@@ -130,9 +131,10 @@ def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, 
         else:
             create_race_result(is_f1_feed=False, json_str=json.dumps(race_result_json))
 
+    update_config_for_race_result(is_f1_feed=False, gp_id=gp_id)
     print("######################")
     print(f"update stats")
-    update_config_for_race_result(is_f1_feed=False, gp_id=gp_id)
+    process_update_moto_gp_stats(season_year=year)
     print("######################")
     print(f"sending race complete notification")
     send_race_complete_notification(is_f1=False, race_type=race_type, grand_prix=grand_prix)

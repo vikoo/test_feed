@@ -1,7 +1,7 @@
 from cron.strapi_api.apis import update_driver_standings, update_team_standings
 import json
 
-def update_stats(season, all_race_results, driver_standings, team_standings):
+def update_f1_stats(season, all_race_results, driver_standings, team_standings):
     print(f"## updateStats: {season}")
 
     driver_season_grid_id_to_stats_map = {}

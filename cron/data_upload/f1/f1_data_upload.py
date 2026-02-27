@@ -48,7 +48,7 @@ def process():
                 for row in rows:
                     create_race_result(is_f1_feed=True, json_str=json.dumps(row))
 
-                update_config_for_race_result(is_f1_feed=False, gp_id=gp_id)
+                update_config_for_race_result(is_f1_feed=True, gp_id=gp_id)
                 # update stats after data upload
                 print(f"######################")
                 print(f"updating stats for year: {year}")
