@@ -456,6 +456,15 @@ query_race_results_for_race_event = """
             ) {
                 data {
                     id
+                    attributes {
+                        seasonGrid {
+                            data {
+                                attributes {
+                                    driverNumber
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -486,6 +495,16 @@ query_season_grid = """
 mutation_post_race_result = """
         mutation PostRaceResults($input: RaceResultInput!) {
             createRaceResult(data: $input) {
+                data {
+                    id
+                }
+            }
+        }
+"""
+
+mutation_update_race_result = """
+        mutation UpdateRaceResults($id: ID!,$input: RaceResultInput!) {
+            updateRaceResult(id: $id, data: $input) {
                 data {
                     id
                 }

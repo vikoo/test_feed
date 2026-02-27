@@ -229,6 +229,113 @@ def merge_dicts(*dicts: Dict) -> Dict:
     return result
 
 
+def load_json_file(file_path: str) -> Optional[Dict[str, Any]]:
+    """
+    Load and parse a JSON file.
+
+    Args:
+        file_path: Path to JSON file
+
+    Returns:
+        Parsed JSON data as dictionary, or None if error
+
+    Example:
+        >>> data = load_json_file('data.json')
+    """
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        log_error(f"File not found: {file_path}")
+        return None
+    except json.JSONDecodeError as e:
+        log_error(f"Invalid JSON in {file_path}: {e}")
+        return None
+    except Exception as e:
+        log_error(f"Error loading {file_path}: {e}")
+        return None
+
+
+def make_api_request(
+    method: str,
+    url: str,
+    headers: Optional[Dict[str, str]] = None,
+    json_data: Optional[Dict[str, Any]] = None,
+    timeout: int = 30
+) -> Optional[Dict[str, Any]]:
+    """
+    Make an HTTP API request with error handling.
+
+    Args:
+        method: HTTP method (GET, POST, PUT, DELETE)
+        url: Full URL to request
+        headers: Request headers
+        json_data: JSON data for request body
+        timeout: Request timeout in seconds
+
+    Returns:
+        Response JSON data, or None if error
+
+    Example:
+        >>> response = make_api_request('POST', 'https://api.example.com/data',
+        ...                             headers={'Authorization': 'Bearer token'},
+        ...                             json_data={'key': 'value'})
+    """
+    try:
+        response = requests.request(
+            method=method.upper(),
+            url=url,
+            headers=headers,
+            json=json_data,
+            timeout=timeout
+        )
+        response.raise_for_status()
+
+        if response.status_code == 204 or not response.content:
+            return {"success": True}
+
+        return response.json()
+
+    except requests.exceptions.HTTPError as e:
+        try:
+            error_data = response.json()
+            log_error(f"HTTP {response.status_code}: {error_data}")
+            return error_data
+        except:
+            log_error(f"HTTP error: {e}")
+            return None
+    except requests.exceptions.Timeout:
+        log_error(f"Request timed out after {timeout} seconds")
+        return None
+    except requests.exceptions.ConnectionError as e:
+        log_error(f"Connection error: {e}")
+        return None
+    except Exception as e:
+        log_error(f"Request error: {e}")
+        return None
+
+
+def log_info(message: str):
+    """Print an info message."""
+    print(f"ℹ️  {message}")
+
+
+def log_success(message: str):
+    """Print a success message."""
+    print(f"✅ {message}")
+
+
+def log_error(message: str):
+    """Print an error message."""
+    print(f"❌ {message}")
+
+
+def log_warning(message: str):
+    """Print a warning message."""
+    print(f"⚠️  {message}")
+
+
+
 # Example usage
 if __name__ == "__main__":
     print("=== Common Utils Test ===\n")

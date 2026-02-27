@@ -10,7 +10,7 @@ from cron.strapi_api.api_queries import query_get_latest_grand_prixes, mutation_
     mutation_post_race, mutation_update_race_with_time, mutation_update_config_for_gp, \
     mutation_get_latest_past_race_entry, query_race_results_for_race_event, query_season_grid, \
     mutation_post_race_result, query_race_results_all, query_driver_and_team_standings, mutation_update_driver_standing, \
-    mutation_update_team_standing, mutation_update_config_for_stats
+    mutation_update_team_standing, mutation_update_config_for_stats, mutation_update_race_result
 from cron.utils import *
 import requests
 import re
@@ -500,6 +500,24 @@ def create_race_result(is_f1_feed: bool, json_str: str) -> str:
     data = response.json()
     print(f"create_race_result---> {data}")
     race_id = data['data']['createRaceResult']['data']['id']
+    print(f"race result ID: {race_id}")
+    return race_id
+
+def update_race_result(is_f1_feed: bool, json_str: str, row_id: str) -> str:
+    # Define GraphQL endpoint
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = f"""
+      {{
+        "input": {json_str},
+        "id": {row_id}
+      }}
+      """
+
+    print(f"update_race_result ------> variables: {variables}")
+    response = requests.post(end_point, json={'query': mutation_update_race_result, "variables": variables}, headers=get_headers(is_f1_feed))
+    data = response.json()
+    print(f"update_race_result---> {data}")
+    race_id = data['data']['updateRaceResult']['data']['id']
     print(f"race result ID: {race_id}")
     return race_id
 

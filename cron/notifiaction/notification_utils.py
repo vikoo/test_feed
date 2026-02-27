@@ -11,11 +11,11 @@ from googletrans import Translator
 from cron.notifiaction.notification_message_utils import get_title_body_for_notification
 from cron.utils import locales
 
-topic_prefix_f1 = "ps_";
-topic_prefix_moto_gp = "wheelie_";
+topic_prefix_f1 = "ps_"
+topic_prefix_moto_gp = "wheelie_"
 
-topic_notification = "notification_";
-topic_config_update = "config_update";
+topic_notification = "notification_"
+topic_config_update = "config_update"
 
 def __init_firebase_admin(is_prod: bool):
     service_account = __get_service_account_dict(is_prod)
@@ -71,8 +71,8 @@ async def send_notification_to_topic(is_f1: bool, is_prod: bool, title: str, bod
     __send_notification_to_topic_lang(is_f1, title, body, "en")
     for locale in locales:
         try:
-            translated_title_obj = await translator.translate(title, dest=locale)
-            translated_desc_obj = await translator.translate(body, dest=locale)
+            translated_title_obj = translator.translate(title, dest=locale)
+            translated_desc_obj = translator.translate(body, dest=locale)
 
             translated_title = translated_title_obj.text
             translated_desc = translated_desc_obj.text
@@ -111,11 +111,11 @@ async def send_config_update_notification(is_f1: bool, is_prod: bool, year: str,
 def send_race_complete_notification(is_f1: bool, race_type: str, grand_prix):
     print(f"Sending race complete notification...for race type: {race_type}")
     title, body = get_title_body_for_notification(grand_prix, race_type)
-    asyncio.run(send_notification_to_topic(is_f1=is_f1, is_prod=False, title=title, body=body))
+    asyncio.run(send_notification_to_topic(is_f1=is_f1, is_prod=True, title=title, body=body))
 
 
 if __name__ == "__main__":
     print("Testing notification utils...")
     # Send notification for default (en) locale
     # asyncio.run(send_notification_to_topic(is_prod=False, is_f1=True, title="Season summary for 2025", body="checkout season summary on the app!"))
-    asyncio.run(send_config_update_notification(is_f1=True, is_prod=False, year="2024", grand_prix_id="some-event-id"))
+    asyncio.run(send_config_update_notification(is_f1=True, is_prod=True, year="2024", grand_prix_id="some-event-id"))
