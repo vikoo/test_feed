@@ -114,8 +114,16 @@ async def send_config_update_notification(is_f1: bool, is_prod: bool, year: str,
 
 def send_race_complete_notification(is_f1: bool, race_type: str, grand_prix):
     print(f"Sending race complete notification...for race type: {race_type}")
-    title, body = get_title_body_for_notification(grand_prix, race_type)
-    asyncio.run(send_notification_to_topic(is_f1=is_f1, is_prod=True, title=title, body=body))
+    try:
+        title, body = get_title_body_for_notification(grand_prix, race_type)
+        asyncio.run(send_notification_to_topic(is_f1=is_f1, is_prod=True, title=title, body=body))
+        print("✓ Notification sent successfully")
+    except ValueError as e:
+        print(f"⚠️ Skipping notification - Firebase configuration error: {e}")
+        print("   Continuing without sending notification...")
+    except Exception as e:
+        print(f"⚠️ Failed to send notification: {type(e).__name__}: {e}")
+        print("   Continuing without sending notification...")
 
 
 if __name__ == "__main__":
