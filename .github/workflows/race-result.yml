@@ -1,0 +1,37 @@
+name: Race Result Fetcher
+
+on:
+  schedule:
+    # Runs every 15 minutes on Friday, Saturday, Sunday, and Monday (explicitly for each day)
+    - cron: "*/10 * * * 1"
+    - cron: "*/10 * * * 5"
+    - cron: "*/10 * * * 6"
+    - cron: "*/10 * * * 0"
+
+  workflow_dispatch:       # allow manual run
+
+permissions:
+  contents: write
+
+jobs:
+  weather:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: Install deps
+        run: pip install -r cron/requirements.txt  # dependencies
+
+      - name: Run Race Result Script
+        env:
+          MOTO_GP_TOKEN: ${{ secrets.MOTO_GP_TOKEN }}
+          F1_TOKEN: ${{ secrets.F1_TOKEN }}
+          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+          TOMORROW_IO_API_KEY: ${{ secrets.TOMORROW_IO_API_KEY }}
+        run: python -m cron.weather.weather
