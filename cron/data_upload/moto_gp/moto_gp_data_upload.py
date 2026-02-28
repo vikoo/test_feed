@@ -82,6 +82,11 @@ def convert_strapi_races_to_driver_map(strapi_races):
     return driver_map
 
 def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year, driver_number_to_id_map=None):
+    official = moto_gp_race_results.get("official", False)
+    if not official:
+        logger.error("official results not found in MotoGP API response. skipping upload.")
+        return
+
     classification = moto_gp_race_results.get("classification", [])
     records = moto_gp_race_results.get("records", [])
 
@@ -140,8 +145,9 @@ def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, 
     logger.info(f"update stats")
     process_update_moto_gp_stats(season_year=year)
     logger.info("######################")
-    logger.info(f"sending race complete notification")
-    send_race_complete_notification(is_f1=False, race_type=race_type, grand_prix=grand_prix)
+    if not is_update_enabled:
+        logger.info(f"sending race complete notification")
+        send_race_complete_notification(is_f1=False, race_type=race_type, grand_prix=grand_prix)
 
 
 if __name__ == "__main__":
