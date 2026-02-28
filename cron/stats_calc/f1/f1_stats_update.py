@@ -1,15 +1,17 @@
 import argparse
 from datetime import datetime, timezone
 
+from loguru import logger
+
 from cron.race_schedule.moto_gp.moto_gp_schedule_utils import valid_year
 from cron.stats_calc.f1.f1_stats_update_utils import update_f1_stats
 from cron.strapi_api.apis import fetch_all_race_results, fetch_driver_team_standings_for_season, update_config_for_stats
 
 
 def process_update_f1_stats(season_year: str):
-    print("Processing F1 stats update...")
+    logger.info("Processing F1 stats update...")
     race_results = fetch_all_race_results(is_f1_feed=True, season=season_year)
-    print(f"Fetched {len(race_results)}")
+    logger.info(f"Fetched {len(race_results)}")
     driver_standings, team_standings = fetch_driver_team_standings_for_season(True, season_year)
     update_f1_stats(season_year, race_results, driver_standings, team_standings)
     update_config_for_stats(is_f1_feed=True, season_year=season_year)

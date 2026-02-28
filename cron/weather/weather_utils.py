@@ -6,6 +6,7 @@ from astral import LocationInfo
 from astral.sun import sun
 import pytz
 from dotenv import load_dotenv
+from loguru import logger
 
 # Load environment variables from .env file - this is for local setup of token
 load_dotenv()
@@ -38,18 +39,18 @@ def fetch_hourly_weather(lat: float, lon: float) -> str:
 BASE_URL = "https://github.com/Tomorrow-IO-API/tomorrow-weather-codes/blob/master/V2_icons/large/png/"
 def get_icon_url(code: str, lat: float, lon: float, time_str: str) -> str:
     filename = weather_code_to_icon_mapping.get(code)
-    print(f"icon file name: ${filename}")
+    logger.debug(f"icon file name: ${filename}")
     if not filename:
         # if file name not found then it's a generic code.
         # we need to append 0 for day and 1 for night to get the icon.
         is_day = is_day_or_night(lat, lon, time_str)
-        print(f"is_day: ${is_day}")
+        logger.debug(f"is_day: ${is_day}")
         if is_day == "day":
             filename = weather_code_to_icon_mapping.get(code + "0")
         else:
             filename = weather_code_to_icon_mapping.get(code + "1")
 
-        print(f"new icon file name: ${filename}")
+        logger.debug(f"new icon file name: ${filename}")
         if not filename:
             return ""
         return BASE_URL + filename + "?raw=true"
@@ -101,7 +102,7 @@ def get_weather_for_time(weather_json, target_time_str):
 
     now = datetime.now(timezone.utc)
     if target_time < now:
-        print(f"skipping this as event is done...")
+        logger.debug(f"skipping this as event is done...")
         return None
 
     hourly_data = weather_json.get("timelines", {}).get("hourly", [])
@@ -220,12 +221,12 @@ def check_json_outdated(data: str) -> bool:
     if not data:
         return True
 
-    print(f"data to check: {data}")
+    logger.debug(f"data to check: {data}")
 
     # Check if data has the expected structure
     data_section = data.get("data")
     if data_section is None:
-        print("No valid data section found, treating as outdated")
+        logger.warning("No valid data section found, treating as outdated")
         return True
 
     races = data.get("data", {}).get("races", {}).get("data", [])
@@ -236,7 +237,7 @@ def check_json_outdated(data: str) -> bool:
         None  # fallback if not found
     )
 
-    print(race_time)
+    logger.debug(race_time)
     if race_time:
         # Parse ISO string into datetime (handle 'Z' as UTC)
         race_time = datetime.fromisoformat(race_time.replace("Z", "+00:00"))
@@ -247,19 +248,19 @@ def check_json_outdated(data: str) -> bool:
         # Back to ISO string with Z
         new_time_str = race_time_plus_3.isoformat().replace("+00:00", "Z")
 
-        print(f"new_time_str: {new_time_str}")
+        logger.debug(f"new_time_str: {new_time_str}")
         # Get current UTC time
         current_time = datetime.now(timezone.utc)
 
         if current_time > race_time_plus_3:
-            print("✅ Current time is after the race start time. invalidate json and fetch next GP")
+            logger.info("✅ Current time is after the race start time. invalidate json and fetch next GP")
             return True
         else:
-            print("you are in race week.")
+            logger.info("you are in race week.")
             return False
 
     else:
-        print(f"no race time found: so fetch the fresh the json")
+        logger.info(f"no race time found: so fetch the fresh the json")
         return True
 
 def save_grandprix_json(data: str, is_for_f1: bool) -> str:
@@ -279,7 +280,7 @@ def save_grandprix_json(data: str, is_for_f1: bool) -> str:
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
-    print(f"✅ Saved file to {filepath}")
+    logger.info(f"✅ Saved file to {filepath}")
     return filepath
 
 def read_grand_prix_json(is_for_f1: bool):
@@ -320,7 +321,7 @@ def delete_grandprix_json_file(is_for_f1: bool) -> str:
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump("", f, indent=2, ensure_ascii=False)
 
-    print(f"✅ cleared json data for file: {filepath}")
+    logger.info(f"✅ cleared json data for file: {filepath}")
     return filepath
 
 def get_local_json_file_name(is_for_f1: bool) -> str:

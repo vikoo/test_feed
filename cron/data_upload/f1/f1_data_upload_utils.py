@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
+from loguru import logger
 
 from cron.data_upload.f1.f1_utils import fetch_race_results_table, practice_1, practice_2, practice_3, qualifying, \
     sprint_qualifying, main_race, sprint_race, fastest_laps, get_position, get_laps, get_race_result_time_dnf, POSITION, \
@@ -11,17 +12,17 @@ def fetch_race_results(f1_url, season_grid_map, race_id, race_type, year, q2_id,
     table_rows = fetch_race_results_table(f1_url)
     json_rows = {}
     if race_type in (practice_1, practice_2, practice_3):
-        print(f"Practice session results found. ")
+        logger.info("Practice session results found.")
         json_rows = fetch_practice_rows(table_rows, race_id, season_grid_map)
         return json_rows
     elif race_type in (qualifying, sprint_qualifying):
         json_rows = fetch_quali_rows(table_rows, race_id, race_type, season_grid_map, q2_id, q1_id)
-        print(f"Qualifying session results found.")
+        logger.info("Qualifying session results found.")
     elif race_type in (main_race, sprint_race):
         json_rows = fetch_race_result_rows(table_rows, race_id, race_type, season_grid_map)
-        print(f"race/ sprint session results found.")
+        logger.info("race/sprint session results found.")
     elif race_type == fastest_laps:
-        print(f"fastest laps results found.")
+        logger.info("fastest laps results found.")
 
     return json_rows
 
@@ -53,7 +54,7 @@ def fetch_practice_rows(table_rows, race_id, season_grid_map):
             DRIVERNAME: driver_name
         }
         practice_row.update(time_info)
-        print(f"practice_row: {practice_row}")
+        logger.debug(f"practice_row: {practice_row}")
         practice_row.pop(DRIVERNUM)
         practice_row.pop(DRIVERNAME)
         # add the constructed row to the list
@@ -88,7 +89,7 @@ def fetch_race_result_rows(table_rows, race_id, race_type, season_grid_map):
             DRIVERNAME: driver_name
         }
         race_row.update(time_info)
-        print(f"practice_row: {race_row}")
+        logger.debug(f"race_row: {race_row}")
         race_row.pop(DRIVERNUM)
         race_row.pop(DRIVERNAME)
         # add the constructed row to the list
@@ -97,7 +98,7 @@ def fetch_race_result_rows(table_rows, race_id, race_type, season_grid_map):
 
 def fetch_quali_rows(row_elements, race_id, race_type, season_grid_map, q2_id, q1_id):
     rows = []
-    print(
+    logger.info(
         f"getRaceQualiRows: Q3 Id: {race_id}, "
         f"Q2 id: {q2_id}, Q1 Id: {q1_id}"
     )
@@ -116,11 +117,11 @@ def fetch_quali_rows(row_elements, race_id, race_type, season_grid_map, q2_id, q
         )
 
         if r == 1 and data.get(TIME) == "":
-            print("clearing data as first row does not have time for Q1")
+            logger.warning("clearing data as first row does not have time for Q1")
             rows.clear()
             break
 
-        print(data)
+        logger.debug(f"Q1 data: {data}")
         data.pop(DRIVERNUM)
         data.pop(DRIVERNAME)
         rows.append(data)
@@ -137,11 +138,11 @@ def fetch_quali_rows(row_elements, race_id, race_type, season_grid_map, q2_id, q
         )
 
         if r == 1 and data.get(TIME) == "":
-            print("clearing data as first row does not have time for Q2")
+            logger.warning("clearing data as first row does not have time for Q2")
             rows.clear()
             break
 
-        print(data)
+        logger.debug(f"Q2 data: {data}")
         data.pop(DRIVERNUM)
         data.pop(DRIVERNAME)
         rows.append(data)
@@ -158,13 +159,14 @@ def fetch_quali_rows(row_elements, race_id, race_type, season_grid_map, q2_id, q
         )
 
         if r == 1 and data.get(TIME) == "":
-            print("clearing data as first row does not have time for Q3")
+            logger.warning("clearing data as first row does not have time for Q3")
             rows.clear()
             break
 
-        print(data)
+        logger.debug(f"Q3 data: {data}")
         data.pop(DRIVERNUM)
         data.pop(DRIVERNAME)
         rows.append(data)
 
     return rows
+

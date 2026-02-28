@@ -5,12 +5,13 @@ import json
 from datetime import timedelta
 from cron.strapi_api.apis import *
 from dotenv import load_dotenv
+from loguru import logger
 
 # Load environment variables from .env file - this is for local setup of token
 load_dotenv()
 
-print("Using Token 1:", f1_graphql_token[:5] + "*****")  # Masking token
-print("Using Token 2:", moto_graphql_token[:5] + "*****")
+logger.info(f"Using Token 1: {f1_graphql_token[:5]}*****")
+logger.info(f"Using Token 2: {moto_graphql_token[:5]}*****")
 
 def fetch_and_process_feeds(is_f1_feed: bool):
   # GET CONFIG
@@ -21,7 +22,7 @@ def fetch_and_process_feeds(is_f1_feed: bool):
   feed_urls = get_feed_urls(is_f1_feed)
   for index, feed_url in enumerate(feed_urls):
     feeds = feedparser.parse(feed_url)
-    print(f" feed len: {len(feeds)}")
+    logger.info(f"feed len: {len(feeds)}")
     # in case xml is getting downloaded rather than shown in browser entries will be empty.
     # in this case call the normal API like below to fetch the feeds
     if len(feeds.entries) == 0:
@@ -32,7 +33,7 @@ def fetch_and_process_feeds(is_f1_feed: bool):
       if response.status_code == 200:
         feeds = feedparser.parse(response.content)
       else:
-        print(f"Failed to fetch feed: {response.status_code} - {feed_url}")
+        logger.error(f"Failed to fetch feed: {response.status_code} - {feed_url}")
 
     # get feed source and last feed time from config
     feed_source = url_to_id[feed_url]
@@ -42,7 +43,7 @@ def fetch_and_process_feeds(is_f1_feed: bool):
     if not config_date:
       config_date = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%a, %d %b %Y %H:%M:%S %z")
 
-    print(f"------> source: {feed_source} - date: {config_date} - url: {feed_url}")
+    logger.info(f"source: {feed_source} - date: {config_date} - url: {feed_url}")
 
     # date to fill in update config
     feed_date = ""
@@ -61,10 +62,9 @@ def fetch_and_process_feeds(is_f1_feed: bool):
     for entry in feeds.entries:
       entry["published"] = entry["published"].replace("GMT", "+0000")
 
-
     # Sort feeds by pubDate
     entries = sorted(feeds.entries, key=lambda x: datetime.strptime(x["published"], "%a, %d %b %Y %H:%M:%S %z"))
-    print(f"------> source: {feed_source} - size: {len(entries)}")
+    logger.info(f"source: {feed_source} - size: {len(entries)}")
 
     # if published date is present then parse based on date time
     if is_published_date_present:
@@ -72,17 +72,17 @@ def fetch_and_process_feeds(is_f1_feed: bool):
         feed_date = feed.published
         feed_epoch = get_epoch(feed_date)
         config_epoch = get_epoch(config_date)
-        print(f"------># feed date: {feed_date}")
+        logger.debug(f"feed date: {feed_date}")
         if feed_epoch > config_epoch:
-          print(f"------>## processing feed title: {feed.title}")
-          print(f"------>## processing feed: {feed}")
+          logger.info(f"processing feed title: {feed.title}")
+          logger.debug(f"processing feed: {feed}")
           process_feed(is_f1_feed, feed, feed_source)
     else :
       # parse based on guid
       is_last_feed_found = False
       for feed in entries:
         feed_date = feed.id
-        print(f"------># feed guid: {feed_date}")
+        logger.debug(f"feed guid: {feed_date}")
         if feed_date == config_date:
           is_last_feed_found = True
           continue
@@ -91,8 +91,8 @@ def fetch_and_process_feeds(is_f1_feed: bool):
             continue
 
         if is_last_feed_found:
-          print(f"------>## guid processing feed title: {feed.title}")
-          print(f"------>## guid processing feed: {feed}")
+          logger.info(f"guid processing feed title: {feed.title}")
+          logger.debug(f"guid processing feed: {feed}")
           process_feed(is_f1_feed, feed, feed_source)
 
     feed_update_map[feed_source] = feed_date
@@ -105,7 +105,7 @@ def process_feed(is_f1_feed: bool, feed, feed_source):
 
 
 if __name__ == "__main__":
-  print(f"------------- FETCHING F1 FEEDS ------------------")
+  logger.info("------------- FETCHING F1 FEEDS ------------------")
   fetch_and_process_feeds(True)
-  print(f"------------- FETCHING MOTO GP FEEDS ------------------")
+  logger.info("------------- FETCHING MOTO GP FEEDS ------------------")
   fetch_and_process_feeds(False)

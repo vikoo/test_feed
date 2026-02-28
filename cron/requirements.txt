@@ -1,8 +1,9 @@
-requests
-feedparser
-bs4
-python-dotenv
-astral
-pytz
-googletrans-py
-firebase-admin
+requests==2.32.5
+feedparser==6.0.12
+bs4==0.0.2
+python-dotenv==1.2.1
+astral==3.2
+pytz==2025.2
+googletrans-py==4.0.0
+firebase-admin==7.2.0
+loguru==0.7.3

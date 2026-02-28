@@ -8,8 +8,9 @@ Endpoints:
     GET /api/seasons/  - Fetch all seasons
 """
 
-import logging
 from typing import Dict, Optional
+
+from loguru import logger
 
 from cron.server_v2.ps_backend.utils.common_utils import (
     make_ps_api_request,
@@ -18,8 +19,6 @@ from cron.server_v2.ps_backend.utils.common_utils import (
     APIError
 )
 
-# Setup logging
-logger = logging.getLogger(__name__)
 
 
 def fetch_all_seasons() -> Dict[str, int]:
@@ -138,58 +137,53 @@ def display_seasons(seasons_dict: Dict[str, int]):
         >>> display_seasons(seasons)
     """
     if not seasons_dict:
-        print("No seasons to display")
+        logger.warning("No seasons to display")
         return
 
-    print(f"\n{'Year':<10} {'Season ID':<15}")
-    print("-" * 25)
+    logger.info(f"\n{'Year':<10} {'Season ID':<15}")
+    logger.info("-" * 25)
 
     for year in sorted(seasons_dict.keys()):
         season_id = seasons_dict[year]
-        print(f"{year:<10} {season_id:<15}")
+        logger.info(f"{year:<10} {season_id:<15}")
 
-    print(f"\nTotal: {len(seasons_dict)} seasons\n")
+    logger.info(f"\nTotal: {len(seasons_dict)} seasons\n")
 
 
 # Example usage and testing
 if __name__ == "__main__":
-    # Configure logging for CLI usage
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
 
-    print("=" * 50)
-    print("PS Seasons Fetcher")
-    print("=" * 50)
+    logger.info("=" * 50)
+    logger.info("PS Seasons Fetcher")
+    logger.info("=" * 50)
 
     try:
         # Fetch all seasons
-        print("\n1. Fetching all seasons from API...")
+        logger.info("\n1. Fetching all seasons from API...")
         seasons = fetch_all_seasons()
 
         # Display results
-        print("\n2. Displaying fetched seasons:")
+        logger.info("\n2. Displaying fetched seasons:")
         display_seasons(seasons)
 
         # Print as JSON
-        print("3. Seasons as JSON:")
+        logger.info("3. Seasons as JSON:")
         print_json(seasons)
 
         # Lookup specific year
-        print("\n4. Looking up specific years:")
+        logger.info("\n4. Looking up specific years:")
         test_years = [2023, 2024, 2025]
         for year in test_years:
             season_id = get_season_by_year(year, seasons)
             if season_id:
-                print(f"   ✓ Year {year} -> Season ID {season_id}")
+                logger.info(f"   Year {year} -> Season ID {season_id}")
             else:
-                print(f"   ✗ Year {year} -> Not found")
+                logger.warning(f"   Year {year} -> Not found")
 
-        print("\n✅ All operations completed successfully!")
+        logger.success("All operations completed successfully!")
 
     except APIError as e:
-        print(f"\n❌ API Error: {e}")
+        logger.error(f"API Error: {e}")
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        logger.error(f"Error: {e}")
 

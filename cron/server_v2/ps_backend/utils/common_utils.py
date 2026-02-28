@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Union
 
 import requests
+from loguru import logger
 
 from cron.server_v2.ps_backend.utils.config import BACKEND_URL, TOKEN
 
@@ -316,60 +317,60 @@ def make_api_request(
 
 
 def log_info(message: str):
-    """Print an info message."""
-    print(f"ℹ️  {message}")
+    """Log an info message."""
+    logger.info(message)
 
 
 def log_success(message: str):
-    """Print a success message."""
-    print(f"✅ {message}")
+    """Log a success message."""
+    logger.success(message)
 
 
 def log_error(message: str):
-    """Print an error message."""
-    print(f"❌ {message}")
+    """Log an error message."""
+    logger.error(message)
 
 
 def log_warning(message: str):
-    """Print a warning message."""
-    print(f"⚠️  {message}")
+    """Log a warning message."""
+    logger.warning(message)
 
 
 
 # Example usage
 if __name__ == "__main__":
-    print("=== Common Utils Test ===\n")
+    logger.info("=== Common Utils Test ===\n")
 
     try:
         # Test API request
-        print("1. Testing API request...")
+        logger.info("1. Testing API request...")
         result = make_ps_api_request('/api/season-types', params={'year': 2024})
-        print(f"   ✓ Success! Found {len(result.get('data', []))} items\n")
+        logger.info(f"   Success! Found {len(result.get('data', []))} items")
 
         # Test safe_get
-        print("2. Testing safe_get...")
+        logger.info("2. Testing safe_get...")
         test_data = {'season': {'name': '2024-25', 'year': 2024}}
         name = safe_get(test_data, 'season', 'name')
         missing = safe_get(test_data, 'missing', 'key', default='N/A')
-        print(f"   ✓ Season name: {name}")
-        print(f"   ✓ Missing key: {missing}\n")
+        logger.info(f"   Season name: {name}")
+        logger.info(f"   Missing key: {missing}")
 
         # Test format_date
-        print("3. Testing format_date...")
+        logger.info("3. Testing format_date...")
         iso_date = '2024-10-22T00:00:00.000Z'
         short = format_date(iso_date, 'short')
         long = format_date(iso_date, 'long')
-        print(f"   ✓ Short format: {short}")
-        print(f"   ✓ Long format: {long}\n")
+        logger.info(f"   Short format: {short}")
+        logger.info(f"   Long format: {long}")
 
         # Test chunk_list
-        print("4. Testing chunk_list...")
+        logger.info("4. Testing chunk_list...")
         chunks = chunk_list([1, 2, 3, 4, 5, 6, 7], 3)
-        print(f"   ✓ Chunks: {chunks}\n")
+        logger.info(f"   Chunks: {chunks}")
 
-        print("✅ All tests passed!")
+        logger.success("All tests passed!")
 
     except APIError as e:
-        print(f"❌ API Error: {e}")
+        logger.error(f"API Error: {e}")
     except Exception as e:
-        print(f"❌ Error: {e}")
+        logger.error(f"Error: {e}")

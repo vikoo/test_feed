@@ -1,4 +1,5 @@
 from cron.strapi_api.apis import update_driver_standings, update_team_standings
+from loguru import logger
 
 # MotoGP race type constants  (match the values stored in Strapi)
 MOTO_RACE_RACE   = "Race"
@@ -8,7 +9,7 @@ MOTO_RACE_QUALI2 = "QNR2"
 
 
 def update_moto_gp_stats(season, all_race_results, driver_standings, team_standings):
-    print(f"## updateStats: {season}")
+    logger.info(f"## updateStats: {season}")
 
     driver_season_grid_id_to_stats_map = {}
     driver_multi_season_grid_id_to_stats_map = {}
@@ -21,7 +22,7 @@ def update_moto_gp_stats(season, all_race_results, driver_standings, team_standi
     for standing in driver_standings:
         standings_id = standing.get("id")
         if standings_id is None:
-            print("## driverStanding: driver id null")
+            logger.warning("## driverStanding: driver id null")
             continue
 
         driver_season_grid_id = (
@@ -30,7 +31,7 @@ def update_moto_gp_stats(season, all_race_results, driver_standings, team_standi
             .get("data", {})
             .get("id")
         )
-        print(f"## standingsId: {standings_id} - driverSeasonGridId: {driver_season_grid_id}")
+        logger.info(f"## standingsId: {standings_id} - driverSeasonGridId: {driver_season_grid_id}")
         position = standing.get("attributes", {}).get("position", 0)
 
         race_results = [
@@ -49,15 +50,15 @@ def update_moto_gp_stats(season, all_race_results, driver_standings, team_standi
             .get("data", [])
         )
         if grids:
-            print(f"## standingsId: {standings_id} - driverSeasonGridId: {driver_season_grid_id} -> has multiple grids")
+            logger.info(f"## standingsId: {standings_id} - driverSeasonGridId: {driver_season_grid_id} -> has multiple grids")
             grid_ids = [g.get("id") for g in grids]
             standings_with_multiple_grids.append((standing, grid_ids))
 
             for grid_id in grid_ids:
                 if grid_id == driver_season_grid_id:
-                    print(f"GRIDS primary driverStanding: gridId: {grid_id} NOT calculating data")
+                    logger.debug(f"GRIDS primary driverStanding: gridId: {grid_id} NOT calculating data")
                     continue
-                print(f"GRIDS member driverStanding: gridId: {grid_id}")
+                logger.debug(f"GRIDS member driverStanding: gridId: {grid_id}")
                 grid_race_results = [
                     r for r in all_race_results
                     if _get_val(r, ["attributes", "seasonGrid", "data", "id"]) == grid_id
@@ -70,10 +71,10 @@ def update_moto_gp_stats(season, all_race_results, driver_standings, team_standi
     # MERGED MULTI-GRID DRIVER STATS
     # --------------------------------------------------
     if standings_with_multiple_grids:
-        print(f"standingsWithMultipleGrids: {len(standings_with_multiple_grids)}")
+        logger.info(f"standingsWithMultipleGrids: {len(standings_with_multiple_grids)}")
         for standing, grid_ids in standings_with_multiple_grids:
-            print(f"standingsWithMultipleGrids collecting for standingsId: {standing.get('id')}")
-            print(f"standingsWithMultipleGrids gridIds: {grid_ids}")
+            logger.debug(f"standingsWithMultipleGrids collecting for standingsId: {standing.get('id')}")
+            logger.debug(f"standingsWithMultipleGrids gridIds: {grid_ids}")
             merged_race_results = [
                 r for r in all_race_results
                 if _get_val(r, ["attributes", "seasonGrid", "data", "id"]) in grid_ids
@@ -102,10 +103,10 @@ def update_moto_gp_stats(season, all_race_results, driver_standings, team_standi
             .get("id")
         )
         if driver_multi_season_grid_id_to_stats_map.get(grid_id) is not None:
-            print(f"adding multi GRIDS driverStanding to list: gridId: {grid_id}")
+            logger.debug(f"adding multi GRIDS driverStanding to list: gridId: {grid_id}")
             drivers_list.append(driver_multi_season_grid_id_to_stats_map[grid_id])
         else:
-            print(f"adding single driverStanding: gridId to list: gridId: {grid_id}")
+            logger.debug(f"adding single driverStanding: gridId to list: gridId: {grid_id}")
             drivers_list.append(driver_season_grid_id_to_stats_map[grid_id])
 
     drivers_list.sort(
@@ -119,12 +120,12 @@ def update_moto_gp_stats(season, all_race_results, driver_standings, team_standi
     for i, driver in enumerate(drivers_list):
         driver["position"] = i + 1
         if driver.get("is_primary_grid_id") is True:
-            print(f"uploading for primary grid id: {driver.get('driver_season_grid_id')}")
-            print(f"########################################################")
-            print(f"driver: {driver}")
+            logger.info(f"uploading for primary grid id: {driver.get('driver_season_grid_id')}")
+            logger.debug("########################################################")
+            logger.debug(f"driver: {driver}")
             update_driver_standings(is_f1_feed=False, driver_map=driver, row_id=driver.get("standings_id"))
         else:
-            print(f"skip upload for non primary grid id: {driver.get('driver_season_grid_id')}")
+            logger.info(f"skip upload for non primary grid id: {driver.get('driver_season_grid_id')}")
 
     # --------------------------------------------------
     # TEAM STANDINGS
@@ -149,7 +150,7 @@ def update_moto_gp_stats(season, all_race_results, driver_standings, team_standi
                     .get("attributes", {})
                     .get("name", "unknown")
                 )
-                print(f"********** driverMap: null for {grid_id} : team: {team_name}")
+                logger.warning(f"driverMap: null for {grid_id} : team: {team_name}")
                 continue
             avg_points_per_race  += stats_map.get("avgPointsPerRace", 0.0)
             avg_points_per_sprint += stats_map.get("avgPointsPerSprint", 0.0)
@@ -176,9 +177,9 @@ def update_moto_gp_stats(season, all_race_results, driver_standings, team_standi
 
     for i, team in enumerate(teams_list):
         team["position"] = i + 1
-        print(f"uploading for team standings id: {team.get('standings_id')}")
-        print(f"########################################################")
-        print(f"team: {team}")
+        logger.info(f"uploading for team standings id: {team.get('standings_id')}")
+        logger.debug("########################################################")
+        logger.debug(f"team: {team}")
         update_team_standings(is_f1_feed=False, team_map=team, row_id=team.get("standings_id"))
 
     return drivers_list, teams_list

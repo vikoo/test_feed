@@ -1,6 +1,7 @@
 from typing import Any
 
 import requests
+from loguru import logger
 
 from cron.moto_gp.moto_gp_utils import to_utc
 
@@ -158,9 +159,10 @@ def fetch_session(session_type: str, event_uuid: str)-> str:
 
 def fetch_race_results(session_uuid: str) :
     race_result_end_point = end_point + "/v2/results/classifications?session=" + session_uuid
+    logger.debug(f"race_result_end_point: {race_result_end_point}")
     response = requests.get(race_result_end_point, timeout=30)
     response.raise_for_status()
 
     events = response.json()
-    print(f"race results: {events}")
+    logger.debug(f"race results: {events}")
     return events

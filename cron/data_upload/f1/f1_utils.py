@@ -64,7 +64,8 @@ def get_laps(text: str) -> int:
         return 0
 
 def get_race_result_time_dnf(time: str, previous_time: str) -> dict:
-    print(f"time: {time}, previousTime: {previous_time}")
+    from loguru import logger
+    logger.debug(f"time: {time}, previousTime: {previous_time}")
 
     data = {}
 

@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from cron.strapi_api.apis import create_season, get_config, get_seasons, update_config_for_season, get_tracks, \
     create_grand_prix, create_race, update_time_in_race, update_config_for_gp
 from cron.utils import get_current_epoch
+from loguru import logger
 
 
 def valid_year(value):
@@ -26,11 +27,11 @@ def contains_season(is_f1_feed: bool, target_year: str):
     return False, None
 
 def create_season_entry_and_update_config(target_year: str):
-    print(f"Creating a new entry in season table.")
+    logger.info("Creating a new entry in season table.")
     season_id = create_season(is_f1_feed=False, season_year=target_year)
-    print(f"season id created: {season_id}")
+    logger.info(f"season id created: {season_id}")
     if season_id:
-        print(f"updating config for new season.")
+        logger.info("updating config for new season.")
         config = get_config(is_f1_feed=False)
         team_standings_json_str = config.get("teamStandingsForSeasonJson")
         driver_standings_json_str = config.get("driverStandingsForSeasonJson")
@@ -44,10 +45,10 @@ def create_season_entry_and_update_config(target_year: str):
 def handle_season_creation(is_f1_feed: bool, target_year: str):
     found, season_id = contains_season(is_f1_feed=is_f1_feed, target_year=target_year)
     if found:
-        print(f"season exists with id:{season_id}. proceed ahead with grand prix and race fetch")
+        logger.info(f"season exists with id:{season_id}. proceed ahead with grand prix and race fetch")
         return True, season_id
     else:
-        print(f"season not found.")
+        logger.warning("season not found.")
         return create_season_entry_and_update_config(target_year)
 
 def get_tracks_map(is_f1_feed: bool)-> dict[str, str]:
@@ -60,23 +61,23 @@ def get_tracks_map(is_f1_feed: bool)-> dict[str, str]:
 
 def process_strapi_gp_with_moto_gp(moto_gp_schedule_map_with_short_name, grand_prixes, races, track_map, season_id, event_year):
     if not grand_prixes:
-        print(f"NO grand prix found CREATING new entries for GP and races.")
+        logger.info("NO grand prix found CREATING new entries for GP and races.")
         gp_short_name_to_id_map = {}
         for event in moto_gp_schedule_map_with_short_name.values():
             grand_prix_id = create_gp_entry(season_id, track_map, event, event_year)
             gp_short_name_to_id_map[event.get("shortname")] = grand_prix_id
             filtered_races_from_strapi_map = filter_races_by_grand_prix_as_dict(races, grand_prix_id)
             if not filtered_races_from_strapi_map:
-                print(f" races are empty in strapi. create new entries.")
+                logger.info("races are empty in strapi. create new entries.")
                 create_race_entry(event.get("broadcasts"), grand_prix_id)
             else:
                 update_race_entry(event.get("broadcasts"), filtered_races_from_strapi_map)
-                print(f"races exists strapi. update date time in each entry.")
+                logger.info("races exists strapi. update date time in each entry.")
         # todo update the gp ids in config
         update_config_for_gp(is_f1_feed=False)
 
     else:
-        print(f"grand prix and races found UPDATING entries for GP and races.")
+        logger.info("grand prix and races found UPDATING entries for GP and races.")
         gp_short_name_already_uploaded = []
         for grand_prix in grand_prixes:
             grand_prix_id = grand_prix.get("id")
@@ -85,27 +86,27 @@ def process_strapi_gp_with_moto_gp(moto_gp_schedule_map_with_short_name, grand_p
             gp_short_name_already_uploaded.append(grand_prix_short_name)
             moto_gp_event = moto_gp_schedule_map_with_short_name[grand_prix_short_name]
             if not filtered_races_from_strapi_map:
-                print(f" races are empty in strapi. create new entries.")
+                logger.info("races are empty in strapi. create new entries.")
                 create_race_entry(moto_gp_event.get("broadcasts"), grand_prix_id)
             else:
                 update_race_entry(moto_gp_event.get("broadcasts"), filtered_races_from_strapi_map)
-                print(f"races exists strapi. update date time in each entry.")
+                logger.info("races exists strapi. update date time in each entry.")
 
-        print(f"checking if any grand prix is remaining to upload or not from moto gp schedule")
+        logger.info("checking if any grand prix is remaining to upload or not from moto gp schedule")
         for event_key in moto_gp_schedule_map_with_short_name.keys():
             if event_key in gp_short_name_already_uploaded:
-                print(f"skipping GP already there")
+                logger.info("skipping GP already there")
                 continue
 
             event = moto_gp_schedule_map_with_short_name[event_key]
             grand_prix_id = create_gp_entry(season_id, track_map, event, event_year)
             filtered_races_from_strapi_map = filter_races_by_grand_prix_as_dict(races, grand_prix_id)
             if not filtered_races_from_strapi_map:
-                print(f" races are empty in strapi. create new entries.")
+                logger.info("races are empty in strapi. create new entries.")
                 create_race_entry(event.get("broadcasts"), grand_prix_id)
             else:
                 update_race_entry(event.get("broadcasts"), filtered_races_from_strapi_map)
-                print(f"races exists strapi. update date time in each entry.")
+                logger.info("races exists strapi. update date time in each entry.")
 
         # todo update the gp ids in config
         update_config_for_gp(is_f1_feed=False)

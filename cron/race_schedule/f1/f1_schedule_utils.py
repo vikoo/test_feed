@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 import json
 import re
 from typing import Optional
+from loguru import logger
+
 
 
 def parse_race_url(url):
@@ -54,7 +56,7 @@ def parse_date_time(date_str: str, time_str: str, year: str) -> Optional[str]:
 
         return datetime_str
     except Exception as e:
-        print(f"Error parsing date/time: {e}")
+        logger.error(f"Error parsing date/time: {e}")
         return None
 
 
@@ -139,7 +141,7 @@ def convert_time_to_utc(local_time: str, date_str: str, year: str, race_name: st
         return time_utc.strftime('%H:%M')
 
     except Exception as e:
-        print(f"Error converting time to UTC: {e}")
+        logger.error(f"Error converting time to UTC: {e}")
         return None
 
 
@@ -167,7 +169,7 @@ def convert_datetime_to_utc(local_datetime: str, race_name: str) -> Optional[str
         return dt_utc.strftime('%Y-%m-%d %H:%M')
 
     except Exception as e:
-        print(f"Error converting datetime to UTC: {e}")
+        logger.error(f"Error converting datetime to UTC: {e}")
         return None
 
 
@@ -226,7 +228,7 @@ def extract_f1_schedule(url):
                         break
 
         if not schedule_ul:
-            print(f"Could not find schedule UL element")
+            logger.warning("Could not find schedule UL element")
             return schedule_data
 
         # Process each li element in the schedule
@@ -240,10 +242,10 @@ def extract_f1_schedule(url):
         return schedule_data
 
     except requests.RequestException as e:
-        print(f"Error fetching URL: {e}")
+        logger.error(f"Error fetching URL: {e}")
         return None
     except Exception as e:
-        print(f"Error parsing schedule: {e}")
+        logger.error(f"Error parsing schedule: {e}")
         return None
 
 
@@ -340,7 +342,7 @@ def extract_session_info(li_element, year=None, race_name=None):
         return session_info if session_info else None
 
     except Exception as e:
-        print(f"Error extracting session info: {e}")
+        logger.error(f"Error extracting session info: {e}")
         return None
 
 
@@ -369,10 +371,10 @@ def extract_f1_schedule_detailed(url):
         schedule_container = soup.find('div', class_='Container-module_inner__UkLYJ')
 
         if not schedule_container:
-            print(f"Could not find schedule container")
+            logger.warning("Could not find schedule container")
             # Try to find any ul li structure as fallback
             all_lis = soup.find_all('li')
-            print(f"Found {len(all_lis)} li elements in the page")
+            logger.debug(f"Found {len(all_lis)} li elements in the page")
             return {
                 'url': url,
                 'error': 'Container not found',
@@ -436,7 +438,7 @@ def extract_f1_schedule_detailed(url):
         return schedule_data
 
     except Exception as e:
-        print(f"Error in detailed extraction: {e}")
+        logger.error(f"Error in detailed extraction: {e}")
         return {
             'url': url,
             'error': str(e)
@@ -444,38 +446,32 @@ def extract_f1_schedule_detailed(url):
 
 
 def print_schedule(schedule_data):
-    """
-    Print the extracted schedule in a readable format.
-
-    Args:
-        schedule_data (dict): The schedule data returned by extract_f1_schedule
-    """
     if not schedule_data:
-        print("No schedule data available")
+        logger.warning("No schedule data available")
         return
 
-    print(f"\nF1 Schedule extracted from: {schedule_data.get('url')}")
-    print(f"Race: {schedule_data.get('race_name')} {schedule_data.get('year')}")
-    print(f"Extracted at: {schedule_data.get('extracted_at')}")
-    print("=" * 80)
+    logger.info(f"F1 Schedule extracted from: {schedule_data.get('url')}")
+    logger.info(f"Race: {schedule_data.get('race_name')} {schedule_data.get('year')}")
+    logger.info(f"Extracted at: {schedule_data.get('extracted_at')}")
+    logger.info("=" * 80)
 
     if 'sessions' in schedule_data:
-        print(f"\n{'Session':<20} {'DateTime Local':<20} {'DateTime UTC':<20}")
-        print("-" * 65)
+        logger.info(f"\n{'Session':<20} {'DateTime Local':<20} {'DateTime UTC':<20}")
+        logger.info("-" * 65)
         for session in schedule_data['sessions']:
             session_name = session.get('session_name', 'Unknown')
             dt_local = session.get('datetime_local', 'TBD')
             dt_utc = session.get('datetime_utc', 'TBD')
-            print(f"{session_name:<20} {dt_local:<20} {dt_utc:<20}")
+            logger.info(f"{session_name:<20} {dt_local:<20} {dt_utc:<20}")
     elif 'schedule_items' in schedule_data:
         for item in schedule_data['schedule_items']:
-            print(f"\nItem {item['index']}:")
-            print(f"  Text: {item['text']}")
+            logger.info(f"Item {item['index']}:")
+            logger.info(f"  Text: {item['text']}")
             if 'structured' in item:
                 for key, value in item['structured'].items():
-                    print(f"  {key}: {value}")
+                    logger.info(f"  {key}: {value}")
 
-    print("\n" + "=" * 80)
+    logger.info("\n" + "=" * 80)
 
 
 def save_schedule_to_json(schedule_data, output_file='f1_schedule.json'):
@@ -489,9 +485,9 @@ def save_schedule_to_json(schedule_data, output_file='f1_schedule.json'):
     try:
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(schedule_data, f, indent=2, ensure_ascii=False)
-        print(f"Schedule saved to {output_file}")
+        logger.info(f"Schedule saved to {output_file}")
     except Exception as e:
-        print(f"Error saving to JSON: {e}")
+        logger.error(f"Error saving to JSON: {e}")
 
 
 def debug_page_structure(url):
@@ -511,65 +507,63 @@ def debug_page_structure(url):
 
         soup = BeautifulSoup(response.content, 'html.parser')
 
-        print("\n=== DEBUG: Page Structure Analysis ===")
+        logger.debug("\n=== DEBUG: Page Structure Analysis ===")
 
         # Check for the specific container
         schedule_container = soup.find('div', class_='Container-module_inner__UkLYJ')
         if schedule_container:
-            print(f"✓ Found Container-module_inner__UkLYJ")
-            print(f"  Container HTML length: {len(str(schedule_container))} characters")
+            logger.debug("Found Container-module_inner__UkLYJ")
+            logger.debug(f"  Container HTML length: {len(str(schedule_container))} characters")
 
             # Check for ul elements
             ul_elements = schedule_container.find_all('ul')
-            print(f"  Found {len(ul_elements)} <ul> elements")
+            logger.debug(f"  Found {len(ul_elements)} <ul> elements")
 
             for idx, ul in enumerate(ul_elements):
                 li_elements = ul.find_all('li')
-                print(f"    UL {idx}: {len(li_elements)} <li> elements")
+                logger.debug(f"    UL {idx}: {len(li_elements)} <li> elements")
 
                 if li_elements:
                     # Show first li as example
                     first_li = li_elements[0]
-                    print(f"      First <li> text: {first_li.get_text(strip=True)[:100]}")
-                    print(f"      First <li> classes: {first_li.get('class')}")
+                    logger.debug(f"      First <li> text: {first_li.get_text(strip=True)[:100]}")
+                    logger.debug(f"      First <li> classes: {first_li.get('class')}")
         else:
-            print(f"✗ Container-module_inner__UkLYJ NOT found")
+            logger.debug("Container-module_inner__UkLYJ NOT found")
 
             # Search for other potential containers
-            print("\n  Searching for alternative containers...")
+            logger.debug("  Searching for alternative containers...")
             all_divs = soup.find_all('div', class_=lambda x: x and 'container' in ' '.join(x).lower())
-            print(f"  Found {len(all_divs)} divs with 'container' in class name")
+            logger.debug(f"  Found {len(all_divs)} divs with 'container' in class name")
 
             for div in all_divs[:5]:  # Show first 5
                 classes = ' '.join(div.get('class', []))
-                print(f"    - {classes}")
+                logger.debug(f"    - {classes}")
 
         # Check for all ul/li structures
-        print("\n=== All UL elements on page ===")
+        logger.debug("\n=== All UL elements on page ===")
         all_uls = soup.find_all('ul')
-        print(f"Total <ul> elements on page: {len(all_uls)}")
+        logger.debug(f"Total <ul> elements on page: {len(all_uls)}")
 
         for idx, ul in enumerate(all_uls[:10]):  # Show first 10
             li_count = len(ul.find_all('li'))
             ul_classes = ' '.join(ul.get('class', []))
-            print(f"  UL {idx}: {li_count} <li> items, classes: {ul_classes}")
+            logger.debug(f"  UL {idx}: {li_count} <li> items, classes: {ul_classes}")
 
             if li_count > 0 and li_count < 20:  # Likely schedule-related
-                print(f"    Sample text: {ul.get_text(strip=True)[:150]}")
+                logger.debug(f"    Sample text: {ul.get_text(strip=True)[:150]}")
 
-        print("\n" + "=" * 80)
+        logger.debug("\n" + "=" * 80)
 
     except Exception as e:
-        print(f"Debug error: {e}")
+        logger.error(f"Debug error: {e}")
 
 
 # Main execution example
 if __name__ == "__main__":
-    # Example usage
-    # url = "https://www.formula1.com/en/racing/2026/australia"
     url = "https://www.formula1.com/en/racing/2026/china"
-    print("Extracting F1 schedule...")
-    print("=" * 80)
+    logger.info("Extracting F1 schedule...")
+    logger.info("=" * 80)
 
     # Uncomment to debug page structure:
     # debug_page_structure(url)
@@ -578,21 +572,20 @@ if __name__ == "__main__":
     schedule = extract_f1_schedule(url)
 
     if schedule:
-        print(f"\n✓ Successfully extracted schedule for {schedule['race_name']} {schedule['year']}")
-        print(f"  Found {len(schedule['sessions'])} sessions\n")
+        logger.info(f"Successfully extracted schedule for {schedule['race_name']} {schedule['year']}")
+        logger.info(f"  Found {len(schedule['sessions'])} sessions")
 
-        print(f"{'#':<3} {'Session':<20} {'DateTime Local':<20} {'DateTime UTC':<20}")
-        print("-" * 70)
+        logger.info(f"{'#':<3} {'Session':<20} {'DateTime Local':<20} {'DateTime UTC':<20}")
+        logger.info("-" * 70)
 
         for idx, session in enumerate(schedule['sessions'], 1):
             session_name = session.get('session_name', 'Unknown')
             dt_local = session.get('datetime_local', 'TBD')
             dt_utc = session.get('datetime_utc', 'TBD')
-            print(f"{idx:<3} {session_name:<20} {dt_local:<20} {dt_utc:<20}")
+            logger.info(f"{idx:<3} {session_name:<20} {dt_local:<20} {dt_utc:<20}")
 
-        # Save to JSON
         # save_schedule_to_json(schedule, 'f1_schedule_australia_2026.json')
-        print("\n" + "=" * 80)
+        logger.info("\n" + "=" * 80)
     else:
-        print("Failed to extract schedule")
+        logger.error("Failed to extract schedule")
 

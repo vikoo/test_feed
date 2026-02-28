@@ -4,12 +4,13 @@ from cron.stats_calc.moto_gp.moto_gp_stats_update import process_update_moto_gp_
 from cron.strapi_api.apis import get_latest_past_race, get_race_results_for_race_event, get_season_grid_map, \
     create_race_result, update_race_result, update_config_for_race_result
 import json
+from loguru import logger
 
 is_update_enabled = False
 
 
 def process():
-    print("fetching the schedule")
+    logger.info("fetching the schedule")
     json_data = get_latest_past_race(is_f1_feed=False)
 
     # Extract the year
@@ -17,27 +18,27 @@ def process():
     race_id = json_data["data"]["races"]["data"][0]["id"]
     race_type = json_data["data"]["races"]["data"][0]["attributes"]["type"]
     grand_prix = json_data["data"]["races"]["data"][0]["attributes"]["grandPrix"]["data"]
-    print(f"race_id: {race_id} --- race_type: {race_type}")
+    logger.info(f"race_id: {race_id} --- race_type: {race_type}")
     strapi_races = get_race_results_for_race_event(is_f1_feed=False, race_id=race_id)
     race_result_count = len(strapi_races['data']['raceResults']['data'])
-    print(f"race_result_count from strapi: {race_result_count}")
+    logger.info(f"race_result_count from strapi: {race_result_count}")
 
     if not is_update_enabled:
         if race_result_count == 0:
             moto_gp_race_results, season_grid_map, year = fetch_and_upload_race_data(json_data)
             upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year)
         else:
-            print("Race results already exist in Strapi. No need to fetch from MotoGP API.")
+            logger.info("Race results already exist in Strapi. No need to fetch from MotoGP API.")
     else:
-        print("UPDATE is enabled")
+        logger.info("UPDATE is enabled")
         moto_gp_race_results, season_grid_map, year = fetch_and_upload_race_data(json_data)
         if race_result_count == 0:
             upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year)
         else:
             # Convert strapi races to driver number -> race result id mapping
             driver_number_to_id_map = convert_strapi_races_to_driver_map(strapi_races)
-            print(f"Driver number to ID map: {driver_number_to_id_map}")
-            print("Race results already exist in Strapi. No need to fetch from MotoGP API.")
+            logger.info(f"Driver number to ID map: {driver_number_to_id_map}")
+            logger.info("Race results already exist in Strapi. No need to fetch from MotoGP API.")
             upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year, driver_number_to_id_map)
 
 
@@ -46,13 +47,13 @@ def fetch_and_upload_race_data(json_data):
     year = json_data["data"]["races"]["data"][0]["attributes"]["grandPrix"]["data"]["attributes"]["season"]["data"]["attributes"]["year"]
     event_name = json_data["data"]["races"]["data"][0]["attributes"]["grandPrix"]["data"]["attributes"]["shortName"]
     session_type = json_data["data"]["races"]["data"][0]["attributes"]["type"]
-    print(f"year: {year}, event_name: {event_name}, session_type: {session_type}")
+    logger.info(f"year: {year}, event_name: {event_name}, session_type: {session_type}")
     season_uuid = fetch_season(year)
-    print(f"season_uuid: {season_uuid}")
+    logger.info(f"season_uuid: {season_uuid}")
     event_uuid = fetch_event(event_name=event_name, season_uuid=season_uuid)
-    print(f"event_uuid: {event_uuid}")
+    logger.info(f"event_uuid: {event_uuid}")
     session_uuid = fetch_session(session_type=session_type, event_uuid=event_uuid)
-    print(f"session_uuid: {session_uuid}")
+    logger.info(f"session_uuid: {session_uuid}")
     moto_gp_race_results = fetch_race_results(session_uuid)
     season_grid_map = get_season_grid_map(is_f1_feed=False, season=year)
     return moto_gp_race_results, season_grid_map, year
@@ -87,13 +88,16 @@ def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, 
     fastest_lap_rider_id = None
     fastest_lap_record = None
     gp_id = grand_prix.get("id")
-    print(f"gp_id: {gp_id} ")
+    logger.info(f"gp_id: {gp_id} ")
+    if classification is None or len(classification) == 0:
+        logger.warning("No classification data found in MotoGP API response.")
+        return
 
     for record in records:
         if record.get("type") == "fastestLap":
             fastest_lap_rider_id = record.get("rider", {}).get("id")
             fastest_lap_record = record
-            print(f"fastest_lap_rider_id: {fastest_lap_rider_id}")
+            logger.debug(f"fastest_lap_rider_id: {fastest_lap_rider_id}")
             break
 
     for index, item in enumerate(classification):
@@ -114,7 +118,7 @@ def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, 
 
         }
         rider_id = item["rider"]["id"]
-        print(f"Processing rider_id: {rider_id} at position: {pos}")
+        logger.debug(f"Processing rider_id: {rider_id} at position: {pos}")
         if item["rider"]["id"] == fastest_lap_rider_id:
             race_result_json["fastestLap"] = True
             race_result_json["fastestLapTime"] = fastest_lap_record.get("bestLap", {}).get("time", "")
@@ -123,20 +127,20 @@ def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, 
         if race_type == "QNR1" and index > 1 :
             race_result_json["finalPos"] = index + 11
 
-        print(f"race_result: {race_result_json}")
+        logger.debug(f"race_result: {race_result_json}")
         if driver_number_to_id_map:
             row_id = driver_number_to_id_map[item["rider"]["number"]]
-            print(f" row id: {row_id} for {item["rider"]["number"]}")
+            logger.debug(f" row id: {row_id} for {item['rider']['number']}")
             update_race_result(is_f1_feed=False, json_str=json.dumps(race_result_json), row_id=row_id)
         else:
             create_race_result(is_f1_feed=False, json_str=json.dumps(race_result_json))
 
     update_config_for_race_result(is_f1_feed=False, gp_id=gp_id)
-    print("######################")
-    print(f"update stats")
+    logger.info("######################")
+    logger.info(f"update stats")
     process_update_moto_gp_stats(season_year=year)
-    print("######################")
-    print(f"sending race complete notification")
+    logger.info("######################")
+    logger.info(f"sending race complete notification")
     send_race_complete_notification(is_f1=False, race_type=race_type, grand_prix=grand_prix)
 
 

@@ -1,5 +1,6 @@
 import fastf1
 import requests
+from loguru import logger
 
 if __name__ == "__main__":
     end_point = "https://api.formula1.com/v1/event-tracker"
@@ -11,4 +12,4 @@ if __name__ == "__main__":
     }
 
     response = requests.get(url=end_point, headers=headers)
-    print(response.json())
+    logger.info(f"f1_live_data response: {response.json()}")

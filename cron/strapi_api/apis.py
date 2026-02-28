@@ -19,6 +19,7 @@ import json
 from datetime import datetime, timezone
 
 from cron.weather.weather_utils import convert_weather_api_json_to_strapi_json
+from loguru import logger
 
 #----------------------------------------------------------------------------------------------------------------
 # common code
@@ -38,16 +39,16 @@ def get_config(is_f1_feed: bool) -> str:
     end_point = get_graphql_endpoint(is_f1_feed)
     response = requests.post(end_point, json={'query': query_get_config}, headers=get_headers(is_f1_feed))
     config_json = response.json()['data']['config']['data']['attributes']
-    print(config_json)
+    logger.debug(f"config_json: {config_json}")
     return config_json
 
 def get_config_for_feeds(is_f1_feed: bool) -> str:
     end_point = get_graphql_endpoint(is_f1_feed)
 
     response = requests.post(end_point, json={'query': query_get_config}, headers=get_headers(is_f1_feed))
-    print(response.json())
+    logger.debug(f"get_config_for_feeds response: {response.json()}")
     config_json = response.json()['data']['config']['data']['attributes']['feedJson']
-    print(config_json)
+    logger.debug(f"config_json: {config_json}")
     return config_json
 
 def update_config_for_feeds(is_f1_feed, config_json_str) -> None:
@@ -61,17 +62,17 @@ def update_config_for_feeds(is_f1_feed, config_json_str) -> None:
     }}
   }}
   """
-    print(f"------> update_config_for_feeds config_json_str: {config_json_str}")
-    print(f"------> update_config_for_feeds variables: {variables}")
+    logger.info(f"update_config_for_feeds config_json_str: {config_json_str}")
+    logger.debug(f"update_config_for_feeds variables: {variables}")
 
     response = requests.post(end_point, json={"query": mutation_update_config_for_feeds, "variables": variables}, headers=get_headers(is_f1_feed))
-    print(response.json())
+    logger.debug(f"update_config_for_feeds response: {response.json()}")
 
 #----------------------------------------------------------------------------------------------------------------
 # RSS FEEDs relate code
 #----------------------------------------------------------------------------------------------------------------
 async def post_feed(is_f1_feed, feed, feed_source):
-    print(f"------> posting feed to strapi: {feed.title}")
+    logger.info(f"posting feed to strapi: {feed.title}")
     end_point = get_graphql_endpoint(is_f1_feed)
 
     feed_map = {'title': feed.title}
@@ -91,7 +92,7 @@ async def post_feed(is_f1_feed, feed, feed_source):
     # if feed has image urls then get that
     if feed.links:
         type_to_href = {item['type']: item['href'] for item in feed.links if 'type' in item}
-        print(f"---> type_to_href: {type_to_href}")
+        logger.debug(f"type_to_href: {type_to_href}")
         feed_map['imageUrl'] = type_to_href.get('image/jpeg') or type_to_href.get('image/webp') or type_to_href.get('image/png')
 
     # if feed does not have image url then get it from article
@@ -107,21 +108,21 @@ async def post_feed(is_f1_feed, feed, feed_source):
     # Send the request
     response = requests.post(end_point, json={"query": mutation_post_feed, "variables": variables}, headers=get_headers(is_f1_feed))
     result = response.json()
-    print(result)
+    logger.debug(f"post_feed result: {result}")
 
     # Check for GraphQL errors
     if "errors" in result:
-        print("❌ GraphQL errors:", result["errors"])
+        logger.error(f"GraphQL errors: {result['errors']}")
         return
 
     # Check that createFeed->data exists
     feed_data = result.get("data", {}).get("createFeed", {}).get("data")
     if not feed_data:
-        print("❌ No feed data in response:", result)
+        logger.error(f"No feed data in response: {result}")
         return
 
     feed_id = feed_data["id"]
-    print(f"feed_id : {feed_id}")
+    logger.info(f"feed_id : {feed_id}")
 
     # Initialize translator
     translator = Translator()
@@ -134,7 +135,7 @@ async def post_feed(is_f1_feed, feed, feed_source):
 
             translated_title = translated_title_obj.text
             translated_desc = translated_desc_obj.text
-            print(f"{locale} : title: {translated_title}")
+            logger.debug(f"{locale} : title: {translated_title}")
 
             updated_map = feed_map.copy()
             updated_map['title'] = translated_title
@@ -150,10 +151,10 @@ async def post_feed(is_f1_feed, feed, feed_source):
                 # json={"query": mutation_update_feed, "variables": variables_update},
                 headers=get_headers(is_f1_feed),
             )
-            print(f"Update Feed [{locale}] Response:", update_response.json())
+            logger.info(f"Update Feed [{locale}] Response: {update_response.json()}")
         except Exception as e:
-            print(f"⚠️ Translation failed for locale {locale}: {e}")
-            print(f"   Skipping {locale} translation for this feed")
+            logger.warning(f"Translation failed for locale {locale}: {e}")
+            logger.warning(f"Skipping {locale} translation for this feed")
 
 # Fetch primary image from feed.link if feed.links is empty
 def fetch_primary_image(url: str):
@@ -165,7 +166,7 @@ def fetch_primary_image(url: str):
         if img_tag and img_tag["content"]:
             return img_tag["content"]
     except Exception as e:
-        print(f"Error fetching primary image: {e}")
+        logger.error(f"Error fetching primary image: {e}")
     return None
 
 def fetch_old_feeds(is_f1_feed: bool, cutoff_date_str: str, start=0, limit=50, lang: str = "en"):
@@ -180,7 +181,7 @@ def fetch_old_votes(is_f1_feed: bool, cutoff_date_str: str, start=0, limit=50):
     variables = {"cutoffDate": cutoff_date_str, "limit": limit, "start": start}
     resp = requests.post(end_point, json={"query": query_old_votes, "variables": variables}, headers=get_headers(is_f1_feed))
     resp.raise_for_status()
-    print(f"json: ${resp.json()}")
+    logger.debug(f"fetch_old_votes response: {resp.json()}")
     return resp.json()["data"]["votes"]["data"]
 
 def fetch_old_vote_counts(is_f1_feed: bool, cutoff_date_str: str, start=0, limit=50):
@@ -188,7 +189,7 @@ def fetch_old_vote_counts(is_f1_feed: bool, cutoff_date_str: str, start=0, limit
     variables = {"cutoffDate": cutoff_date_str, "limit": limit, "start": start}
     resp = requests.post(end_point, json={"query": query_old_vote_counts, "variables": variables}, headers=get_headers(is_f1_feed))
     resp.raise_for_status()
-    print(f"json: ${resp.json()}")
+    logger.debug(f"fetch_old_vote_counts response: {resp.json()}")
     return resp.json()["data"]["voteCounts"]["data"]
 
 def delete_feed(is_f1_feed: bool, feed_id):
@@ -239,11 +240,11 @@ def get_upcoming_races(is_f1_feed) -> str:
     variables = {
         "currentDate": current_date_str,
     }
-    print(f"get_upcoming_races ------> variables: {variables}")
+    logger.info(f"get_upcoming_races variables: {variables}")
 
     response = requests.post(end_point, json={'query': query_get_latest_grand_prixes, "variables": variables}, headers=get_headers(is_f1_feed))
     data = response.json()
-    print(f"get_upcoming_races ---> {data}")
+    logger.debug(f"get_upcoming_races response: {data}")
     return response.json()
 
 def create_weather(is_f1_feed: bool, weather_json: str, race_id: str, lat: float, lon: float) -> str:
@@ -256,12 +257,12 @@ def create_weather(is_f1_feed: bool, weather_json: str, race_id: str, lat: float
       }}
       """
 
-    print(f"create_weather ------> variables: {variables}")
+    logger.info(f"create_weather variables: {variables}")
     response = requests.post(end_point, json={'query': mutation_post_weather, "variables": variables}, headers=get_headers(is_f1_feed))
     data = response.json()
-    print(f"create weather---> {data}")
+    logger.debug(f"create_weather response: {data}")
     weather_id = data['data']['createWeather']['data']['id']
-    print(weather_id)
+    logger.info(f"weather_id: {weather_id}")
     return weather_id
 
 def update_weather_in_race(is_f1_feed: bool, weather_id: str, race_id: str) -> str:
@@ -270,10 +271,10 @@ def update_weather_in_race(is_f1_feed: bool, weather_id: str, race_id: str) -> s
         "weatherId": weather_id,
         "raceId": race_id,
     }
-    print(f"update_weather_in_race ------> variables: {variables}")
+    logger.info(f"update_weather_in_race variables: {variables}")
     response = requests.post(end_point, json={'query': mutation_update_race_with_weather, "variables": variables}, headers=get_headers(is_f1_feed))
     data = response.json()
-    print(f"update weather in race---> {data}")
+    logger.debug(f"update_weather_in_race response: {data}")
     return response.json()
 
 
@@ -286,10 +287,10 @@ def update_weather(is_f1_feed: bool, weather_id: str, weather_json: str, race_id
         "id": {weather_id}
       }}
       """
-    print(f"update_weather ------> variables: {variables}")
+    logger.info(f"update_weather variables: {variables}")
     response = requests.post(end_point, json={'query': mutation_update_weather, "variables": variables}, headers=get_headers(is_f1_feed))
     data = response.json()
-    print(f"update weather ---> {data}")
+    logger.debug(f"update_weather response: {data}")
     return response.json()
 
 
@@ -298,16 +299,16 @@ def update_weather(is_f1_feed: bool, weather_id: str, weather_json: str, race_id
 #----------------------------------------------------------------------------------------------------------------
 def get_seasons(is_f1_feed: bool) -> str:
     end_point = get_graphql_endpoint(is_f1_feed)
-    print(f"fetching seasons -->")
+    logger.info("fetching seasons")
     response = requests.post(end_point, json={'query': query_get_seasons}, headers=get_headers(is_f1_feed))
-    print(response.json())
+    logger.debug(f"get_seasons response: {response.json()}")
     return response.json()
 
 def get_tracks(is_f1_feed: bool) -> str:
     end_point = get_graphql_endpoint(is_f1_feed)
-    print(f"fetching tracks -->")
+    logger.info("fetching tracks")
     response = requests.post(end_point, json={'query': query_get_tracks}, headers=get_headers(is_f1_feed))
-    # print(response.json())
+    # logger.debug(f"get_tracks response: {response.json()}")
     return response.json()
 
 def get_grand_prix_races_for_year(is_f1_feed: bool, year: str):
@@ -315,14 +316,14 @@ def get_grand_prix_races_for_year(is_f1_feed: bool, year: str):
     variables = {
         "season": year,
     }
-    print(f"get_grand_prix_races_for_year --> variables: {variables}")
+    logger.info(f"get_grand_prix_races_for_year variables: {variables}")
 
     response = requests.post(end_point, json={'query': query_get_grand_prixes_for_year, "variables": variables}, headers=get_headers(is_f1_feed))
     data = response.json()
     grand_prixes = data.get("data", {}).get("grandPrixes", {}).get("data", [])
     races = data.get("data", {}).get("races", {}).get("data", [])
-    print(f"grand_prixes: {grand_prixes}")
-    print(f"races: {races}")
+    logger.info(f"grand_prixes count: {len(grand_prixes)}")
+    logger.info(f"races count: {len(races)}")
     return grand_prixes, races
 
 def create_season(is_f1_feed: bool, season_year: str) -> str:
@@ -339,12 +340,12 @@ def create_season(is_f1_feed: bool, season_year: str) -> str:
       }}
       """
 
-    print(f"create_season ------> variables: {variables}")
+    logger.info(f"create_season variables: {variables}")
     response = requests.post(end_point, json={'query': mutation_post_season, "variables": variables}, headers=get_headers(is_f1_feed))
     data = response.json()
-    print(f"create_season---> {data}")
+    logger.debug(f"create_season response: {data}")
     season_id = data['data']['createSeason']['data']['id']
-    print(season_id)
+    logger.info(f"season_id: {season_id}")
     return season_id
 
 
@@ -361,10 +362,10 @@ def update_config_for_season(is_f1_feed: bool, driver_standings_json_str: str, t
         }}
     }}
   """
-    print(f"------> update_config_for_season variables: {variables}")
+    logger.info(f"update_config_for_season variables: {variables}")
 
     response = requests.post(end_point, json={"query": mutation_update_config_for_season, "variables": variables}, headers=get_headers(is_f1_feed))
-    print(response.json())
+    logger.debug(f"update_config_for_season response: {response.json()}")
 
 def update_config_for_gp(is_f1_feed: bool) -> None:
     end_point = get_graphql_endpoint(is_f1_feed)
@@ -377,10 +378,10 @@ def update_config_for_gp(is_f1_feed: bool) -> None:
         }}
     }}
   """
-    print(f"------> update_config_for_gp variables: {variables}")
+    logger.info(f"update_config_for_gp variables: {variables}")
 
     response = requests.post(end_point, json={"query": mutation_update_config_for_gp, "variables": variables}, headers=get_headers(is_f1_feed))
-    print(response.json())
+    logger.debug(f"update_config_for_gp response: {response.json()}")
 
 def create_grand_prix(is_f1_feed: bool, json_str: str) -> str:
     # Define GraphQL endpoint
@@ -391,13 +392,13 @@ def create_grand_prix(is_f1_feed: bool, json_str: str) -> str:
       }}
       """
 
-    print(f"create_grand_prix ------> variables: {variables}")
+    logger.info(f"create_grand_prix variables: {variables}")
     response = requests.post(end_point, json={'query': mutation_post_grand_prix, "variables": variables}, headers=get_headers(is_f1_feed))
-    print(f"create_grand_prix response: {response}")
+    logger.debug(f"create_grand_prix response object: {response}")
     data = response.json()
-    print(f"create_grand_prix---> {data}")
+    logger.debug(f"create_grand_prix response data: {data}")
     gp_id = data['data']['createGrandPrix']['data']['id']
-    print(f"gP ID: {gp_id}")
+    logger.info(f"gP ID: {gp_id}")
     return gp_id
 
 def create_race(is_f1_feed: bool, json_str: str) -> str:
@@ -409,12 +410,12 @@ def create_race(is_f1_feed: bool, json_str: str) -> str:
       }}
       """
 
-    print(f"create_race ------> variables: {variables}")
+    logger.info(f"create_race variables: {variables}")
     response = requests.post(end_point, json={'query': mutation_post_race, "variables": variables}, headers=get_headers(is_f1_feed))
     data = response.json()
-    print(f"create_race---> {data}")
+    logger.debug(f"create_race response: {data}")
     race_id = data['data']['createRace']['data']['id']
-    print(f"race ID: {race_id}")
+    logger.info(f"race ID: {race_id}")
     return race_id
 
 def update_time_in_race(is_f1_feed: bool, start_time: str, race_id: str, site_event_id: str) -> str:
@@ -424,10 +425,10 @@ def update_time_in_race(is_f1_feed: bool, start_time: str, race_id: str, site_ev
         "raceId": race_id,
         "siteEventId": site_event_id
     }
-    print(f"update_time_in_race ------> variables: {variables}")
+    logger.info(f"update_time_in_race variables: {variables}")
     response = requests.post(end_point, json={'query': mutation_update_race_with_time, "variables": variables}, headers=get_headers(is_f1_feed))
     data = response.json()
-    print(f"update_time_in_race in race---> {data}")
+    logger.debug(f"update_time_in_race response: {data}")
     return response.json()
 
 #----------------------------------------------------------------------------------------------------------------
@@ -439,11 +440,11 @@ def get_latest_past_race(is_f1_feed: bool) -> str:
     variables = {
         "currentDate": current_date_str,
     }
-    print(f"get_latest_past_race ------> variables: {variables}")
+    logger.info(f"get_latest_past_race variables: {variables}")
 
     response = requests.post(end_point, json={'query': mutation_get_latest_past_race_entry, "variables": variables}, headers=get_headers(is_f1_feed))
     data = response.json()
-    print(f"get_latest_past_race ---> {data}")
+    logger.debug(f"get_latest_past_race response: {data}")
     return response.json()
 
 def get_race_results_for_race_event(is_f1_feed: bool, race_id: str) -> str:
@@ -451,10 +452,10 @@ def get_race_results_for_race_event(is_f1_feed: bool, race_id: str) -> str:
     variables = {
         "raceId": race_id
     }
-    print(f"get_race_results_for_race_event ------> variables: {variables}")
+    logger.info(f"get_race_results_for_race_event variables: {variables}")
     response = requests.post(end_point, json={'query': query_race_results_for_race_event, "variables": variables}, headers=get_headers(is_f1_feed))
     data = response.json()
-    print(f"get_race_results_for_race_event ---> {data}")
+    logger.debug(f"get_race_results_for_race_event response: {data}")
     return data
 
 def get_season_grid_map(is_f1_feed: bool, season: str):
@@ -462,10 +463,10 @@ def get_season_grid_map(is_f1_feed: bool, season: str):
     variables = {
         "season": season
     }
-    print(f"get_season_grid ------> variables: {variables}")
+    logger.info(f"get_season_grid variables: {variables}")
     response = requests.post(end_point, json={'query': query_season_grid, "variables": variables}, headers=get_headers(is_f1_feed))
     data = response.json()
-    # print(f"get_season_grid ---> {data}")
+    # logger.debug(f"get_season_grid response: {data}")
     result = {}
 
     season_grids = data.get("data", {}).get("seasonGrids", {}).get("data", [])
@@ -484,7 +485,7 @@ def get_season_grid_map(is_f1_feed: bool, season: str):
         if driver_number is not None and entry_id is not None:
             result[driver_number] = entry_id
 
-    print(f"season grid map: {result}")
+    logger.info(f"season grid map: {result}")
     return result
 
 def create_race_result(is_f1_feed: bool, json_str: str) -> str:
@@ -496,12 +497,12 @@ def create_race_result(is_f1_feed: bool, json_str: str) -> str:
       }}
       """
 
-    print(f"create_race_result ------> variables: {variables}")
+    logger.info(f"create_race_result variables: {variables}")
     response = requests.post(end_point, json={'query': mutation_post_race_result, "variables": variables}, headers=get_headers(is_f1_feed))
     data = response.json()
-    print(f"create_race_result---> {data}")
+    logger.debug(f"create_race_result response: {data}")
     race_id = data['data']['createRaceResult']['data']['id']
-    print(f"race result ID: {race_id}")
+    logger.info(f"race result ID: {race_id}")
     return race_id
 
 def update_race_result(is_f1_feed: bool, json_str: str, row_id: str) -> str:
@@ -514,12 +515,12 @@ def update_race_result(is_f1_feed: bool, json_str: str, row_id: str) -> str:
       }}
       """
 
-    print(f"update_race_result ------> variables: {variables}")
+    logger.info(f"update_race_result variables: {variables}")
     response = requests.post(end_point, json={'query': mutation_update_race_result, "variables": variables}, headers=get_headers(is_f1_feed))
     data = response.json()
-    print(f"update_race_result---> {data}")
+    logger.debug(f"update_race_result response: {data}")
     race_id = data['data']['updateRaceResult']['data']['id']
-    print(f"race result ID: {race_id}")
+    logger.info(f"race result ID: {race_id}")
     return race_id
 
 #----------------------------------------------------------------------------------------------------------------
@@ -536,7 +537,7 @@ def fetch_all_race_results(is_f1_feed: bool, season: str):
             "limit": chunk_size,
             "start": start
         }
-        print(f"fetch_all_race_results ------> variables: {variables}")
+        logger.debug(f"fetch_all_race_results variables: {variables}")
         response = requests.post(end_point, json={'query': query_race_results_all, "variables": variables}, headers=get_headers(is_f1_feed))
         response.raise_for_status()
         data = response.json()
@@ -547,7 +548,7 @@ def fetch_all_race_results(is_f1_feed: bool, season: str):
             .get("data", [])
         )
 
-        print(f"fetched {len(races)} races")
+        logger.info(f"fetched {len(races)} races")
 
         # 🛑 Stop when no more data
         if not races:
@@ -564,7 +565,7 @@ def fetch_driver_team_standings_for_season(is_f1_feed: bool, season: str) :
     variables = {
         "season": season,
     }
-    print(f"fetch_driver_team_standings_for_season ------> variables: {variables}")
+    logger.info(f"fetch_driver_team_standings_for_season variables: {variables}")
 
     response = requests.post(end_point, json={'query': query_driver_and_team_standings, "variables": variables}, headers=get_headers(is_f1_feed))
     response.raise_for_status()
@@ -599,10 +600,10 @@ def update_driver_standings(is_f1_feed: bool, driver_map, row_id: str) -> str:
         "rowId": {row_id} 
       }}
       """
-    print(f"update_driver_standings ------> variables: {variables}")
+    logger.info(f"update_driver_standings variables: {variables}")
     response = requests.post(end_point, json={'query': mutation_update_driver_standing, "variables": variables}, headers=get_headers(is_f1_feed))
     data = response.json()
-    print(f"update_driver_standings ---> {data}")
+    logger.debug(f"update_driver_standings response: {data}")
     return response.json()
 
 
@@ -618,10 +619,10 @@ def update_team_standings(is_f1_feed: bool, team_map, row_id: str) -> str:
       }}
       """
 
-    print(f"update_team_standings ------> variables: {variables}")
+    logger.info(f"update_team_standings variables: {variables}")
     response = requests.post(end_point, json={'query': mutation_update_team_standing, "variables": variables}, headers=get_headers(is_f1_feed))
     data = response.json()
-    print(f"update_team_standings ---> {data}")
+    logger.debug(f"update_team_standings response: {data}")
     return data
 
 def update_config_for_stats(is_f1_feed: bool, season_year: str):
@@ -658,16 +659,16 @@ def update_config_for_stats(is_f1_feed: bool, season_year: str):
         }}
     }}
     """
-    print(f"------> update_config_for_stats variables: {variables}")
+    logger.info(f"update_config_for_stats variables: {variables}")
 
     response = requests.post(end_point, json={"query": mutation_update_config_for_stats, "variables": variables}, headers=get_headers(is_f1_feed))
-    print(response.json())
+    logger.debug(f"update_config_for_stats response: {response.json()}")
 
 
 def update_config_for_race_result(is_f1_feed: bool, gp_id: str):
     config = get_config(is_f1_feed=is_f1_feed)
     config_gp = config.get("raceResultFastestLapForGrandPrixJson")
-    print(f"config_gp: {config_gp}")
+    logger.info(f"config_gp: {config_gp}")
 
     # Handle both string and dict types
     if isinstance(config_gp, str):
@@ -688,7 +689,7 @@ def update_config_for_race_result(is_f1_feed: bool, gp_id: str):
         }}
     }}
     """
-    print(f"------> update_config_for_race_result variables: {variables}")
+    logger.info(f"update_config_for_race_result variables: {variables}")
 
     response = requests.post(end_point, json={"query": mutation_update_config_for_race_result, "variables": variables}, headers=get_headers(is_f1_feed))
-    print(response.json())
+    logger.debug(f"update_config_for_race_result response: {response.json()}")

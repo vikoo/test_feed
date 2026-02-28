@@ -1,8 +1,9 @@
 from cron.strapi_api.apis import update_driver_standings, update_team_standings
 import json
+from loguru import logger
 
 def update_f1_stats(season, all_race_results, driver_standings, team_standings):
-    print(f"## updateStats: {season}")
+    logger.info(f"## updateStats: {season}")
 
     driver_season_grid_id_to_stats_map = {}
     driver_multi_season_grid_id_to_stats_map = {}
@@ -137,12 +138,12 @@ def update_f1_stats(season, all_race_results, driver_standings, team_standings):
     for i, driver in enumerate(drivers_list):
         driver["position"] = i + 1
         if driver.get('is_primary_grid_id') is True:
-            print(f"uploading for primary grid id: {driver.get('driver_season_grid_id')}")
-            print(f"########################################################")
-            print(f"driver: {driver}")
+            logger.info(f"uploading for primary grid id: {driver.get('driver_season_grid_id')}")
+            logger.debug("########################################################")
+            logger.debug(f"driver: {driver}")
             update_driver_standings(is_f1_feed=True, driver_map=driver, row_id=driver.get("standings_id"))
         else:
-            print(f"skip upload for non primary grid id: {driver.get('driver_season_grid_id')}")
+            logger.info(f"skip upload for non primary grid id: {driver.get('driver_season_grid_id')}")
 
 
     # --------------------------------------------------
@@ -163,8 +164,8 @@ def update_f1_stats(season, all_race_results, driver_standings, team_standings):
             stats_map = driver_season_grid_id_to_stats_map.get(season_grid["id"])
 
             if stats_map is None:
-                print(
-                    f"********** driverMap: null for {season_grid['id']} : team: "
+                logger.warning(
+                    f"driverMap: null for {season_grid['id']} : team: "
                     f"{standing['attributes']['chassis']['data']['attributes']['name']}"
                 )
                 continue
@@ -209,9 +210,9 @@ def update_f1_stats(season, all_race_results, driver_standings, team_standings):
 
     for i, team in enumerate(teams_list):
         team["position"] = i + 1
-        print(f"uploading for team standings id: {team.get('standings_id')}")
-        print(f"########################################################")
-        print(f"team: {team}")
+        logger.info(f"uploading for team standings id: {team.get('standings_id')}")
+        logger.debug("########################################################")
+        logger.debug(f"team: {team}")
         update_team_standings(is_f1_feed=True, team_map=team, row_id=team.get("standings_id"))
 
 
