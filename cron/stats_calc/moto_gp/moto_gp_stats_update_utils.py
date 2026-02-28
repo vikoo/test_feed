@@ -326,15 +326,14 @@ def populate_moto_gp_driver_data(
             avg_finish_key,
             is_sprint: bool
     ):
-        # QNR1 results where position > 2  → add +10 to position (they start from grid pos 13+)
+        # QNR1: only entries with position > 2 are used (mirrors Dart logic)
+        import copy
         qnr1_raw = race_list_of_type(MOTO_RACE_QUALI1)
-        qnr1_top2 = [r for r in qnr1_raw if _safe_int(_get_val(r, ["attributes", "position"])) <= 2]
         qnr1_rest = [r for r in qnr1_raw if _safe_int(_get_val(r, ["attributes", "position"])) > 2]
 
-        # Rebuild qnr1_rest with position offset by +10
+        # Rebuild qnr1_rest with position offset by +10 (for quali position stats)
         qnr1_for_quali = []
         for r in qnr1_rest:
-            import copy
             r_copy = copy.deepcopy(r)
             orig_pos = _safe_int(_get_val(r_copy, ["attributes", "position"]))
             r_copy["attributes"]["position"] = orig_pos + 10
@@ -353,8 +352,9 @@ def populate_moto_gp_driver_data(
         m[best_quali_key] = min(quali_positions) if quali_positions else 0
         m[avg_quali_key]  = sum(quali_positions) / len(qualis) if quali_positions else -999
 
-        # Grid for start position (qnr1 raw + qnr2, unmodified positions)
-        qualis_for_grid = qnr1_raw + qnr2
+        # Grid for start position: qnr1_rest (position > 2 only, unmodified) + qnr2
+        # Mirrors Dart: var qualisForGrid = qnr1 + qnr2  (where qnr1 is already filtered to position > 2)
+        qualis_for_grid = qnr1_rest + qnr2
 
         if is_sprint:
             # Sprint grid: sprintFinalPos ?? finalPos ?? position
