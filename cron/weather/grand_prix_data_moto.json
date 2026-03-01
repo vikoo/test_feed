@@ -1,1 +1,129 @@
-""
+{
+  "data": {
+    "grandPrixes": {
+      "data": [
+        {
+          "id": "44",
+          "attributes": {
+            "name": "BRAZIL GP 26",
+            "startDate": "2026-03-20T11:00:00.000Z",
+            "fullName": "GOIÂNIA",
+            "endDate": "2026-03-22T21:00:00.000Z",
+            "round": "02",
+            "season": {
+              "data": {
+                "attributes": {
+                  "year": "2026"
+                }
+              }
+            },
+            "track": {
+              "data": {
+                "id": "24",
+                "attributes": {
+                  "name": "Autódromo Internacional de Goiânia – Ayrton Senna",
+                  "imageOutline": "https://photos.motogp.com/events-admin/5/0/50941f7f-e112-4404-8dcf-5fb2c47e9617/info/bra.png",
+                  "image": "https://photos.motogp.com/events-admin/5/0/50941f7f-e112-4404-8dcf-5fb2c47e9617/info/bra.png",
+                  "imageFancy": null,
+                  "city": "GOIÂNIA",
+                  "country": "Brazil",
+                  "latitude": -16.71897883899751,
+                  "longitude": -49.19205119808313
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "races": {
+      "data": [
+        {
+          "id": "468",
+          "attributes": {
+            "type": "PRACTICE",
+            "startTime": "2026-03-20T18:20:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "44"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "12"
+              }
+            }
+          }
+        },
+        {
+          "id": "470",
+          "attributes": {
+            "type": "QNR1",
+            "startTime": "2026-03-21T13:50:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "44"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "13"
+              }
+            }
+          }
+        },
+        {
+          "id": "471",
+          "attributes": {
+            "type": "QNR2",
+            "startTime": "2026-03-21T14:15:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "44"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "14"
+              }
+            }
+          }
+        },
+        {
+          "id": "472",
+          "attributes": {
+            "type": "Sprint",
+            "startTime": "2026-03-21T18:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "44"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "15"
+              }
+            }
+          }
+        },
+        {
+          "id": "473",
+          "attributes": {
+            "type": "Race",
+            "startTime": "2026-03-22T18:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "44"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "16"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
