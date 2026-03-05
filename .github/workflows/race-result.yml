@@ -36,4 +36,6 @@ jobs:
           TOMORROW_IO_API_KEY: ${{ secrets.TOMORROW_IO_API_KEY }}
           FIREBASE_CONFIG_PROD: ${{ secrets.FIREBASE_CONFIG_PROD }}
           FIREBASE_CONFIG_DEV: ${{ secrets.FIREBASE_CONFIG_DEV }}
-        run: python -m cron.data_upload.moto_gp.moto_gp_data_upload
+        run: |
+          python -m cron.data_upload.moto_gp.moto_gp_data_upload
+          python -m cron.data_upload.f1.f1_data_upload
