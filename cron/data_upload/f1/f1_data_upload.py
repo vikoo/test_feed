@@ -8,9 +8,12 @@ from cron.strapi_api.apis import get_latest_past_race, get_race_results_for_race
 import json
 from loguru import logger
 
+from cron.utils import f1_graphql_token
+
 
 def process():
     logger.info("fetching the schedule")
+    logger.info(f"Using Token 1: {f1_graphql_token[:5]}*****")
     json_data = get_latest_past_race(is_f1_feed=True)
 
     races = json_data["data"]["races"]["data"]
@@ -46,6 +49,9 @@ def process():
                 logger.info(f"f1_url: {f1_url}")
                 season_grid_map = get_season_grid_map(is_f1_feed=True, season=year)
                 rows = fetch_race_results(f1_url, season_grid_map, race_id, race_type, year, q2_id, q1_id)
+                if len(rows) < 10:
+                    logger.warning(f"Insufficient race results fetched for URL: {f1_url}. Expected at least 10, got {len(rows)}.")
+                    return
                 for row in rows:
                     create_race_result(is_f1_feed=True, json_str=json.dumps(row))
 

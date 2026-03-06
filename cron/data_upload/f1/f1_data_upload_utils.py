@@ -10,6 +10,7 @@ from cron.data_upload.f1.f1_utils import fetch_race_results_table, practice_1, p
 
 def fetch_race_results(f1_url, season_grid_map, race_id, race_type, year, q2_id, q1_id):
     table_rows = fetch_race_results_table(f1_url)
+    logger.info(f"Fetched {len(table_rows)} rows from the race results table for URL: {f1_url}")
     json_rows = {}
     if race_type in (practice_1, practice_2, practice_3):
         logger.info("Practice session results found.")

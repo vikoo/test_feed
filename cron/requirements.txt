@@ -7,3 +7,4 @@ pytz==2025.2
 googletrans-py==4.0.0
 firebase-admin==7.2.0
 loguru==0.7.3
+playwright>=1.40.0

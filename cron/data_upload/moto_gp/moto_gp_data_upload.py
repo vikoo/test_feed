@@ -6,7 +6,7 @@ from cron.strapi_api.apis import get_latest_past_race, get_race_results_for_race
 import json
 from loguru import logger
 
-is_update_enabled = True
+is_update_enabled = False
 
 
 def process():

@@ -491,11 +491,9 @@ def get_season_grid_map(is_f1_feed: bool, season: str):
 def create_race_result(is_f1_feed: bool, json_str: str) -> str:
     # Define GraphQL endpoint
     end_point = get_graphql_endpoint(is_f1_feed)
-    variables = f"""
-      {{
-        "input": {json_str}
-      }}
-      """
+    variables = {
+        "input": json.loads(json_str)
+    }
 
     logger.info(f"create_race_result variables: {variables}")
     response = requests.post(end_point, json={'query': mutation_post_race_result, "variables": variables}, headers=get_headers(is_f1_feed))
@@ -508,12 +506,10 @@ def create_race_result(is_f1_feed: bool, json_str: str) -> str:
 def update_race_result(is_f1_feed: bool, json_str: str, row_id: str) -> str:
     # Define GraphQL endpoint
     end_point = get_graphql_endpoint(is_f1_feed)
-    variables = f"""
-      {{
-        "input": {json_str},
-        "id": {row_id}
-      }}
-      """
+    variables = {
+        "input": json.loads(json_str),
+        "id": row_id
+    }
 
     logger.info(f"update_race_result variables: {variables}")
     response = requests.post(end_point, json={'query': mutation_update_race_result, "variables": variables}, headers=get_headers(is_f1_feed))
@@ -692,4 +688,5 @@ def update_config_for_race_result(is_f1_feed: bool, gp_id: str):
     logger.info(f"update_config_for_race_result variables: {variables}")
 
     response = requests.post(end_point, json={"query": mutation_update_config_for_race_result, "variables": variables}, headers=get_headers(is_f1_feed))
-    logger.debug(f"update_config_for_race_result response: {response.json()}")
+    logger.debug(f"update_config_for_race_result response: {response}")
+    # logger.debug(f"update_config_for_race_result response: {response.json()}")
