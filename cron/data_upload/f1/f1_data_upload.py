@@ -12,9 +12,9 @@ from cron.utils import f1_graphql_token
 
 
 def process():
-    logger.info("######################")
-    logger.info("fetching the F1 schedule")
-    logger.info("######################")
+    logger.error("############################################")
+    logger.error("fetching the F1 schedule")
+    logger.error("############################################")
     logger.info(f"Using Token 1: {f1_graphql_token[:5]}*****")
     json_data = get_latest_past_race(is_f1_feed=True)
 
