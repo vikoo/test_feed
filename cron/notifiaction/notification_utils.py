@@ -66,10 +66,14 @@ def __send_notification_to_topic_lang(is_f1: bool, title: str, body: str, lang_c
 
 
 async def send_notification_to_topic(is_f1: bool, is_prod: bool, title: str, body: str):
+    logger.info("waiting for 20 seconds before sending notification to ensure data consistency...")
+    await asyncio.sleep(20)
+    logger.info("Sending notification to topic...")
     __init_firebase_admin(is_prod=is_prod)
     translator = Translator()
     # Send notification for default (en) locale
     __send_notification_to_topic_lang(is_f1, title, body, "en")
+
     for locale in locales:
         try:
             if locale == "zh":

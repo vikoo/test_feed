@@ -8,6 +8,10 @@ def get_title_body_for_notification(grand_prix, race_type):
     gp_track = grand_prix["attributes"]["track"]["data"]["attributes"]["name"]
     gp_country = grand_prix["attributes"]["track"]["data"]["attributes"]["country"]
     logger.info(f"grand_prix: {gp_name} at {gp_track} (id: {gp_id}), race type: {race_type}, country: {gp_country}")
+    if race_type == 'Q3':
+        race_type = "Qualifying"
+    if race_type == 'SQ3':
+        race_type = "Sprint Qualifying"
     return __get_final_title_body_for_notification(gp_name, race_type)
 
 
