@@ -11,7 +11,7 @@ from cron.strapi_api.api_queries import query_get_latest_grand_prixes, mutation_
     mutation_get_latest_past_race_entry, query_race_results_for_race_event, query_season_grid, \
     mutation_post_race_result, query_race_results_all, query_driver_and_team_standings, mutation_update_driver_standing, \
     mutation_update_team_standing, mutation_update_config_for_stats, mutation_update_race_result, \
-    mutation_update_config_for_race_result
+    mutation_update_config_for_race_result, query_fastest_laps_for_gp, mutation_post_fastest_lap
 from cron.utils import *
 import requests
 import re
@@ -458,6 +458,17 @@ def get_race_results_for_race_event(is_f1_feed: bool, race_id: str) -> str:
     logger.debug(f"get_race_results_for_race_event response: {data}")
     return data
 
+def get_fastest_laps_for_gp(is_f1_feed: bool, gp_id: str) -> str:
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = {
+        "grandPrixId": gp_id
+    }
+    logger.info(f"get_fastest_laps_for_gp variables: {variables}")
+    response = requests.post(end_point, json={'query': query_fastest_laps_for_gp, "variables": variables}, headers=get_headers(is_f1_feed))
+    data = response.json()
+    logger.debug(f"get_fastest_laps_for_gp response: {data}")
+    return data
+
 def get_season_grid_map(is_f1_feed: bool, season: str):
     end_point = get_graphql_endpoint(is_f1_feed)
     variables = {
@@ -500,6 +511,21 @@ def create_race_result(is_f1_feed: bool, json_str: str) -> str:
     data = response.json()
     logger.debug(f"create_race_result response: {data}")
     race_id = data['data']['createRaceResult']['data']['id']
+    logger.info(f"race result ID: {race_id}")
+    return race_id
+
+def create_fastest_lap(is_f1_feed: bool, json_str: str) -> str:
+    # Define GraphQL endpoint
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = {
+        "input": json.loads(json_str)
+    }
+
+    logger.info(f"create_fastest_lap variables: {variables}")
+    response = requests.post(end_point, json={'query': mutation_post_fastest_lap, "variables": variables}, headers=get_headers(is_f1_feed))
+    data = response.json()
+    logger.debug(f"create_fastest_lap response: {data}")
+    race_id = data['data']['createFastestLap']['data']['id']
     logger.info(f"race result ID: {race_id}")
     return race_id
 

@@ -5,7 +5,8 @@ from loguru import logger
 
 from cron.data_upload.f1.f1_utils import fetch_race_results_table, practice_1, practice_2, practice_3, qualifying, \
     sprint_qualifying, main_race, sprint_race, fastest_laps, get_position, get_laps, get_race_result_time_dnf, POSITION, \
-    TIME, DRIVERNUM, SEASONGRID, RACE, POINTS, LAPS, get_race_points, DRIVERNAME, get_quali_common_elements
+    TIME, DRIVERNUM, SEASONGRID, RACE, POINTS, LAPS, get_race_points, DRIVERNAME, get_quali_common_elements, AVG_SPEED, \
+    get_race_time_and_dnf, LAP, DNF
 
 
 def fetch_race_results(f1_url, season_grid_map, race_id, race_type, year, q2_id, q1_id):
@@ -23,6 +24,7 @@ def fetch_race_results(f1_url, season_grid_map, race_id, race_type, year, q2_id,
         json_rows = fetch_race_result_rows(table_rows, race_id, race_type, season_grid_map)
         logger.info("race/sprint session results found.")
     elif race_type == fastest_laps:
+        json_rows = fetch_fastest_laps_rows(table_rows, race_id, race_type, season_grid_map)
         logger.info("fastest laps results found.")
 
     return json_rows
@@ -95,6 +97,41 @@ def fetch_race_result_rows(table_rows, race_id, race_type, season_grid_map):
         race_row.pop(DRIVERNAME)
         # add the constructed row to the list
         race_rows.append(race_row)
+    return race_rows
+
+
+def fetch_fastest_laps_rows(table_rows, race_id, race_type, season_grid_map):
+    race_rows = []
+    previous_time = ""
+    for index, row in enumerate(table_rows[1:], start=1):  # Skip header row
+        cols = row.find_all("td")
+        if len(cols) < 6:
+            continue  # Skip rows that don't have enough columns
+        position = get_position(cols[0].text.strip(), index)
+        driver_num = cols[1].text.strip()
+        driver_name = cols[2].text.strip()
+        season_grid = season_grid_map.get(int(driver_num))
+        lap = get_laps(cols[4].text)
+        avg_speed = cols[7].text.strip()
+        time_txt = cols[6].text.strip()
+        time_info = get_race_time_and_dnf(time_txt)
+
+        fastest_lap_row = {
+            POSITION: position,
+            DRIVERNUM: driver_num,
+            SEASONGRID: season_grid,
+            RACE: race_id,
+            LAP: lap,
+            DRIVERNAME: driver_name,
+            AVG_SPEED: avg_speed
+        }
+        fastest_lap_row.update(time_info)
+        logger.debug(f"fastest_lap_row: {fastest_lap_row}")
+        fastest_lap_row.pop(DRIVERNUM)
+        fastest_lap_row.pop(DRIVERNAME)
+        fastest_lap_row.pop(DNF)
+        # add the constructed row to the list
+        race_rows.append(fastest_lap_row)
     return race_rows
 
 def fetch_quali_rows(row_elements, race_id, race_type, season_grid_map, q2_id, q1_id):

@@ -470,6 +470,30 @@ query_race_results_for_race_event = """
         }
 """
 
+query_fastest_laps_for_gp = """
+        query GetFastestLaps($grandPrixId:ID!) {
+            fastestLaps(
+                    filters: {
+                        race: {
+                            grandPrix: {
+                                id: {
+                                    eq: $grandPrixId
+                                }
+                            }
+                        }
+                    },
+                    pagination: {
+                        limit: 25
+                    },
+                    sort: "position:asc"
+                ) {
+                    data {
+                        id
+                    }
+                }
+        }
+"""
+
 query_season_grid = """
         query GetSeasonGridQuery($season:String!) {
             seasonGrids(filters: { season: { year: { eq: $season} } }, pagination: {pageSize: 60}) {
@@ -495,6 +519,16 @@ query_season_grid = """
 mutation_post_race_result = """
         mutation PostRaceResults($input: RaceResultInput!) {
             createRaceResult(data: $input) {
+                data {
+                    id
+                }
+            }
+        }
+"""
+
+mutation_post_fastest_lap = """
+        mutation PostFastestLap($input: FastestLapInput!) {
+            createFastestLap(data: $input) {
                 data {
                     id
                 }

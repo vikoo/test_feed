@@ -25,7 +25,9 @@ SEASONGRID = "seasonGrid"
 RACE = "race"
 POINTS = "points"
 LAPS = "laps"
+LAP = "lap"
 DRIVERNAME = "driverName"
+AVG_SPEED = "avgSpeed"
 
 
 race_type_to_url_map = {
