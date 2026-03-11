@@ -166,3 +166,14 @@ def fetch_race_results(session_uuid: str) :
     events = response.json()
     logger.debug(f"race results: {events}")
     return events
+
+def fetch_constructor_standings(season_uuid: str) :
+    # https://api.pulselive.motogp.com/motogp/v2/results/world-standings?type=constructor&season=e88b4e43-2209-47aa-8e83-0e0b1cedde6e&category=e8c110ad-64aa-4e8e-8a86-f2f152f6a942
+    constructor_standings_end_point = end_point + "/v2/results/world-standings?type=constructor&season=" + season_uuid + "&category=" + TARGET_CATEGORY_ID_FOR_RACE_RESULT
+    logger.debug(f"constructor_standings_end_point: {constructor_standings_end_point}")
+    response = requests.get(constructor_standings_end_point, timeout=30)
+    response.raise_for_status()
+
+    events = response.json()
+    logger.debug(f"constructor standings: {events}")
+    return events

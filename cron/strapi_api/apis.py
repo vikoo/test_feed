@@ -11,7 +11,9 @@ from cron.strapi_api.api_queries import query_get_latest_grand_prixes, mutation_
     mutation_get_latest_past_race_entry, query_race_results_for_race_event, query_season_grid, \
     mutation_post_race_result, query_race_results_all, query_driver_and_team_standings, mutation_update_driver_standing, \
     mutation_update_team_standing, mutation_update_config_for_stats, mutation_update_race_result, \
-    mutation_update_config_for_race_result, query_fastest_laps_for_gp, mutation_post_fastest_lap
+    mutation_update_config_for_race_result, query_fastest_laps_for_gp, mutation_post_fastest_lap, \
+    mutation_update_constructor_standing_moto_gp, query_get_constructor_standing_moto_gp, \
+    mutation_create_constructor_standing_moto_gp
 from cron.utils import *
 import requests
 import re
@@ -716,3 +718,45 @@ def update_config_for_race_result(is_f1_feed: bool, gp_id: str):
     response = requests.post(end_point, json={"query": mutation_update_config_for_race_result, "variables": variables}, headers=get_headers(is_f1_feed))
     logger.debug(f"update_config_for_race_result response: {response}")
     # logger.debug(f"update_config_for_race_result response: {response.json()}")
+
+
+def fetch_constructor_standings_for_season_moto_gp(is_f1_feed: bool, season: str) :
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = {
+        "season": season,
+    }
+    logger.info(f"fetch_constructor_standings_for_season_moto_gp variables: {variables}")
+
+    resp = requests.post(end_point, json={'query': query_get_constructor_standing_moto_gp, "variables": variables}, headers=get_headers(is_f1_feed))
+    resp.raise_for_status()
+    result = resp.json()
+    logger.debug(f"fetch_constructor_standings_for_season_moto_gp response: {result}")
+    return result["data"]["constructorStandings"]["data"]
+
+
+def update_constructor_standings_for_season_moto_gp(is_f1_feed: bool, row_id: str, json_standings) :
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = f"""
+      {{
+        "input": {json.dumps(json_standings)},
+        "rowId": {row_id} 
+      }}
+      """
+    logger.info(f"update_constructor_standings_for_season_moto_gp variables: {variables}")
+    response = requests.post(end_point, json={'query': mutation_update_constructor_standing_moto_gp, "variables": variables}, headers=get_headers(is_f1_feed))
+    data = response.json()
+    logger.debug(f"update_constructor_standings_for_season_moto_gp response: {data}")
+    return response.json()
+
+def create_constructor_standings_for_season_moto_gp(is_f1_feed: bool, json_standings) :
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = f"""
+      {{
+        "input": {json.dumps(json_standings)}
+      }}
+      """
+    logger.info(f"create_constructor_standings_for_season_moto_gp variables: {variables}")
+    response = requests.post(end_point, json={'query': mutation_create_constructor_standing_moto_gp, "variables": variables}, headers=get_headers(is_f1_feed))
+    # data = response.json()
+    logger.debug(f"create_constructor_standings_for_season_moto_gp response: {response}")
+    return response.json()

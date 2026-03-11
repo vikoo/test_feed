@@ -868,3 +868,49 @@ mutation_update_config_for_race_result = """
             }
           }
           """
+
+query_get_constructor_standing_moto_gp = """
+            query GetDriverStandingsQuery($season:String!) {
+            constructorStandings(
+                filters: {
+                    season: {
+                        year: {
+                            eq: $season
+                        }
+                    }
+                },
+                pagination: {
+                    limit: 10
+                }
+            ) {
+                data {
+                    id
+                    attributes {
+                        position
+                        points
+                        name
+                    }
+                }
+            }
+        }
+"""
+
+mutation_update_constructor_standing_moto_gp = """
+        mutation UpdateConstructorStandings($rowId: ID!, $input: ConstructorStandingInput!) {
+            updateConstructorStanding(id: $rowId, data: $input) {
+                data {
+                    id
+                }
+            }
+        }
+"""
+
+mutation_create_constructor_standing_moto_gp = """
+    mutation CreateConstructorStandings($input: ConstructorStandingInput!) {
+        createConstructorStanding(data: $input) {
+            data {
+                id
+            }
+        }
+    }
+"""
