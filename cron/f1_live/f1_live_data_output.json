@@ -5,9 +5,9 @@
     "Last Name": "Russell",
     "Team": "Mercedes",
     "Abbreviation": "RUS",
-    "Gap": "1:34.169",
+    "Gap": "1:33.030",
     "Tyre": "Medium",
-    "Tyres Used": "2"
+    "Tyres Used": "1"
   },
   {
     "Pos": "2",
@@ -15,9 +15,9 @@
     "Last Name": "Hamilton",
     "Team": "Ferrari",
     "Abbreviation": "HAM",
-    "Gap": "+0.208",
-    "Tyre": "Empty",
-    "Tyres Used": "3"
+    "Gap": "+0.118",
+    "Tyre": "Medium",
+    "Tyres Used": "1"
   },
   {
     "Pos": "3",
@@ -25,159 +25,159 @@
     "Last Name": "Leclerc",
     "Team": "Ferrari",
     "Abbreviation": "LEC",
-    "Gap": "+0.240",
+    "Gap": "+0.164",
     "Tyre": "Medium",
-    "Tyres Used": "2"
+    "Tyres Used": "1"
   },
   {
     "Pos": "4",
-    "First Name": "Oscar",
-    "Last Name": "Piastri",
-    "Team": "McLaren",
-    "Abbreviation": "PIA",
-    "Gap": "+0.381",
-    "Tyre": "Medium",
-    "Tyres Used": "3"
-  },
-  {
-    "Pos": "5",
     "First Name": "Kimi",
     "Last Name": "Antonelli",
     "Team": "Mercedes",
     "Abbreviation": "ANT",
-    "Gap": "+0.625",
+    "Gap": "+0.425",
     "Tyre": "Medium",
-    "Tyres Used": "2"
+    "Tyres Used": "1"
   },
   {
-    "Pos": "6",
-    "First Name": "Oliver",
-    "Last Name": "Bearman",
-    "Team": "Haas F1 Team",
-    "Abbreviation": "BEA",
-    "Gap": "+0.781",
-    "Tyre": "Medium",
-    "Tyres Used": "2"
-  },
-  {
-    "Pos": "7",
+    "Pos": "5",
     "First Name": "Lando",
     "Last Name": "Norris",
     "Team": "McLaren",
     "Abbreviation": "NOR",
-    "Gap": "+1.403",
+    "Gap": "+0.753",
     "Tyre": "Medium",
-    "Tyres Used": "3"
+    "Tyres Used": "1"
   },
   {
-    "Pos": "8",
+    "Pos": "6",
+    "First Name": "Oscar",
+    "Last Name": "Piastri",
+    "Team": "McLaren",
+    "Abbreviation": "PIA",
+    "Gap": "+0.783",
+    "Tyre": "Medium",
+    "Tyres Used": "1"
+  },
+  {
+    "Pos": "7",
     "First Name": "Pierre",
     "Last Name": "Gasly",
     "Team": "Alpine",
     "Abbreviation": "GAS",
-    "Gap": "+1.470",
+    "Gap": "+0.940",
     "Tyre": "Medium",
-    "Tyres Used": "2"
+    "Tyres Used": "1"
   },
   {
-    "Pos": "9",
-    "First Name": "Liam",
-    "Last Name": "Lawson",
-    "Team": "Racing Bulls",
-    "Abbreviation": "LAW",
-    "Gap": "+1.487",
-    "Tyre": "Medium",
-    "Tyres Used": "2"
-  },
-  {
-    "Pos": "10",
-    "First Name": "Esteban",
-    "Last Name": "Ocon",
-    "Team": "Haas F1 Team",
-    "Abbreviation": "OCO",
-    "Gap": "+1.612",
-    "Tyre": "Medium",
-    "Tyres Used": "4"
-  },
-  {
-    "Pos": "11",
-    "First Name": "Isack",
-    "Last Name": "Hadjar",
-    "Team": "Red Bull Racing",
-    "Abbreviation": "HAD",
-    "Gap": "+1.782",
-    "Tyre": "Medium",
-    "Tyres Used": "2"
-  },
-  {
-    "Pos": "12",
-    "First Name": "Max",
-    "Last Name": "Verstappen",
-    "Team": "Red Bull Racing",
-    "Abbreviation": "VER",
-    "Gap": "+1.871",
-    "Tyre": "Medium",
-    "Tyres Used": "2"
-  },
-  {
-    "Pos": "13",
+    "Pos": "8",
     "First Name": "Nico",
     "Last Name": "Hulkenberg",
     "Team": "Audi",
     "Abbreviation": "HUL",
-    "Gap": "+1.905",
+    "Gap": "+0.967",
     "Tyre": "Medium",
-    "Tyres Used": "4"
+    "Tyres Used": "1"
   },
   {
-    "Pos": "14",
-    "First Name": "Franco",
-    "Last Name": "Colapinto",
-    "Team": "Alpine",
-    "Abbreviation": "COL",
-    "Gap": "+2.007",
+    "Pos": "9",
+    "First Name": "Esteban",
+    "Last Name": "Ocon",
+    "Team": "Haas F1 Team",
+    "Abbreviation": "OCO",
+    "Gap": "+1.057",
     "Tyre": "Medium",
-    "Tyres Used": "2"
+    "Tyres Used": "1"
   },
   {
-    "Pos": "15",
+    "Pos": "10",
+    "First Name": "Liam",
+    "Last Name": "Lawson",
+    "Team": "Racing Bulls",
+    "Abbreviation": "LAW",
+    "Gap": "+1.080",
+    "Tyre": "Medium",
+    "Tyres Used": "1"
+  },
+  {
+    "Pos": "11",
+    "First Name": "Max",
+    "Last Name": "Verstappen",
+    "Team": "Red Bull Racing",
+    "Abbreviation": "VER",
+    "Gap": "+1.140",
+    "Tyre": "Medium",
+    "Tyres Used": "1"
+  },
+  {
+    "Pos": "12",
+    "First Name": "Oliver",
+    "Last Name": "Bearman",
+    "Team": "Haas F1 Team",
+    "Abbreviation": "BEA",
+    "Gap": "+1.250",
+    "Tyre": "Medium",
+    "Tyres Used": "1"
+  },
+  {
+    "Pos": "13",
     "First Name": "Gabriel",
     "Last Name": "Bortoleto",
     "Team": "Audi",
     "Abbreviation": "BOR",
-    "Gap": "+2.063",
+    "Gap": "+1.261",
     "Tyre": "Medium",
-    "Tyres Used": "2"
+    "Tyres Used": "1"
+  },
+  {
+    "Pos": "14",
+    "First Name": "Isack",
+    "Last Name": "Hadjar",
+    "Team": "Red Bull Racing",
+    "Abbreviation": "HAD",
+    "Gap": "+1.417",
+    "Tyre": "Medium",
+    "Tyres Used": "1"
+  },
+  {
+    "Pos": "15",
+    "First Name": "Arvid",
+    "Last Name": "Lindblad",
+    "Team": "Racing Bulls",
+    "Abbreviation": "LIN",
+    "Gap": "+1.465",
+    "Tyre": "Medium",
+    "Tyres Used": "1"
   },
   {
     "Pos": "16",
+    "First Name": "Franco",
+    "Last Name": "Colapinto",
+    "Team": "Alpine",
+    "Abbreviation": "COL",
+    "Gap": "+1.562",
+    "Tyre": "Medium",
+    "Tyres Used": "1"
+  },
+  {
+    "Pos": "17",
+    "First Name": "Carlos",
+    "Last Name": "Sainz",
+    "Team": "Williams",
+    "Abbreviation": "SAI",
+    "Gap": "+1.731",
+    "Tyre": "Medium",
+    "Tyres Used": "1"
+  },
+  {
+    "Pos": "18",
     "First Name": "Alexander",
     "Last Name": "Albon",
     "Team": "Williams",
     "Abbreviation": "ALB",
-    "Gap": "+2.325",
+    "Gap": "+2.275",
     "Tyre": "Medium",
-    "Tyres Used": "3"
-  },
-  {
-    "Pos": "17",
-    "First Name": "Valtteri",
-    "Last Name": "Bottas",
-    "Team": "Cadillac",
-    "Abbreviation": "BOT",
-    "Gap": "+2.871",
-    "Tyre": "Medium",
-    "Tyres Used": "2"
-  },
-  {
-    "Pos": "18",
-    "First Name": "Lance",
-    "Last Name": "Stroll",
-    "Team": "Aston Martin",
-    "Abbreviation": "STR",
-    "Gap": "+3.098",
-    "Tyre": "Soft",
-    "Tyres Used": "3"
+    "Tyres Used": "1"
   },
   {
     "Pos": "19",
@@ -185,38 +185,38 @@
     "Last Name": "Alonso",
     "Team": "Aston Martin",
     "Abbreviation": "ALO",
-    "Gap": "+3.160",
-    "Tyre": "Soft",
-    "Tyres Used": "3"
+    "Gap": "+2.551",
+    "Tyre": "Medium",
+    "Tyres Used": "1"
   },
   {
     "Pos": "20",
-    "First Name": "Arvid",
-    "Last Name": "Lindblad",
-    "Team": "Racing Bulls",
-    "Abbreviation": "LIN",
-    "Gap": "- -",
+    "First Name": "Lance",
+    "Last Name": "Stroll",
+    "Team": "Aston Martin",
+    "Abbreviation": "STR",
+    "Gap": "+3.121",
     "Tyre": "Medium",
     "Tyres Used": "1"
   },
   {
     "Pos": "21",
+    "First Name": "Valtteri",
+    "Last Name": "Bottas",
+    "Team": "Cadillac",
+    "Abbreviation": "BOT",
+    "Gap": "+4.348",
+    "Tyre": "Medium",
+    "Tyres Used": "1"
+  },
+  {
+    "Pos": "22",
     "First Name": "Sergio",
     "Last Name": "Perez",
     "Team": "Cadillac",
     "Abbreviation": "PER",
-    "Gap": "+5.031",
-    "Tyre": "Medium",
-    "Tyres Used": "2"
-  },
-  {
-    "Pos": "22",
-    "First Name": "Carlos",
-    "Last Name": "Sainz",
-    "Team": "Williams",
-    "Abbreviation": "SAI",
     "Gap": "- -",
-    "Tyre": "Medium",
-    "Tyres Used": "2"
+    "Tyre": "Empty",
+    "Tyres Used": "0"
   }
 ]

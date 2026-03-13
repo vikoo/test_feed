@@ -3,7 +3,7 @@
     "id": "aa646566-580a-48d7-8f85-ab13fa2141d9",
     "content_type": "article-element",
     "published_at": "2026-03-13T03:10:16Z",
-    "updated_at": "2026-03-13T04:32:47Z",
+    "updated_at": "2026-03-13T04:53:01Z",
     "title": "Overview",
     "subtitle": "",
     "icon": "NA",
@@ -705,6 +705,41 @@
     "platform": "twitter",
     "url": "https://x.com/McLarenF1/status/2032315175768916453",
     "hide_media": false,
+    "pin": false
+  },
+  {
+    "id": "5366b4e2-8e4b-4cef-aee8-845308b2630b",
+    "content_type": "article-element",
+    "published_at": "2026-03-13T04:51:33Z",
+    "updated_at": "2026-03-13T04:52:44Z",
+    "title": "'A good chance of being in the top 10'",
+    "subtitle": "",
+    "icon": "RB",
+    "image_url": "",
+    "body": [
+      "Permane also said his team have a \"good chance of being in the top 10,\" here, which bodes well for fans of Lawson and Lindblad.",
+      "As to that midfield pecking order, it seems there is a group of Racing Bulls, Audi, Haas and Alpine who are fighting for those last top 10 slots. As such, that section of the grid is fiercely competitive.",
+      "Williams are slightly further back at the moment, ahead of Cadillac and Aston Martin."
+    ],
+    "pin": false
+  },
+  {
+    "id": "19a218fb-e8d3-4945-a5d1-6460472c83ef",
+    "content_type": "article-element",
+    "published_at": "2026-03-13T04:52:35Z",
+    "updated_at": "2026-03-13T04:52:35Z",
+    "title": "Sprint Qualifying up next",
+    "subtitle": "",
+    "icon": "Mercedes",
+    "image_url": "trackside-images/2026/F1_Grand_Prix_Of_China___Practice__Sprint_Qualifying/2266237923",
+    "body": [
+      "So, the drivers now have a short break before leaving it all on the line in Sprint Qualifying.",
+      "Russell and Antonelli are once again the class of the field, but the scene behind is not so clear. McLaren pipped Ferrari, but did set their lap times later when the track was rubbered in.",
+      "Bearman was seventh, once again impressing for Haas with Audi also in the mix for the top 10.",
+      "But Red Bull are a fraction back - Verstappen was only eighth, a huge 1.8s back from Russell's marker. Hadjar struggled in P13, so he needs to find some time here as he has fallen three tenths behind his team mate.",
+      "As for the rest, there were plenty of spins with these cars still tricky to handle with grip at a premium in some corners. Sainz, Colapinto and Lindblad all suffered reliability issues, so there is work to do for Williams, Alpine and Racing Bulls in the break.",
+      "All of which leaves us to tell you that Sprint Qualifying is at 15:30 local time, 07:30 UTC and we will be back half an hour before for all the build up to what is sure to be a very busy session!"
+    ],
     "pin": false
   }
 ]
