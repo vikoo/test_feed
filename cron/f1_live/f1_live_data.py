@@ -1,4 +1,3 @@
-import csv
 import json
 import os
 import re
@@ -13,8 +12,7 @@ TABLE_CLASS = "w-full grid"
 # Directory where this script lives — all output files go here
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# CSV columns (Driver cell is split into sub-fields)
-CSV_HEADERS = ["Pos", "First Name", "Last Name", "Team", "Abbreviation", "Gap", "Tyre", "Tyres Used"]
+HEADERS = ["Pos", "First Name", "Last Name", "Team", "Abbreviation", "Gap", "Tyre", "Tyres Used"]
 
 
 def _parse_driver_cell(td: Tag) -> tuple[str, str, str, str]:
@@ -49,8 +47,8 @@ def _parse_tyre_cell(td: Tag) -> str:
     return ""
 
 
-def _parse_table(soup: BeautifulSoup) -> dict:
-    """Find the timing table and return structured headers + rows."""
+def _parse_table(soup: BeautifulSoup) -> list[dict]:
+    """Find the timing table and return a list of dicts, one per driver row."""
     table = soup.find("table", class_=lambda c: c and all(cls in c.split() for cls in TABLE_CLASS.split()))
 
     if table is None:
@@ -59,11 +57,11 @@ def _parse_table(soup: BeautifulSoup) -> dict:
         logger.info(f"Total <table> tags on page: {len(all_tables)}")
         for i, t in enumerate(all_tables):
             logger.info(f"  table[{i}] classes: {t.get('class', [])}")
-        return {"headers": CSV_HEADERS, "rows": []}
+        return []
 
     # ── tbody rows ─────────────────────────────────────────────────────────────
     tbody = table.find("tbody")
-    rows: list[list[str]] = []
+    records: list[dict] = []
 
     if tbody:
         tds_list = [tr.find_all(["td", "th"]) for tr in tbody.find_all("tr")]
@@ -75,19 +73,18 @@ def _parse_table(soup: BeautifulSoup) -> dict:
             gap        = tds[2].get_text(strip=True)
             tyre       = _parse_tyre_cell(tds[3])
             tyres_used = tds[4].get_text(strip=True)
-            rows.append([pos, fn, ln, team, abbr, gap, tyre, tyres_used])
-        logger.info(f"Extracted {len(rows)} data row(s).")
+            records.append(dict(zip(HEADERS, [pos, fn, ln, team, abbr, gap, tyre, tyres_used])))
+        logger.info(f"Extracted {len(records)} data row(s).")
     else:
         logger.warning("No <tbody> found in the table.")
 
-    return {"headers": CSV_HEADERS, "rows": rows}
+    return records
 
 
-def scrape_f1_live_table() -> dict:
+def scrape_f1_live_table() -> str:
     """
     Scrape the live timing table from the F1 website.
-    Returns a dict with 'headers' (list of strings) and
-    'rows' (list of lists with one entry per column).
+    Returns a JSON string — an array of objects, each mapping header names to values.
     """
     logger.info(f"Launching headless browser to scrape: {URL}")
 
@@ -120,28 +117,20 @@ def scrape_f1_live_table() -> dict:
     logger.info(f"Raw HTML snapshot saved to {html_path}")
 
     soup = BeautifulSoup(html, "html.parser")
-    return _parse_table(soup)
+    return json.dumps(_parse_table(soup), indent=2, ensure_ascii=False)
 
 
 if __name__ == "__main__":
-    data = scrape_f1_live_table()
+    json_str = scrape_f1_live_table()
+    records = json.loads(json_str)
 
     print("\n=== F1 Live Timing Data ===")
-    print(f"Headers   : {data['headers']}")
-    print(f"Total rows: {len(data['rows'])}")
-    for i, row in enumerate(data["rows"], start=1):
-        print(f"  Row {i:>3}: {row}")
-
-    # ── Save CSV ───────────────────────────────────────────────────────────────
-    csv_path = os.path.join(SCRIPT_DIR, "f1_live_data_output.csv")
-    with open(csv_path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        writer.writerow(data["headers"])
-        writer.writerows(data["rows"])
-    logger.info(f"CSV saved  → {csv_path}")
+    print(f"Total entries: {len(records)}")
+    for entry in records:
+        print(json.dumps(entry, ensure_ascii=False))
 
     # ── Save JSON ──────────────────────────────────────────────────────────────
     json_path = os.path.join(SCRIPT_DIR, "f1_live_data_output.json")
     with open(json_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+        f.write(json_str)
     logger.info(f"JSON saved → {json_path}")

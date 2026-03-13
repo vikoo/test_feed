@@ -1,0 +1,361 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0"><meta http-equiv="X-UA-Compatible" content="ie=edge"><meta property="og:type" content="website"><meta property="twitter:card" content="summary"><link href="//uploads-ssl.webflow.com/5e2456a6cc9ad74c16467d5e/5eb02db61a39702a2d3a5a8b_favicon-32x32.png" rel="icon" type="image/png"><title>Formula One</title><meta property="og:title" content="Formula One"><meta property="twitter:title" content="Formula One"><meta itemprop="name" content="Formula One"><meta property="description" content="Formula 1"><meta property="og:description" content="Formula 1"><meta property="twitter:description" content="Formula 1"><meta itemprop="description" content="Formula 1"><meta property="og:image" content="https://uploads-ssl.webflow.com/5e2456a6cc9ad74c16467d5e/62b496153c542c8fc3aff6f8_Working.png"><meta property="twitter:image" content="https://uploads-ssl.webflow.com/5e2456a6cc9ad74c16467d5e/62b496153c542c8fc3aff6f8_Working.png"><meta itemprop="image" content="https://uploads-ssl.webflow.com/5e2456a6cc9ad74c16467d5e/62b496153c542c8fc3aff6f8_Working.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""><link rel="preconnect" href="https://cdn.monterosa.cloud"><link rel="preload" href="https://cdn.monterosa.cloud/config/enmasse.json" as="fetch" crossorigin=""><link rel="preconnect" href="https://edgeservers-europe.monterosa.cloud"><link rel="preconnect" href="https://static-datacapture-europe.monterosa.cloud"><script src="https://code.jquery.com/jquery-3.6.0.min.js"></script><style>a,abbr,acronym,address,applet,article,aside,audio,b,big,blockquote,body,canvas,caption,center,cite,code,dd,del,details,dfn,div,dl,dt,em,embed,fieldset,figcaption,figure,footer,form,h1,h2,h3,h4,h5,h6,header,hgroup,html,i,iframe,img,ins,kbd,label,legend,li,main,mark,menu,nav,object,ol,output,p,pre,q,ruby,s,samp,section,small,span,strike,strong,sub,summary,sup,table,tbody,td,tfoot,th,thead,time,tr,tt,u,ul,var,video{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline}article,aside,details,figcaption,figure,footer,header,hgroup,main,menu,nav,section{display:block}[hidden]{display:none}body{line-height:1}menu,ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:after,blockquote:before,q:after,q:before{content:'';content:none}table{border-collapse:collapse;border-spacing:0}</style><script defer="defer" src="7405.f350668f7ac3135ae242.js"></script><script defer="defer" src="main.854a2019219125324f15.js"></script><style id="consent-overrides">div[id^="sp_message_container"] {display: none !important;}</style><link rel="preconnect" href="https://cdn.privacy-mgmt.com/unified/wrapperMessagingWithoutDetection.js"><script>
+    function _typeof(t) { return (_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (t) { return typeof t } : function (t) { return t && "function" == typeof Symbol && t.constructor === Symbol && t !== Symbol.prototype ? "symbol" : typeof t })(t) } !function () { for (var t, e, o = [], n = window, r = n; r;) { try { if (r.frames.__tcfapiLocator) { t = r; break } } catch (t) { } if (r === n.top) break; r = n.parent } t || (function t() { var e = n.document, o = !!n.frames.__tcfapiLocator; if (!o) if (e.body) { var r = e.createElement("iframe"); r.style.cssText = "display:none", r.name = "__tcfapiLocator", e.body.appendChild(r) } else setTimeout(t, 5); return !o }(), n.__tcfapi = function () { for (var t = arguments.length, n = new Array(t), r = 0; r < t; r++)n[r] = arguments[r]; if (!n.length) return o; "setGdprApplies" === n[0] ? n.length > 3 && 2 === parseInt(n[1], 10) && "boolean" == typeof n[3] && (e = n[3], "function" == typeof n[2] && n[2]("set", !0)) : "ping" === n[0] ? "function" == typeof n[2] && n[2]({ gdprApplies: e, cmpLoaded: !1, cmpStatus: "stub" }) : o.push(n) }, n.addEventListener("message", (function (t) { var e = "string" == typeof t.data, o = {}; if (e) try { o = JSON.parse(t.data) } catch (t) { } else o = t.data; var n = "object" === _typeof(o) ? o.__tcfapiCall : null; n && window.__tcfapi(n.command, n.version, (function (o, r) { var a = { __tcfapiReturn: { returnValue: o, success: r, callId: n.callId } }; t && t.source && t.source.postMessage && t.source.postMessage(e ? JSON.stringify(a) : a, "*") }), n.parameter) }), !1)) }();
+  </script><script>
+    var cmpReloadPage = false;
+    window._sp_queue = [];
+    window._sp_ = {
+      config: {
+        accountId: 1831,
+        propertyID: "31416",
+        baseEndpoint: "https://consent.formula1.com",
+        propertyHref: "https://formula1.com",
+        gdpr: {},
+        events: {
+          onMessageReady: function (message_type) {},
+          onConsentReady: function (message_type, consentUUID, euconsent, info) {
+            if (window.publish) {
+              publish('onConsentReady', { message_type, consentUUID, euconsent, info });
+            }
+            if (cmpReloadPage) {
+              window.location.reload();
+              return;
+            }
+            document.querySelector('body').classList.remove('cmp-open');
+            const onVendorGrantsAvailable = new CustomEvent('onVendorGrantsAvailable', {
+              detail: {
+                message: "onConsentReady event trigerred via CMP"
+              }
+            });
+            document.dispatchEvent(onVendorGrantsAvailable);
+          },
+          onMessageChoiceSelect: function (message_type, choice_id, choice_type_id) {
+            if (window.publish) {
+              publish('onMessageChoiceSelect', { message_type, choice_id, choice_type_id });
+            }
+            const reloadChoiceTypes = [11, 13];
+            if (reloadChoiceTypes.includes(choice_type_id)) {
+              cmpReloadPage = true;
+            }
+          },
+          onPrivacyManagerAction: function (message_type, pmData) {
+            if (window.publish) {
+              publish('onPrivacyManagerAction', { message_type, pmData });
+            }
+            const reloadChoiceTypes = ['all', 'some', 'none'];
+            if (reloadChoiceTypes.includes(pmData.vendorConsent)) {
+              cmpReloadPage = true;
+            }
+          },
+          onPMCancel: function (message_type) {
+            if (window.publish) {
+              publish('onPMCancel', { message_type });
+            }
+            document.querySelector('body').classList.remove('cmp-open');
+          }
+        }
+      },
+      getVendorConsent: function (vendorId) {
+        var vId = vendorId;
+        return new Promise((resolve, reject) => {
+          if (window.__tcfapi) {
+            window.__tcfapi('getCustomVendorConsents', 2, function (tcData) {
+              console.log(tcData)
+              if (tcData && vId) {
+                var vendorConsent = tcData.grants[vId];
+                if (vendorConsent && vendorConsent.vendorGrant) {
+                  return resolve(true);
+                } else {
+                  return resolve(false);
+                }
+              }
+            });
+          } else {
+            reject(false);
+          }
+        });
+      }
+    }
+  </script><script type="text/javascript" async="" src="https://cdn.privacy-mgmt.com/unified/wrapperMessagingWithoutDetection.js"></script><style data-styled="active" data-styled-version="5.3.11"></style><script charset="utf-8" src="https://cdn.privacy-mgmt.com/unified/4.40.1/gdpr-tcf.27718c8cb9d29947d2c1.bundle.js"></script><style type="text/css">#sp_message_iframe_1406947 { display:block; width: 100%; height: 100%; border: 0 none; } #sp_message_container_1406947 { overflow:auto;-webkit-overflow-scrolling:touch; display: none; position: fixed; z-index: 2147483647; left: 0; right: 0; bottom: 0; top: 0; height: 100%; width: 100%; max-width: 100%; max-height: 100vh;}.sp-message-open { height: 100vh !important; width: 100vw !important } .sp-message-open body { overflow: hidden !important; position: fixed !important; margin-top: 0px !important; top: 0px !important; left: 0px !important; right: 0px !important; }</style><link rel="stylesheet" media="all" type="text/css" href="https://static-datacapture-europe.monterosa.cloud/static/default.css"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600&amp;display=swap"><style data-type="font">
+  @font-face {
+    font-family: 'Formula1';
+    src: url('//cdn.monterosa.cloud/uploads/5f/5ff41dd8-841a-452b-b60e-63e6b335f3a3/Formula1-Regular.otf?_src=lvis');
+    font-weight: 400;
+  }
+  @font-face {
+    font-family: 'Formula1';
+    src: url('//cdn.monterosa.cloud/uploads/e7/e7d868e7-5d3c-449b-8906-1b198705d3a1/Formula1-Bold.otf?_src=lvis');
+    font-weight: 500;
+  }
+  @font-face {
+    font-family: 'Northwell Alt';
+    src: url('//cdn.monterosa.cloud/uploads/79/799784db-4d91-41fe-be08-87211ef8c3f0/northwell-alt.ttf?_src=lvis');
+    font-weight: 400;
+  }</style><script async="" src="https://static-datacapture-europe.monterosa.cloud/static/broker.js"></script><style data-type="font">
+  @font-face {
+    font-family: 'Formula1';
+    src: url('//cdn.monterosa.cloud/uploads/5f/5ff41dd8-841a-452b-b60e-63e6b335f3a3/Formula1-Regular.otf?_src=lvis');
+    font-weight: 400;
+  }
+  @font-face {
+    font-family: 'Formula1';
+    src: url('//cdn.monterosa.cloud/uploads/e7/e7d868e7-5d3c-449b-8906-1b198705d3a1/Formula1-Bold.otf?_src=lvis');
+    font-weight: 500;
+  }
+  @font-face {
+    font-family: 'Northwell Alt';
+    src: url('//cdn.monterosa.cloud/uploads/79/799784db-4d91-41fe-be08-87211ef8c3f0/northwell-alt.ttf?_src=lvis');
+    font-weight: 400;
+  }</style><style data-type="font">
+  @font-face {
+    font-family: 'Formula1';
+    src: url('//cdn.monterosa.cloud/uploads/5f/5ff41dd8-841a-452b-b60e-63e6b335f3a3/Formula1-Regular.otf?_src=lvis');
+    font-weight: 400;
+  }
+  @font-face {
+    font-family: 'Formula1';
+    src: url('//cdn.monterosa.cloud/uploads/e7/e7d868e7-5d3c-449b-8906-1b198705d3a1/Formula1-Bold.otf?_src=lvis');
+    font-weight: 500;
+  }
+  @font-face {
+    font-family: 'Northwell Alt';
+    src: url('//cdn.monterosa.cloud/uploads/79/799784db-4d91-41fe-be08-87211ef8c3f0/northwell-alt.ttf?_src=lvis');
+    font-weight: 400;
+  }</style><style>:root {--primaryButtonBorderRadius: 20px;--primaryButtonBorderWidth: 1px;--primaryButtonGlobalGradientDirection: 90deg;--primaryButtonTextLightColor: #ffffff;--primaryButtonBorderLightColor: rgba(255, 255, 255, 0);--primaryButtonLightColor: #E10600,#E10600;--primaryButtonHoverTextLightColor: #FFFFFF;--primaryButtonHoverBorderLightColor: rgba(255, 255, 255, 0);--primaryButtonHoverLightColor: #C20804,#C20804;--primaryButtonSubmittedTextLightColor: #ffffff;--primaryButtonSubmittedBorderLightColor: rgba(255, 255, 255, 0);--primaryButtonSubmittedLightColor: #E10600,#E10600;--primaryButtonTextDarkColor: #ffffff;--primaryButtonBorderDarkColor: rgba(255, 255, 255, 0);--primaryButtonDarkColor: #E10600,#E10600;--primaryButtonHoverTextDarkColor: #FFFFFF;--primaryButtonHoverBorderDarkColor: rgba(255, 255, 255, 0.00);--primaryButtonHoverDarkColor: #C20804,#C20804;--primaryButtonSubmittedTextDarkColor: #ffffff;--primaryButtonSubmittedBorderDarkColor: rgba(255, 255, 255, 0);--primaryButtonSubmittedDarkColor: #E10600,#E10600;--secondaryButtonBorderRadius: 20px;--secondaryButtonBorderWidth: 1px;--secondaryButtonGlobalGradientDirection: 180deg;--secondaryButtonTextLightColor: #FFFFFF;--secondaryButtonBorderLightColor: rgba(255, 255, 255, 0);--secondaryButtonLightColor: #000000,#000000;--secondaryButtonHoverTextLightColor: #FFFFFF;--secondaryButtonHoverBorderLightColor: rgba(255, 255, 255, 0.00);--secondaryButtonHoverLightColor: #333333,#333333;--secondaryButtonSubmittedTextLightColor: #15151E;--secondaryButtonSubmittedBorderLightColor: rgba(255, 255, 255, 0);--secondaryButtonSubmittedLightColor: #000000,#000000;--secondaryButtonTextDarkColor: #000000;--secondaryButtonBorderDarkColor: rgba(255, 255, 255, 0);--secondaryButtonDarkColor: #FFFFFF,#FFFFFF;--secondaryButtonHoverTextDarkColor: #000000;--secondaryButtonHoverBorderDarkColor: rgba(255, 255, 255, 0.00);--secondaryButtonHoverDarkColor: rgba(255, 255, 255, 0.8),rgba(255, 255, 255, 0.8);--secondaryButtonSubmittedTextDarkColor: #000000;--secondaryButtonSubmittedBorderDarkColor: rgba(255, 255, 255, 0);--secondaryButtonSubmittedDarkColor: #FFFFFF,#FFFFFF;--authorFontSize: 42px;--authorFontWeight: 400;--authorFontLine: 33.6px;--authorTextColor: #E6F854;--carouselNavigationLightButtonBackground: #ffffff;--carouselNavigationLightButtonIconColour: #000000;--carouselNavigationLightDotsBackground: rgba(0,0,0,0.1);--carouselNavigationLightDotDefault: #fff;--carouselNavigationDarkButtonBackground: #fff;--carouselNavigationDarkButtonHoverBackground: #E5E5E5;--carouselNavigationDarkButtonIconColour: #000000;--carouselNavigationDarkDotsBackground: rgba(0,0,0,0.1);--carouselNavigationDarkDotDefault: #fff;--outcomesBorderRadius: 8px;--outcomesBorderWidth: 0px;--globalCorrectTextColor: #DA291C;--globalCorrectBackgroundColor: rgba(6, 140, 63, 0.1);--globalCorrectBorderColor: #DA291C;--globalIncorrectTextColor: #DA291C;--globalIncorrectBackgroundColor: rgba(255, 0, 0, 0.1);--globalIncorrectBorderColor: #DA291C;--globalNoVoteTextColor: #FFA100;--globalNoVoteBackgroundColor: rgba(255, 161, 0, 0.1);--globalNoVoteBorderColor: #FFA100;--elementPaddingsMpV: 12px;--elementPaddingsMpH: 16px;--elementPaddingsTpV: 12px;--elementPaddingsTpH: 0px;--elementMaxWidthsTp: 752;--elementMaxWidthsDt: 848;--elementContentMaxWidthsDt: 848;--elementContentMaxWidthsTp: 752;--elementBorderRadiusMp: 8;--elementBorderRadiusDt: 8;--elementBorderRadiusTp: 8;--elementLightBackgroundGradientDirection: 90deg;--elementLightBackgroundColor: #FFFFFF,#FFFFFF;--elementDarkBackgroundGradientDirection: 90deg;--elementDarkBackgroundColor: #000000,#000000;--closedLabelBorderRadius: 24px;--closedLabelLightColor: #15151E;--closedLabelLightBackgroundColor: #F7F4F1;--elementLabelLightColor: #E10600;--elementTitleLightColor: #15151E;--elementSubtitleLightColor: #15151E;--timeLightColor: #0B0F1C;--timeDividerLightColor: #BCBDD4;--closedLabelDarkColor: #ffffff;--closedLabelDarkBackgroundColor: #383e5f;--elementLabelDarkColor: #E10600;--elementTitleDarkColor: #fff;--elementSubtitleDarkColor: #E8E8E9;--timeDarkColor: #fff;--timeDividerDarkColor: #fff;--elementHighlightLightColor: #E10600;--elementHighlightDarkColor: #E10600;--elementBodyLightColor: #15151E;--elementBodyDarkColor: #FFFFFF;--formInputBorderWidth: 1px;--formInputBorder: 4px;--formInputLightTextColor: #0B0F1C;--formInputLightBackgroundColor: #fff;--formInputLightBorderColor: #5B5B62;--formCheckboxLightTickColor: #5B5B62;--formErrorLightColor: #E91711;--formInputDarkTextColor: #fff;--formInputDarkBackgroundColor: #000000;--formInputDarkBorderColor: #5B5B62;--formCheckboxDarkTickColor: #fff;--formErrorDarkColor: #E91711;--bodyBackgroundGradientDirection: 90deg;--bodyBackgroundColor: #F7F4F1,#F7F4F1;--globalTextColor: #15151E;--optionButtonMaxWidthsTp: 420;--buttonBorderRadius: 20px;--buttonBorderWidth: 1px;--optionLightTextColor: #15151E;--optionLightDefaultPercentageColor: #ffffff;--optionLightButtonGradientDirection: 90deg;--optionLightButtonBackgroundColor: #FFFFFF,#FFFFFF;--optionLightButtonFillerColor: #15151E,#15151E;--optionLightButtonBorderColor: #5B5B62;--optionDarkTextColor: #fff;--optionDarkDefaultPercentageColor: #ffffff;--optionDarkButtonGradientDirection: 90deg;--optionDarkButtonBackgroundColor: #44444B,#44444B;--optionDarkButtonBorderColor: #5B5B62;--optionLightHoverTextColor: #15151E;--optionLightHoverButtonBackgroundColor: #FFFFFF,#FFFFFF;--optionLightHoverButtonBorderColor: #15151E;--optionDarkHoverTextColor: #fff;--optionDarkHoverButtonBackgroundColor: #44444B,#44444B;--optionDarkHoverButtonBorderColor: #fff;--optionLightSelectedTextColor: #FFFFFF;--optionLightSelectedPercentageColor: #ffffff;--optionLightSelectedButtonBackgroundColor: #15151E,#15151E;--optionLightSelectedButtonFillerColor: rgba(21, 21, 30, 0.16),rgba(21, 21, 30, 0.16);--optionLightSelectedButtonBorderColor: #15151E;--optionDarkSelectedTextColor: #15151E;--optionDarkSelectedPercentageColor: #ffffff;--optionDarkSelectedButtonBackgroundColor: #fff,#fff;--optionDarkSelectedButtonBorderColor: #F7F4F1;--optionLightRevealedTextColor: #15151E;--optionLightRevealedButtonFillerColor: rgba(21, 21, 30, 0.16),rgba(21, 21, 30, 0.16);--optionLightRevealedButtonBorderColor: #15151E;--optionDarkRevealedTextColor: #fff;--optionDarkRevealedButtonBackgroundColor: #44444B,#44444B;--optionDarkRevealedButtonFillerColor: rgba(255, 255, 255, 0.10),rgba(255, 255, 255, 0.10);--optionDarkRevealedButtonBorderColor: #5B5B62;--optionLightCorrectTextColor: #FFFFFF;--optionLightCorrectButtonBackgroundColor: #1A8930,#1A8930;--optionLightCorrectButtonFillerColor: rgba(21, 21, 30, 0.16),rgba(21, 21, 30, 0.16);--optionLightCorrectButtonBorderColor: #1A8930;--optionDarkCorrectTextColor: #FFFFFF;--optionDarkCorrectButtonBackgroundColor: #1A8930,#1A8930;--optionDarkCorrectButtonFillerColor: rgba(21, 21, 30, 0.16),rgba(21, 21, 30, 0.16);--optionDarkCorrectButtonBorderColor: #1A8930;--optionLightIncorrectTextColor: #FFFFFF;--optionLightIncorrectButtonBackgroundColor: #DA291C,#DA291C;--optionLightIncorrectButtonFillerColor: rgba(21, 21, 30, 0.16),rgba(21, 21, 30, 0.16);--optionLightIncorrectButtonBorderColor: #DA291C;--optionDarkIncorrectTextColor: #ffffff;--optionDarkIncorrectButtonBackgroundColor: #DA291C,#DA291C;--optionDarkIncorrectButtonFillerColor: rgba(21, 21, 30, 0.16),rgba(21, 21, 30, 0.16);--optionDarkIncorrectButtonBorderColor: #DA291C;--presenceCounterBackgroundColor: rgba(0, 0, 0, 0.5);--presenceCounterColor: #fff;--presenceCounterBorderRadius: 14;--reactionsPrimaryLabelColor: #81849E;--reactionsPrimaryIconColor: #E9E9E9;--reactionsSecondaryLabelColor: #AAACC9;--reactionsSecondaryIconColor: #E9E9E9;--scoreSeperator: 2px;--sponsorTextLightColor: #0B0F1C;--sponsorTextDarkColor: #ffffff;--tabsNavigationHeight: 56px;--primaryFont: Titillium Web;--elementLabelFontFamily: Titillium Web;--elementLabelFontSize: 15px;--elementLabelFontWeight: 600;--elementLabelLineHeight: 22px;--elementTitleFontFamily: Formula1;--elementTitleFontSize: 18px;--elementTitleFontWeight: 500;--elementTitleLineHeight: 22px;--elementSubtitleFontFamily: Formula1;--elementSubtitleFontSize: 14px;--elementSubtitleFontWeight: 400;--elementSubtitleLineHeight: 20px;--elementSubtitleLetterSpacing: 0px;--elementHeadingFontSize: 13px;--elementHeadingFontWeight: 700;--elementHeadingLineHeight: 16px;--elementHeadingLetterSpacing: 0.065px;--elementBodyFontFamily: Titillium Web;--elementBodyFontSize: 17px;--elementBodyFontWeight: 400;--elementBodyLineHeight: 24px;--elementBodyLetterSpacing: 0.2px;--elementButtonFontFamily: Titillium Web;--elementButtonFontSize: 13px;--elementButtonFontWeight: 700;--elementButtonLineHeight: 16px;--elementButtonLetterSpacing: 0.5px;--elementNumberFontSize: 32px;--elementNumberLineHeight: 32px;--elementTimeFontSize: 16px;--elementTimeLineHeight: 20px;--elementTermsFontSize: 12px;--elementTermsFontWeight: 400;--elementTermsLineHeight: 17px;--lapMinuteFontSize: 17px;--lapMinuteLineHeight: 24px;--languageTitleColor: #0B0F1C;--elementHighlightLightColorDarkenSingle: #ae0500;--elementHighlightDarkColorDarkenSingle: #ae0500;} ol li[data-list="bullet"] {
+  list-style-type: disc;
+}
+.eDPHqv {
+    padding: 0px;
+    color: currentcolor;
+}
+.dNzBfi {
+    padding: 0px;
+    color: currentcolor;
+}
+.iovUJT {
+    border: 1px solid black;
+}
+.article__Wrapper-dquGyL ul li {
+    list-style-position: outside;
+    margin-left: 17px;
+}
+.hFmuDe {display:none}
+.ksSXJG { padding:0;}
+.caBdzX {padding:0;}
+
+.smb-form-root.smb-step-0:not(:first-child){display: none;}
+.hint__Text-iaZjUm {
+margin: auto;
+}
+.DVVuG {
+  padding-top: 0;
+}
+
+/* letter box*/
+.letter-preview__Letter-hkufr , .letter-box__LetterBoxWrapper-VnCSC:not(:has(.letter__LetterDrag-gvLkbo)) {
+display: flex;
+width: 44px;
+height: 44px;
+padding: 4px 10px 4px 8px;
+justify-content: center;
+align-items: center;
+margin: 8px;
+}
+
+ [class*="letter__LetterDrag"] >  div:first-child  {
+display: flex;
+width: 44px;
+height: 44px;
+padding: 4px 9px 4px 8px;
+
+}
+
+.letter__LetterDrag-gvLkbo .letter-preview__Letter-hkufr {
+border-radius:8px;
+width: 44px;
+height: 44px;
+padding: 4px 9px 4px 8px;
+
+}
+
+.letter-preview__Letter-hkufr::after {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+     inset: 0px; 
+     border-style: none; 
+     border-width: none;
+     border-radius: 8px; 
+}
+
+.jHBLRw{
+border: 1px solid #5B5B62;
+}
+
+#agree_terms_other > a {
+ display: block;
+}
+
+.dark {
+ background: #15151E;
+}
+.dark #root{
+ background: #15151E;
+}
+
+.dark select{
+  color: white;
+}
+
+
+.kbyDPI:focus-visible, .kbyDPI:focus {
+  outline-color: unset;
+}
+
+/* COMMENTARY ELEMENT */ 
+.commentary-element .wysiwyg-field__WysiwygFieldWrapper-gnTBdG {
+    font-size: 18px;
+    line-height: 28px;
+}
+@media (min-width: 700px) {
+  .commentary-element .wysiwyg-field__WysiwygFieldWrapper-gnTBdG {
+    font-size: 20px;
+    line-height: 36px;
+  }
+}
+.commentary-element .hfKoNB {
+  padding: 64px 21.6px;
+}
+@media (min-width: 700px) {
+  .commentary-element .hfKoNB {
+    padding: 74px 65px;
+  }
+}
+
+/* ICONS & EDITORIAL HEADER */
+.kWPMVX {
+    min-width: 40px;
+    max-width: 40px;
+}
+.element-header-editorial__Group-dxhwQH {
+    align-items: center;
+}</style><style data-type="font">
+  @font-face {
+    font-family: 'Formula1';
+    src: url('//cdn.monterosa.cloud/uploads/5f/5ff41dd8-841a-452b-b60e-63e6b335f3a3/Formula1-Regular.otf?_src=lvis');
+    font-weight: 400;
+  }
+  @font-face {
+    font-family: 'Formula1';
+    src: url('//cdn.monterosa.cloud/uploads/e7/e7d868e7-5d3c-449b-8906-1b198705d3a1/Formula1-Bold.otf?_src=lvis');
+    font-weight: 500;
+  }
+  @font-face {
+    font-family: 'Northwell Alt';
+    src: url('//cdn.monterosa.cloud/uploads/79/799784db-4d91-41fe-be08-87211ef8c3f0/northwell-alt.ttf?_src=lvis');
+    font-weight: 400;
+  }</style><style data-type="font">
+  @font-face {
+    font-family: 'Formula1';
+    src: url('//cdn.monterosa.cloud/uploads/5f/5ff41dd8-841a-452b-b60e-63e6b335f3a3/Formula1-Regular.otf?_src=lvis');
+    font-weight: 400;
+  }
+  @font-face {
+    font-family: 'Formula1';
+    src: url('//cdn.monterosa.cloud/uploads/e7/e7d868e7-5d3c-449b-8906-1b198705d3a1/Formula1-Bold.otf?_src=lvis');
+    font-weight: 500;
+  }
+  @font-face {
+    font-family: 'Northwell Alt';
+    src: url('//cdn.monterosa.cloud/uploads/79/799784db-4d91-41fe-be08-87211ef8c3f0/northwell-alt.ttf?_src=lvis');
+    font-weight: 400;
+  }</style><style data-type="font">
+  @font-face {
+    font-family: 'Formula1';
+    src: url('//cdn.monterosa.cloud/uploads/5f/5ff41dd8-841a-452b-b60e-63e6b335f3a3/Formula1-Regular.otf?_src=lvis');
+    font-weight: 400;
+  }
+  @font-face {
+    font-family: 'Formula1';
+    src: url('//cdn.monterosa.cloud/uploads/e7/e7d868e7-5d3c-449b-8906-1b198705d3a1/Formula1-Bold.otf?_src=lvis');
+    font-weight: 500;
+  }
+  @font-face {
+    font-family: 'Northwell Alt';
+    src: url('//cdn.monterosa.cloud/uploads/79/799784db-4d91-41fe-be08-87211ef8c3f0/northwell-alt.ttf?_src=lvis');
+    font-weight: 400;
+  }</style><script charset="utf-8" src="https://interactioncloud.formula1.com/formula1/24.39.1-099.2/1407.924c05e10139e1d9ab81.js"></script><style data-type="font">
+  @font-face {
+    font-family: 'Formula1';
+    src: url('//cdn.monterosa.cloud/uploads/5f/5ff41dd8-841a-452b-b60e-63e6b335f3a3/Formula1-Regular.otf?_src=lvis');
+    font-weight: 400;
+  }
+  @font-face {
+    font-family: 'Formula1';
+    src: url('//cdn.monterosa.cloud/uploads/e7/e7d868e7-5d3c-449b-8906-1b198705d3a1/Formula1-Bold.otf?_src=lvis');
+    font-weight: 500;
+  }
+  @font-face {
+    font-family: 'Northwell Alt';
+    src: url('//cdn.monterosa.cloud/uploads/79/799784db-4d91-41fe-be08-87211ef8c3f0/northwell-alt.ttf?_src=lvis');
+    font-weight: 400;
+  }</style><script charset="utf-8" src="https://interactioncloud.formula1.com/formula1/24.39.1-099.2/8418.cc6e157b6f8eaafb4d1f.js"></script><script charset="utf-8" src="https://interactioncloud.formula1.com/formula1/24.39.1-099.2/7274.255535cfef739996edd1.js"></script><script charset="utf-8" src="https://interactioncloud.formula1.com/formula1/24.39.1-099.2/4460.0e4c69a66094583db914.js"></script><script charset="utf-8" src="https://interactioncloud.formula1.com/formula1/24.39.1-099.2/6093.2bbbb1385b544e4f97cb.js"></script><style data-type="font">
+  @font-face {
+    font-family: 'Formula1';
+    src: url('//cdn.monterosa.cloud/uploads/5f/5ff41dd8-841a-452b-b60e-63e6b335f3a3/Formula1-Regular.otf?_src=lvis');
+    font-weight: 400;
+  }
+  @font-face {
+    font-family: 'Formula1';
+    src: url('//cdn.monterosa.cloud/uploads/e7/e7d868e7-5d3c-449b-8906-1b198705d3a1/Formula1-Bold.otf?_src=lvis');
+    font-weight: 500;
+  }
+  @font-face {
+    font-family: 'Northwell Alt';
+    src: url('//cdn.monterosa.cloud/uploads/79/799784db-4d91-41fe-be08-87211ef8c3f0/northwell-alt.ttf?_src=lvis');
+    font-weight: 400;
+  }</style><style data-type="font">
+  @font-face {
+    font-family: 'Formula1';
+    src: url('//cdn.monterosa.cloud/uploads/5f/5ff41dd8-841a-452b-b60e-63e6b335f3a3/Formula1-Regular.otf?_src=lvis');
+    font-weight: 400;
+  }
+  @font-face {
+    font-family: 'Formula1';
+    src: url('//cdn.monterosa.cloud/uploads/e7/e7d868e7-5d3c-449b-8906-1b198705d3a1/Formula1-Bold.otf?_src=lvis');
+    font-weight: 500;
+  }
+  @font-face {
+    font-family: 'Northwell Alt';
+    src: url('//cdn.monterosa.cloud/uploads/79/799784db-4d91-41fe-be08-87211ef8c3f0/northwell-alt.ttf?_src=lvis');
+    font-weight: 400;
+  }</style></head><body ontouchstart="" class="loaded light"><div id="loader"><div></div><div></div><div></div></div><noscript>Please enable JavaScript</noscript><div id="app"><div class="page-layout__Wrapper-bURFOv izPxge"><div><div class="root__Wrapper-huLOcF iEjHYe" style="--tabsBackgroundBorderWidth: 0; --tabLinkColor: rgba(255, 255, 255, 0.8); --selectedTabLinkColor: #FFFFFF; --tabBorderWidth: 0; --tabHighlightGradientDirection: 90deg;"><div class="timeline__Wrapper-bmHzUs cQjLWE"><div id="root" class="layout__Container-bIqfBJ jPFsKp"><div class="feed__Wrapper-gEMvaZ ihKELQ"><div><section id="aa646566-580a-48d7-8f85-ab13fa2141d9" class="element__Wrapper-kpeBGV etRKMa"><div class="suspense-loader__Wrapper-eizBcn dMAZiW"><div class="suspense-loader__Inner-hTGdpm iuhggh"><div class="suspense-loader__FlashingDots-ddDBaA byujle"></div></div><div style="height: 400px;"></div></div></section></div><div><section id="19a218fb-e8d3-4945-a5d1-6460472c83ef" class="element__Wrapper-kpeBGV etRKMa"><div class="suspense-loader__Wrapper-eizBcn dMAZiW"><div class="suspense-loader__Inner-hTGdpm iuhggh"><div class="suspense-loader__FlashingDots-ddDBaA byujle"></div></div><div style="height: 400px;"></div></div></section></div><div><section id="5366b4e2-8e4b-4cef-aee8-845308b2630b" class="element__Wrapper-kpeBGV etRKMa"><div class="suspense-loader__Wrapper-eizBcn dMAZiW"><div class="suspense-loader__Inner-hTGdpm iuhggh"><div class="suspense-loader__FlashingDots-ddDBaA byujle"></div></div><div style="height: 400px;"></div></div></section><div height="250" class="advert__Ad-bfVrrd rnWBE"></div></div><div><section id="77323c64-b8ba-4b44-8f41-45e682788bb8" class="element__Wrapper-kpeBGV etRKMa"><div class="suspense-loader__Wrapper-eizBcn dMAZiW"><div class="suspense-loader__Inner-hTGdpm iuhggh"><div class="suspense-loader__FlashingDots-ddDBaA byujle"></div></div><div style="height: 400px;"></div></div></section></div></div></div></div></div></div><div class="back-to-top__Wrapper-itsoWA dIWUgg" style="--defaultBackgroundColor: #ffffff; --borderWidth: 0; --borderRadius: 20; --defaultArrowColor: #979797; --defaultBoxShadow: 0px 3px 6px rgba(129, 132, 158, 0.3); --hoverBackgroundColor: #ffffff; --hoverArrowColor: #a7a7a7; --hoverBoxShadow: 0px 3px 6px rgba(129, 132, 158, 0.3);"></div></div></div><div id="modal"></div><script>const searchParams = new URLSearchParams(window.location.search);
+    const urlBg = searchParams.get("bg");
+    const urlColor = searchParams.get("color");
+
+    if(urlBg){document.documentElement.style.setProperty("--urlBackground", `#${urlBg}`)};
+    if(urlColor){document.documentElement.style.setProperty("--urlColor", `#${urlColor}`)}</script><script>const THEME = {
+      LIGHT: "light",
+      DARK: "dark",
+    };
+
+    function getCookie(name) {
+      const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+      if (match) return match[2];
+      return null;
+    }
+
+    function getPreferredTheme() {
+      const cookieTheme = getCookie('AppTheme');
+      if (cookieTheme === THEME.DARK || cookieTheme === THEME.LIGHT) {
+        return cookieTheme;
+      }
+
+      const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+      return prefersDark ? THEME.DARK : THEME.LIGHT;
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+      const preferredTheme = getPreferredTheme();
+      document.body.classList.remove(THEME.LIGHT, THEME.DARK); 
+      document.body.classList.add(preferredTheme);             
+    });</script><iframe name="__tcfapiLocator" style="display: none;"></iframe><div id="sp_message_container_1406947" aria-modal="true" aria-labelledby="sp_message_iframe_1406947" role="dialog" style="display: block;"><iframe src="https://consent.formula1.com/index.html?hasCsp=true&amp;message_id=1406947&amp;consentUUID=980e25fa-913f-4a4d-ae4f-e06edfbddcef&amp;consent_origin=https%3A%2F%2Fconsent.formula1.com%2Fconsent%2Ftcfv2&amp;preload_message=true&amp;concatenatedUUID=980e25fa-913f-4a4d-ae4f-e06edfbddcef~~~&amp;version=v1" id="sp_message_iframe_1406947" title="SP Consent Message"></iframe></div></body></html>
