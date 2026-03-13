@@ -439,6 +439,8 @@ def update_time_in_race(is_f1_feed: bool, start_time: str, race_id: str, site_ev
 def get_latest_past_race(is_f1_feed: bool) -> str:
     end_point = get_graphql_endpoint(is_f1_feed)
     current_date_str =  current_datetime_iso()
+    # current_date_str = "2026-03-11T06:06:48.000Z"
+    logger.info(f" current_date_str: {current_date_str}")
     variables = {
         "currentDate": current_date_str,
     }
@@ -760,3 +762,10 @@ def create_constructor_standings_for_season_moto_gp(is_f1_feed: bool, json_stand
     # data = response.json()
     logger.debug(f"create_constructor_standings_for_season_moto_gp response: {response}")
     return response.json()
+
+def clear_server_cache():
+    logger.info("Clearing server cache")
+    url = "https://apiv2.purplesector.club/api/cache/clear"
+    response = requests.post(url)
+    logger.info(f"clear_server_cache status: {response.status_code}")
+    logger.debug(f"clear_server_cache response: {response.text}")
