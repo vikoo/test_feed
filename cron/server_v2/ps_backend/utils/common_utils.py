@@ -13,7 +13,7 @@ from typing import Dict, List, Optional, Any, Union
 import requests
 from loguru import logger
 
-from cron.server_v2.ps_backend.utils.config import BACKEND_URL, TOKEN
+from cron.server_v2.ps_backend.utils.config import BACKEND_URL, TOKEN, EMAIL, PASSWORD
 
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
@@ -22,6 +22,61 @@ sys.path.append(str(Path(__file__).parent.parent))
 class APIError(Exception):
     """Custom exception for API errors"""
     pass
+
+
+# ---------------------------------------------------------------------------
+# Auto-login / token refresh
+# ---------------------------------------------------------------------------
+
+_cached_token: Optional[str] = None
+
+
+def _get_token() -> Optional[str]:
+    """
+    Return a valid Bearer token.
+
+    Strategy:
+        1. If a fresh token has already been fetched this session, reuse it.
+        2. Otherwise call POST /api/auth/login with EMAIL + PASSWORD from
+           config to obtain a new one.
+        3. Fall back to the hardcoded TOKEN from config if login fails.
+    """
+    global _cached_token
+
+    if _cached_token:
+        return _cached_token
+
+    # Try to get a fresh token via login
+    if EMAIL and PASSWORD:
+        try:
+            url = f"{BACKEND_URL}/api/auth/login"
+            resp = requests.post(
+                url,
+                json={"email": EMAIL, "password": PASSWORD},
+                headers={"Content-Type": "application/json"},
+                timeout=15,
+            )
+            resp.raise_for_status()
+            body = resp.json()
+            # Handle both { "token": "..." } and { "data": { "token": "..." } }
+            token = (
+                body.get("token")
+                or body.get("accessToken")
+                or (body.get("data") or {}).get("token")
+                or (body.get("data") or {}).get("accessToken")
+            )
+            if token:
+                logger.debug("Auto-login succeeded — using fresh token")
+                _cached_token = token
+                return _cached_token
+            else:
+                logger.warning(f"Login response did not contain a token: {body}")
+        except Exception as exc:
+            logger.warning(f"Auto-login failed ({exc}) — falling back to config TOKEN")
+
+    # Fall back to hardcoded token
+    _cached_token = TOKEN
+    return _cached_token
 
 
 def make_ps_api_request(
@@ -68,8 +123,10 @@ def make_ps_api_request(
         'Content-Type': 'application/json'
     }
 
-    if use_auth and TOKEN:
-        headers['Authorization'] = f'Bearer {TOKEN}'
+    if use_auth:
+        token = _get_token()
+        if token:
+            headers['Authorization'] = f'Bearer {token}'
 
     try:
         if method.upper() == 'GET':
