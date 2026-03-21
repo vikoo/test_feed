@@ -8,3 +8,8 @@ grafana-dashboards/
 cron/f1_live/certs/*.pem
 cron/f1_live/certs/*.crt
 cron/f1_live/certs/*.key
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
