@@ -4,3 +4,7 @@ docs/
 grafana-dashboards/
 .idea
 
+# AWS IoT certificates — stored as GitHub Secrets / .env, never commit
+cron/f1_live/certs/*.pem
+cron/f1_live/certs/*.crt
+cron/f1_live/certs/*.key
