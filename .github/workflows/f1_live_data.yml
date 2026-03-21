@@ -1,4 +1,4 @@
-name: Cleanup old feeds
+name: F1 Lvie data
 
 on:
   schedule:
@@ -24,7 +24,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r cron/requirements.txt  # dependencies
 
-      - name: Run Python script to clean rss feeds
+      - name: Run Python script for F1 Live data
         env:
           MOTO_GP_TOKEN: ${{ secrets.MOTO_GP_TOKEN }}
           F1_TOKEN: ${{ secrets.F1_TOKEN }}
