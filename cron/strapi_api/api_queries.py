@@ -398,7 +398,7 @@ mutation_get_latest_past_race_entry = """
                     },
                 },
                 pagination: {
-                    limit: 3
+                    limit: 5
                 }
                 sort: "startTime:desc"
             ) {

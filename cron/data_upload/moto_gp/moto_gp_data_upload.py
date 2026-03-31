@@ -13,33 +13,38 @@ def process():
     logger.info("fetching the schedule")
     json_data = get_latest_past_race(is_f1_feed=False)
 
-    # Extract the year
+    races = json_data["data"]["races"]["data"]
+    logger.info(f"Total races to process: {len(races)}")
 
-    race_id = json_data["data"]["races"]["data"][0]["id"]
-    race_type = json_data["data"]["races"]["data"][0]["attributes"]["type"]
-    grand_prix = json_data["data"]["races"]["data"][0]["attributes"]["grandPrix"]["data"]
-    logger.info(f"race_id: {race_id} --- race_type: {race_type}")
-    strapi_races = get_race_results_for_race_event(is_f1_feed=False, race_id=race_id)
-    race_result_count = len(strapi_races['data']['raceResults']['data'])
-    logger.info(f"race_result_count from strapi: {race_result_count}")
+    for race_entry in races:
+        race_id = race_entry["id"]
+        race_type = race_entry["attributes"]["type"]
+        grand_prix = race_entry["attributes"]["grandPrix"]["data"]
+        logger.info(f"race_id: {race_id} --- race_type: {race_type}")
+        strapi_races = get_race_results_for_race_event(is_f1_feed=False, race_id=race_id)
+        race_result_count = len(strapi_races['data']['raceResults']['data'])
+        logger.info(f"race_result_count from strapi: {race_result_count}")
 
-    if not is_update_enabled:
-        if race_result_count == 0:
-            moto_gp_race_results, season_grid_map, year = fetch_and_upload_race_data(json_data)
-            upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year)
+        # Build a minimal json_data-like structure scoped to this race entry
+        race_json_data = {"data": {"races": {"data": [race_entry]}}}
+
+        if not is_update_enabled:
+            if race_result_count == 0:
+                moto_gp_race_results, season_grid_map, year = fetch_and_upload_race_data(race_json_data)
+                upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year)
+            else:
+                logger.info("Race results already exist in Strapi. No need to fetch from MotoGP API.")
         else:
-            logger.info("Race results already exist in Strapi. No need to fetch from MotoGP API.")
-    else:
-        logger.info("UPDATE is enabled")
-        moto_gp_race_results, season_grid_map, year = fetch_and_upload_race_data(json_data)
-        if race_result_count == 0:
-            upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year)
-        else:
-            # Convert strapi races to driver number -> race result id mapping
-            driver_number_to_id_map = convert_strapi_races_to_driver_map(strapi_races)
-            logger.info(f"Driver number to ID map: {driver_number_to_id_map}")
-            logger.info("Race results already exist in Strapi. No need to fetch from MotoGP API.")
-            upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year, driver_number_to_id_map)
+            logger.info("UPDATE is enabled")
+            moto_gp_race_results, season_grid_map, year = fetch_and_upload_race_data(race_json_data)
+            if race_result_count == 0:
+                upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year)
+            else:
+                # Convert strapi races to driver number -> race result id mapping
+                driver_number_to_id_map = convert_strapi_races_to_driver_map(strapi_races)
+                logger.info(f"Driver number to ID map: {driver_number_to_id_map}")
+                logger.info("Race results already exist in Strapi. No need to fetch from MotoGP API.")
+                upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year, driver_number_to_id_map)
 
 
 def fetch_and_upload_race_data(json_data):
