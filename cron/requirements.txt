@@ -10,3 +10,4 @@ loguru==0.7.3
 playwright>=1.40.0
 fastf1==3.8.1
 paho-mqtt>=2.0.0
+python-dateutil>=2.8.2

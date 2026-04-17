@@ -160,15 +160,85 @@ async def post_feed(is_f1_feed, feed, feed_source):
 
 # Fetch primary image from feed.link if feed.links is empty
 def fetch_primary_image(url: str):
-    try:
-        response = requests.get(url, timeout=5)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.content, "html.parser")
-        img_tag = soup.find("meta", property="og:image")
-        if img_tag and img_tag["content"]:
-            return img_tag["content"]
-    except Exception as e:
-        logger.error(f"Error fetching primary image: {e}")
+    """
+    Fetch the primary image (og:image meta tag) from a URL.
+    Includes retry logic and browser-like headers to bypass common bot detection.
+
+    Args:
+        url: The URL to fetch the image from
+
+    Returns:
+        Image URL from og:image meta tag, or None if not found or error occurs
+    """
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Accept-Encoding": "gzip, deflate",
+        "DNT": "1",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1"
+    }
+
+    max_retries = 3
+    retry_delay = 1
+
+    for attempt in range(max_retries):
+        try:
+            logger.debug(f"Fetching primary image from {url} (attempt {attempt + 1}/{max_retries})")
+            response = requests.get(url, headers=headers, timeout=10)
+
+            # Log the status code for debugging
+            logger.debug(f"Response status code: {response.status_code}")
+
+            # Handle 403 and 429 (rate limiting) gracefully
+            if response.status_code == 403:
+                logger.warning(f"Access forbidden (403) for {url}. Skipping.")
+                return None
+            elif response.status_code == 429:
+                logger.warning(f"Rate limited (429) for {url}. Retrying in {retry_delay}s...")
+                if attempt < max_retries - 1:
+                    import time
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff
+                    continue
+                else:
+                    return None
+            elif response.status_code == 404:
+                logger.warning(f"Page not found (404) for {url}. Skipping.")
+                return None
+
+            response.raise_for_status()
+
+            soup = BeautifulSoup(response.content, "html.parser")
+            img_tag = soup.find("meta", property="og:image")
+            if img_tag and img_tag.get("content"):
+                image_url = img_tag["content"]
+                logger.debug(f"Found primary image: {image_url}")
+                return image_url
+            else:
+                logger.debug(f"No og:image meta tag found for {url}")
+                return None
+
+        except requests.exceptions.Timeout:
+            logger.warning(f"Timeout fetching {url} (attempt {attempt + 1}/{max_retries})")
+            if attempt < max_retries - 1:
+                continue
+            else:
+                return None
+        except requests.exceptions.ConnectionError as e:
+            logger.warning(f"Connection error fetching {url}: {e} (attempt {attempt + 1}/{max_retries})")
+            if attempt < max_retries - 1:
+                continue
+            else:
+                return None
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Request error fetching primary image from {url}: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Unexpected error fetching primary image from {url}: {e}")
+            return None
+
     return None
 
 def fetch_old_feeds(is_f1_feed: bool, cutoff_date_str: str, start=0, limit=50, lang: str = "en"):
