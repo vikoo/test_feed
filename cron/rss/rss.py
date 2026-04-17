@@ -2,7 +2,8 @@ import asyncio
 
 import feedparser
 import json
-from datetime import timedelta
+from datetime import timedelta, datetime, timezone
+from dateutil import parser as date_parser
 from cron.strapi_api.apis import *
 from dotenv import load_dotenv
 from loguru import logger
@@ -12,6 +13,16 @@ load_dotenv()
 
 logger.info(f"Using Token 1: {f1_graphql_token[:5]}*****")
 logger.info(f"Using Token 2: {moto_graphql_token[:5]}*****")
+
+def parse_date_safely(date_string):
+  """Safely parse date string with multiple format support"""
+  try:
+    # Try dateutil parser first as it handles most common formats
+    return date_parser.parse(date_string)
+  except (ValueError, TypeError) as e:
+    logger.error(f"Failed to parse date: {date_string} - {e}")
+    # Return current time as fallback
+    return datetime.now(timezone.utc)
 
 def fetch_and_process_feeds(is_f1_feed: bool):
   # GET CONFIG
@@ -41,7 +52,7 @@ def fetch_and_process_feeds(is_f1_feed: bool):
 
     # Checks for None, empty string from server config, if null or empty then config date will be 1 day back
     if not config_date:
-      config_date = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%a, %d %b %Y %H:%M:%S %z")
+      config_date = parse_datetime_string(datetime.now(timezone.utc) - timedelta(days=1))
 
     logger.info(f"source: {feed_source} - date: {config_date} - url: {feed_url}")
 
@@ -63,7 +74,7 @@ def fetch_and_process_feeds(is_f1_feed: bool):
       entry["published"] = entry["published"].replace("GMT", "+0000")
 
     # Sort feeds by pubDate
-    entries = sorted(feeds.entries, key=lambda x: datetime.strptime(x["published"], "%a, %d %b %Y %H:%M:%S %z"))
+    entries = sorted(feeds.entries, key=lambda x: parse_date_safely(x["published"]))
     logger.info(f"source: {feed_source} - size: {len(entries)}")
 
     # if published date is present then parse based on date time

@@ -83,7 +83,7 @@ async def post_feed(is_f1_feed, feed, feed_source):
     feed_map['guid'] = feed.id
 
     # Convert to datetime object
-    dt = datetime.strptime(feed.published, "%a, %d %b %Y %H:%M:%S %z")
+    dt = parse_datetime_string(feed.published)
     # Convert datetime to ISO format string
     json_date = dt.isoformat()
     feed_map['pubDate'] = json_date

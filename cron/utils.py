@@ -1,6 +1,7 @@
 import os
 from datetime import datetime, timezone
 from dotenv import load_dotenv
+from dateutil import parser as date_parser
 
 # Load environment variables from .env file - this is for local setup of token
 load_dotenv()
@@ -71,13 +72,61 @@ url_to_id = {
     "https://flipboard.com/topic/motogp.rss":"flipboard",
 }
 
-def get_epoch(date_str) :
-    # Parse the date string using the appropriate format
-    dt = datetime.strptime(date_str, "%a, %d %b %Y %H:%M:%S %z")
+def parse_datetime_string(date_str: str) -> datetime:
+    """
+    Parse date string in multiple supported formats.
 
-    # Convert the datetime to an epoch timestamp
-    epoch_timestamp = dt.timestamp()
-    return epoch_timestamp
+    Supports:
+    - RFC 2822 format: "%a, %d %b %Y %H:%M:%S %z" (e.g., "Mon, 10 Feb 2026 19:16:24 +0100")
+    - ISO 8601 format: "%Y-%m-%dT%H:%M:%S%z" (e.g., "2026-02-10T19:16:24+0100")
+    - Flexible parsing via dateutil parser as fallback
+
+    Args:
+        date_str: Date string to parse
+
+    Returns:
+        datetime object with timezone info
+
+    Raises:
+        ValueError: If the date string cannot be parsed in any format
+    """
+    # Try the RFC 2822 format first
+    try:
+        return datetime.strptime(date_str, "%a, %d %b %Y %H:%M:%S %z")
+    except ValueError:
+        pass
+
+    # If that fails, try ISO 8601 format
+    try:
+        return datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S%z")
+    except ValueError:
+        pass
+
+    # If both fail, use dateutil parser for flexible parsing
+    try:
+        return date_parser.parse(date_str)
+    except Exception as e:
+        raise ValueError(f"Failed to parse date string '{date_str}': {e}")
+
+def get_epoch(date_str: str) -> int:
+    """
+    Convert date string to epoch timestamp.
+
+    Args:
+        date_str: Date string in supported formats
+
+    Returns:
+        Integer epoch timestamp (seconds since Unix epoch)
+    """
+    print(date_str)
+    try:
+        dt = parse_datetime_string(date_str)
+        return int(dt.timestamp())
+    except ValueError as e:
+        print(f"Failed to parse date: {date_str} - {e}")
+        # Return current epoch as fallback
+        return int(datetime.now(timezone.utc).timestamp())
+
 
 def get_current_epoch() :
     return str(int(datetime.now().timestamp() * 1000))
