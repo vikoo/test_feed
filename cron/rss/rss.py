@@ -52,7 +52,7 @@ def fetch_and_process_feeds(is_f1_feed: bool):
 
     # Checks for None, empty string from server config, if null or empty then config date will be 1 day back
     if not config_date:
-      config_date = parse_datetime_string(datetime.now(timezone.utc) - timedelta(days=1))
+      config_date = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
 
     logger.info(f"source: {feed_source} - date: {config_date} - url: {feed_url}")
 
