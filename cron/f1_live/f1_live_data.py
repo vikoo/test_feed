@@ -111,10 +111,10 @@ def scrape_f1_live_table() -> str:
         browser.close()
 
     # Save raw HTML snapshot
-    html_path = os.path.join(SCRIPT_DIR, "f1_live_page_snapshot.html")
-    with open(html_path, "w", encoding="utf-8") as f:
-        f.write(html)
-    logger.info(f"Raw HTML snapshot saved to {html_path}")
+    # html_path = os.path.join(SCRIPT_DIR, "f1_live_page_snapshot.html")
+    # with open(html_path, "w", encoding="utf-8") as f:
+    #     f.write(html)
+    # logger.info(f"Raw HTML snapshot saved to {html_path}")
 
     soup = BeautifulSoup(html, "html.parser")
     return json.dumps(_parse_table(soup), indent=2, ensure_ascii=False)

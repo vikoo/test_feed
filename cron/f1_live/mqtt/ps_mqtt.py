@@ -28,9 +28,22 @@ _tmp_cert_files: list[tempfile.NamedTemporaryFile] = []
 def _cert_from_env_or_file(env_var: str, fallback_path: str) -> str:
     """
     Return a filesystem path to the certificate content.
-    If *env_var* is set, decode its base64 value into a temp file and return that path.
-    Otherwise return *fallback_path* directly (local dev workflow).
+    Priority 1: local files in certs/ (for local development)
+    Priority 2: env vars (base64-encoded) via CI/GitHub Actions
+
+    Args:
+        env_var: Environment variable name for base64-encoded certificate
+        fallback_path: Path to local certificate file
+
+    Returns:
+        Path to the certificate file
     """
+    # Priority 1: Check for local file first
+    if os.path.exists(fallback_path):
+        logger.debug(f"Loaded {env_var} from file → {fallback_path}")
+        return fallback_path
+
+    # Priority 2: Fall back to environment variable
     b64 = os.environ.get(env_var)
     if b64:
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pem")
@@ -41,13 +54,11 @@ def _cert_from_env_or_file(env_var: str, fallback_path: str) -> str:
         logger.debug(f"Loaded {env_var} from environment variable → {tmp.name}")
         return tmp.name
 
-    if not os.path.exists(fallback_path):
-        raise FileNotFoundError(
-            f"Certificate not found. Set the {env_var!r} environment variable "
-            f"or place the file at: {fallback_path}"
-        )
-    logger.debug(f"Loaded {env_var} from file → {fallback_path}")
-    return fallback_path
+    # Neither local file nor env var found
+    raise FileNotFoundError(
+        f"Certificate not found. Place certificate at {fallback_path!r} "
+        f"or set the {env_var!r} environment variable with base64-encoded content"
+    )
 
 
 CA_CERT     = _cert_from_env_or_file(
@@ -56,16 +67,20 @@ CA_CERT     = _cert_from_env_or_file(
 )
 DEVICE_CERT = _cert_from_env_or_file(
     "MQTT_DEVICE_CERT",
-    os.path.join(_CERTS_DIR, "f09b447235130940b96864f11f4ace28e293746fade5c3875859cce42b7f1096-certificate.pem.crt"),
+    os.path.join(_CERTS_DIR, "device-certificate.pem.crt"),
 )
 PRIVATE_KEY = _cert_from_env_or_file(
     "MQTT_PRIVATE_KEY",
-    os.path.join(_CERTS_DIR, "f09b447235130940b96864f11f4ace28e293746fade5c3875859cce42b7f1096-private.pem.key"),
+    os.path.join(_CERTS_DIR, "device-private.pem.key"),
 )
 
 # ── Default topic ──────────────────────────────────────────────────────────────
 F1_LIVE_DATA_TOPIC = "f1/live"
 F1_LAP_BY_LAP_TOPIC = "f1/lap-by-lap"
+
+# ── Message retention ────────────────────────────────────────────────────────────
+# When True, broker retains last published message and sends to new subscribers
+RETAIN_LAST_MESSAGE = True  # Set to False to disable message retention
 
 
 # ── Callbacks ──────────────────────────────────────────────────────────────────
@@ -143,27 +158,41 @@ def publish(
     payload: dict | str,
     topic: str = F1_LIVE_DATA_TOPIC,
     qos: int = 1,
-    retain: bool = False,
+    retain: bool | None = None,
     client: mqtt.Client | None = None,
 ) -> None:
     """
-    Publish a single message and disconnect.
+    Publish a message to MQTT topic.
+
+    When retain=True, the broker keeps the last message and sends it to new subscribers.
+    This allows new clients to receive the latest data upon subscription.
 
     Args:
-        payload : dict (serialised to JSON) or raw string.
+        payload : dict (serialised to JSON), list, or raw string.
         topic   : MQTT topic string.
         qos     : Quality of service level (0 / 1 / 2).
-        retain  : Whether the broker should retain the message.
+        retain  : Whether to retain message (default uses RETAIN_LAST_MESSAGE setting).
         client  : Reuse an existing connected client, or None to create one.
     """
     _own_client = client is None
     if _own_client:
         client = build_client()  # blocks until connected
+    else:
+        logger.debug("Using provided persistent client connection")
 
-    body = json.dumps(payload, ensure_ascii=False) if isinstance(payload, dict) else payload
-    result = client.publish(topic, body, qos=qos, retain=retain)
-    result.wait_for_publish(timeout=10)
-    logger.info(f"Published to [{topic}]: {body}")
+    # Use default retention setting if not specified
+    if retain is None:
+        retain = RETAIN_LAST_MESSAGE
+
+    body = json.dumps(payload, ensure_ascii=False) if isinstance(payload, (dict, list)) else payload
+
+    try:
+        result = client.publish(topic, body, qos=qos, retain=retain)
+        result.wait_for_publish(timeout=10)
+        logger.info(f"Published to [{topic}] (retain={retain}): {body[:100]}...")
+    except Exception as e:
+        logger.error(f"Failed to publish: {e}")
+        raise
 
     if _own_client:
         client.loop_stop()
@@ -179,6 +208,9 @@ def subscribe(
     """
     Subscribe to *topic* and optionally block (loop_forever).
 
+    When a client subscribes to a topic with retained messages, the broker
+    automatically sends the last published (retained) message to the subscriber.
+
     Args:
         topic  : MQTT topic string (wildcards + / # supported).
         qos    : Quality of service level.
@@ -193,6 +225,7 @@ def subscribe(
 
     client.subscribe(topic, qos=qos)
     logger.info(f"Subscribed to [{topic}]")
+    logger.info(f"ℹ️  Waiting for retained message from broker (if available)...")
 
     if block:
         try:
@@ -202,6 +235,36 @@ def subscribe(
             client.disconnect()
 
     return client
+
+
+def get_subscription_info() -> dict:
+    """
+    Get information about message retention and subscriptions.
+
+    Note: AWS IoT Core doesn't expose real-time subscription counts via MQTT.
+    However, message retention ensures new subscribers get the latest data.
+
+    Returns:
+        Information about retention settings and usage
+    """
+    return {
+        "retention_enabled": RETAIN_LAST_MESSAGE,
+        "message_retention_description": (
+            "When enabled, the MQTT broker retains the last published message "
+            "for each topic and sends it to any new subscribers. This ensures "
+            "new clients always receive the latest data immediately upon subscription."
+        ),
+        "monitoring_note": (
+            "AWS IoT Core does not expose subscription counts via standard MQTT. "
+            "To monitor subscriptions, use AWS CloudWatch or enable AWS IoT Core logs."
+        ),
+        "how_it_works": {
+            "publisher": "Publishes message with retain=True → Broker stores it",
+            "new_subscriber_1": "Connects and subscribes → Receives retained message",
+            "new_subscriber_2": "Connects and subscribes → Also receives retained message",
+            "next_publish": "New message published → Replaces retained message, sent to all subscribers"
+        }
+    }
 
 
 # ── Quick smoke-test ───────────────────────────────────────────────────────────
