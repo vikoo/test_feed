@@ -260,7 +260,7 @@ def publish_f1_live_data(client) -> bool:
     """
     try:
         logger.info("🏎️  Scraping F1 live timing data...")
-        json_str = ""#scrape_f1_live_table()
+        json_str = scrape_f1_live_table()
         records = json.loads(json_str)
 
         if not records:
