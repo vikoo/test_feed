@@ -2,13 +2,19 @@
 
 ## Virtual Environment Setup
 
-A Python virtual environment (venv) has been created for this project. Follow these steps to use it:
+Create a virtual environment once per clone if you do not already have `venv/`:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r cron/requirements.txt
+```
 
 ### 1. Activate the Virtual Environment
 
 ```bash
-# Navigate to project root
-cd /Users/vivekvekariya/Desktop/VIK/PS/PS/feed
+# Navigate to repository root (folder that contains README.md and cron/)
+cd /path/to/your/test_feed
 
 # Activate the virtual environment
 source venv/bin/activate
@@ -86,6 +92,27 @@ python cron/weather/weather.py
 ```
 This will fetch weather data for upcoming Grand Prix events.
 
+#### 4. F1 live data publisher (optional)
+
+Continuous scrape of F1 live timing and publish to AWS IoT Core MQTT. Needs the same venv, plus Playwright browsers and MQTT certificates.
+
+```bash
+playwright install chromium
+```
+
+TLS for MQTT (pick one):
+
+- **Files:** put `AmazonRootCA1.pem`, `device-certificate.pem.crt`, and `device-private.pem.key` under `cron/f1_live/certs/` (paths match `cron/f1_live/mqtt/ps_mqtt.py`), or
+- **Environment:** set `MQTT_CA_CERT`, `MQTT_DEVICE_CERT`, and `MQTT_PRIVATE_KEY` (base64-encoded PEM), as in GitHub Actions secrets for [`.github/workflows/f1_live_data.yml`](.github/workflows/f1_live_data.yml).
+
+Run from repository root with `PYTHONPATH=.` set:
+
+```bash
+python cron/f1_live/f1_live_data_publisher.py
+```
+
+Same flow as CI: `python -m cron.f1_live.f1_live_data_publisher` from the repository root.
+
 ---
 
 ## Environment Variables
@@ -146,6 +173,13 @@ source venv/bin/activate
 pip install -r cron/requirements.txt
 ```
 
+### Accidentally committed `venv/`
+`venv/` must stay local. Add `venv/` to `.gitignore` (already in repo), then remove tracking without deleting files:
+
+```bash
+git rm -r --cached venv
+```
+
 ### Module Import Errors
 Make sure:
 1. The virtual environment is activated (check for `(venv)` in prompt)
@@ -163,8 +197,8 @@ pip install -r cron/requirements.txt --force-reinstall
 ## Development Workflow
 
 ```bash
-# 1. Navigate to project
-cd /Users/vivekvekariya/Desktop/VIK/PS/PS/feed
+# 1. Navigate to repository root
+cd /path/to/your/test_feed
 
 # 2. Activate venv
 source venv/bin/activate

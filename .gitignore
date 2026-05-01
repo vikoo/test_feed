@@ -4,6 +4,9 @@ docs/
 grafana-dashboards/
 .idea
 
+# Local Python virtual environment (create with: python3 -m venv venv)
+venv/
+
 # AWS IoT certificates — stored as GitHub Secrets / .env, never commit
 cron/f1_live/certs/*.pem
 cron/f1_live/certs/*.crt

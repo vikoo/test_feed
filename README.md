@@ -43,8 +43,8 @@ For detailed setup instructions, see [SETUP.md](SETUP.md)
 
 ### Requirements
 - Python 3.8+
-- Virtual environment (already configured)
-- Dependencies in `cron/requirements.txt`
+- A local virtual environment (`python3 -m venv venv` then `pip install -r cron/requirements.txt`; see [SETUP.md](SETUP.md))
+- Dependencies listed in `cron/requirements.txt`
 
 ### Environment Variables
 
@@ -57,23 +57,25 @@ MOTO_GP_TOKEN=your_token_here
 
 ## Project Structure
 
+Repository root (your clone folder, for example `test_feed/`):
+
 ```
-feed/
-├── activate.sh              # Quick activation script
-├── venv/                    # Virtual environment
+├── activate.sh              # Activates venv and sets PYTHONPATH
+├── venv/                    # Local only; create per SETUP.md; gitignored
 ├── cron/
 │   ├── rss/                 # RSS feed processing
 │   ├── weather/             # Weather data handling
+│   ├── f1_live/             # F1 live timing scrape + MQTT publisher
 │   ├── strapi_api/          # API integration
 │   ├── utils.py             # Shared utilities
-│   └── requirements.txt      # Dependencies
+│   └── requirements.txt     # Dependencies
 ├── SETUP.md                 # Detailed setup guide
 └── README.md                # This file
 ```
 
 ## Recent Updates
 
-- ✅ Virtual environment configured
+- ✅ Local `venv/` documented and ignored by Git (never commit the virtualenv)
 - ✅ Added `python-dateutil` for flexible date parsing
 - ✅ Enhanced `fetch_primary_image()` with retry logic and browser headers
 - ✅ Created setup documentation and activation script
