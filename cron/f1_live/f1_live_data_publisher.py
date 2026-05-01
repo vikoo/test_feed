@@ -22,7 +22,7 @@ from mqtt.ps_mqtt import build_client, publish, F1_LIVE_DATA_TOPIC
 
 # Configuration
 PUBLISH_INTERVAL = 5  # seconds (60 for production, 10 for testing)
-USE_FALLBACK_DATA = True  # Set to True to send fallback data when no live data is available, False to skip publish
+USE_FALLBACK_DATA = False  # Set to True to send fallback data when no live data is available, False to skip publish
 
 # Persistent MQTT client (reused for all publishes)
 mqtt_client = None
