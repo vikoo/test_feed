@@ -280,7 +280,7 @@ def publish_f1_live_data(client) -> bool:
             topic=F1_LIVE_DATA_TOPIC,
             qos=1,
             client=client,
-            retain=True
+            retain=False
         )
 
         logger.info(f"✅ Successfully published {len(records)} records to AWS IoT Core")
