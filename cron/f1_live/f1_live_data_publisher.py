@@ -10,6 +10,12 @@ Usage:
 
 import json
 import time
+import sys
+import os
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from loguru import logger
 from f1_live_data import scrape_f1_live_table
 from mqtt.ps_mqtt import build_client, publish, F1_LIVE_DATA_TOPIC

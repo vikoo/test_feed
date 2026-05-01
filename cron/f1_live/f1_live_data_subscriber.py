@@ -14,6 +14,12 @@ Usage:
 
 import json
 import time
+import sys
+import os
+
+# Add current directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from loguru import logger
 from mqtt.ps_mqtt import build_client, F1_LIVE_DATA_TOPIC
 
