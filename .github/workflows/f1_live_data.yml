@@ -1,4 +1,4 @@
-name: F1 Lvie data
+name: F1 Live data
 
 on:
   schedule:
@@ -33,4 +33,4 @@ jobs:
           MQTT_CA_CERT: ${{ secrets.MQTT_CA_CERT }}
           MQTT_DEVICE_CERT: ${{ secrets.MQTT_DEVICE_CERT }}
           MQTT_PRIVATE_KEY: ${{ secrets.MQTT_PRIVATE_KEY }}
-        run: python -m cron.f1_live.mqtt.ps_mqtt
+        run: python -m cron.f1_live.f1_live_data_publisher
