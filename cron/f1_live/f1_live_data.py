@@ -89,23 +89,38 @@ def scrape_f1_live_table() -> str:
     logger.info(f"Launching headless browser to scrape: {URL}")
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        browser = p.chromium.launch(
+            headless=True,
+            args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+        )
         page = browser.new_page(
             user_agent=(
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                "Mozilla/5.0 (X11; Linux x86_64) "
                 "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/122.0.0.0 Safari/537.36"
-            )
+                "Chrome/125.0.0.0 Safari/537.36"
+            ),
+            viewport={"width": 1920, "height": 1080},
         )
 
         logger.info("Navigating to page...")
-        page.goto(URL, wait_until="networkidle", timeout=60_000)
+        page.goto(URL, wait_until="domcontentloaded", timeout=60_000)
 
+        # Dismiss cookie/consent banners if present
+        for selector in ["button:has-text('Accept')", "button:has-text('agree')", "[id*='accept']"]:
+            try:
+                page.click(selector, timeout=3_000)
+                logger.info(f"Dismissed consent banner via: {selector}")
+                break
+            except Exception:
+                pass
+
+        # Wait for dynamic content to render
         try:
-            page.wait_for_selector(f'table.{TABLE_CLASS.replace(" ", ".")}', timeout=30_000)
+            page.wait_for_selector(f'table.{TABLE_CLASS.replace(" ", ".")}', timeout=45_000)
             logger.info("Table found in DOM.")
         except Exception:
-            logger.warning("Table selector timed out – attempting to parse whatever is rendered.")
+            logger.warning("Table selector timed out – waiting extra time for JS render...")
+            page.wait_for_timeout(10_000)
 
         html = page.content()
         browser.close()

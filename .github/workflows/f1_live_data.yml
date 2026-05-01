@@ -27,7 +27,7 @@ jobs:
       - name: Install Playwright browsers
         run: |
           pip install playwright
-          playwright install chromium
+          playwright install --with-deps chromium
 
       - name: Run Python script for F1 Live data
         env:
