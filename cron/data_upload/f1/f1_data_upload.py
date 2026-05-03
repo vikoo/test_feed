@@ -6,6 +6,7 @@ from cron.stats_calc.f1.f1_stats_update import process_update_f1_stats
 from cron.strapi_api.apis import get_latest_past_race, get_race_results_for_race_event, get_season_grid_map, \
     create_race_result, update_config_for_race_result, get_fastest_laps_for_gp, create_fastest_lap, clear_server_cache
 import json
+import time
 from loguru import logger
 
 from cron.utils import f1_graphql_token
@@ -24,85 +25,92 @@ def process():
     q2_id   = races[1]["id"] if len(races) > 1 else None
     q1_id   = races[2]["id"] if len(races) > 2 else None
 
-    if race_id:
-        race_type = json_data["data"]["races"]["data"][0]["attributes"]["type"]
-        grand_prix = json_data["data"]["races"]["data"][0]["attributes"]["grandPrix"]["data"]
-        logger.info(f"race_id: {race_id} --- race_type: {race_type}")
-        strapi_races = get_race_results_for_race_event(is_f1_feed=True, race_id=race_id)
-        race_result_count = len(strapi_races['data']['raceResults']['data'])
-        logger.info(f"race_result_count from strapi: {race_result_count}")
-
-        gp_id = grand_prix.get("id")
-        logger.info(f"gp_id: {gp_id}")
-
-        year = json_data["data"]["races"]["data"][0]["attributes"]["grandPrix"]["data"]["attributes"]["season"]["data"]["attributes"]["year"]
-        site_event_id = json_data["data"]["races"]["data"][0]["attributes"]["grandPrix"]["data"]["attributes"]["siteEventId"]
-        event_name = json_data["data"]["races"]["data"][0]["attributes"]["grandPrix"]["data"]["attributes"]["shortName"]
-        session_type = json_data["data"]["races"]["data"][0]["attributes"]["type"]
-
-        logger.info(f"year: {year}, event_name: {event_name}, session_type: {session_type} site_event_id: {site_event_id}")
-
-
-        if race_result_count == 0:
-
-            if race_type not in (qualifying_1, qualifying_2, sprint_qualifying_1, sprint_qualifying_2) :
-                logger.info("proceeding ahead to fetch the data")
-                race_identifier = race_type_to_url_map[race_type]
-                logger.info(f"race_identifier: {race_identifier}")
-                f1_url = site_event_id + race_identifier
-                logger.info(f"f1_url: {f1_url}")
-                season_grid_map = get_season_grid_map(is_f1_feed=True, season=year)
-                rows = fetch_race_results(f1_url, season_grid_map, race_id, race_type, year, q2_id, q1_id)
-                if len(rows) < 10:
-                    logger.warning(f"Insufficient race results fetched for URL: {f1_url}. Expected at least 10, got {len(rows)}.")
-                    return
-                for row in rows:
-                    create_race_result(is_f1_feed=True, json_str=json.dumps(row))
-
-                update_config_for_race_result(is_f1_feed=True, gp_id=gp_id)
-                # update stats after data upload
-                logger.info("######################")
-                logger.info(f"updating stats for year: {year}")
-                process_update_f1_stats(season_year=year)
-                # send notification
-                logger.info("######################")
-                logger.info(f"sending race complete notification for year: {year}")
-                send_race_complete_notification(is_f1=True, race_type=race_type, grand_prix=grand_prix)
-                clear_server_cache()
-
-        else:
-            logger.info("race results already present in strapi. no action needed.")
-
-        # check and upload fastest lap data if this is the main race
-        if race_type == main_race:
-            logger.info("checking for fastest lap data to be uploaded...")
-            fastest_laps_data = get_fastest_laps_for_gp(is_f1_feed=True, gp_id=gp_id)
-            fastest_laps_count = len(fastest_laps_data['data']['fastestLaps']['data'])
-
-            if fastest_laps_count == 0:
-                logger.info("no fastest lap data found for this gp. fetching and uploading now...")
-                race_type = fastest_laps
-                race_identifier = race_type_to_url_map[race_type]
-                logger.info(f"race_identifier: {race_identifier}")
-                f1_url = site_event_id + race_identifier
-                logger.info(f"f1_url: {f1_url}")
-                season_grid_map = get_season_grid_map(is_f1_feed=True, season=year)
-                rows = fetch_race_results(f1_url, season_grid_map, race_id, race_type, year, q2_id, q1_id)
-                if len(rows) < 10:
-                    logger.warning(f"Insufficient race results fetched for URL: {f1_url}. Expected at least 10, got {len(rows)}.")
-                    return
-                for row in rows:
-                    create_fastest_lap(is_f1_feed=True, json_str=json.dumps(row))
-
-                update_config_for_race_result(is_f1_feed=True, gp_id=gp_id)
-                # update stats after data upload
-                logger.info("######################")
-                logger.info(f"updating stats for year: {year} as fastest laps data uploaded")
-                process_update_f1_stats(season_year=year)
-
-
-    else :
+    if not race_id:
         logger.warning("No race id found")
+        return
+
+    race_type = json_data["data"]["races"]["data"][0]["attributes"]["type"]
+    grand_prix = json_data["data"]["races"]["data"][0]["attributes"]["grandPrix"]["data"]
+    logger.info(f"race_id: {race_id} --- race_type: {race_type}")
+    strapi_races = get_race_results_for_race_event(is_f1_feed=True, race_id=race_id)
+    race_result_count = len(strapi_races['data']['raceResults']['data'])
+    logger.info(f"race_result_count from strapi: {race_result_count}")
+
+    gp_id = grand_prix.get("id")
+    logger.info(f"gp_id: {gp_id}")
+
+    year = json_data["data"]["races"]["data"][0]["attributes"]["grandPrix"]["data"]["attributes"]["season"]["data"]["attributes"]["year"]
+    site_event_id = json_data["data"]["races"]["data"][0]["attributes"]["grandPrix"]["data"]["attributes"]["siteEventId"]
+    event_name = json_data["data"]["races"]["data"][0]["attributes"]["grandPrix"]["data"]["attributes"]["shortName"]
+    session_type = json_data["data"]["races"]["data"][0]["attributes"]["type"]
+
+    logger.info(f"year: {year}, event_name: {event_name}, session_type: {session_type} site_event_id: {site_event_id}")
+
+    # Tracks whether any new data was uploaded this run, so we can
+    # fire cache-clear + notification exactly once at the end.
+    did_upload = False
+    original_race_type = race_type  # preserve before any reassignment below
+
+    # ── Block 1: main race results / regular race results ──────────────────
+    if race_result_count == 0:
+        if race_type not in (qualifying_1, qualifying_2, sprint_qualifying_1, sprint_qualifying_2):
+            logger.info("proceeding ahead to fetch the data")
+            race_identifier = race_type_to_url_map[race_type]
+            logger.info(f"race_identifier: {race_identifier}")
+            f1_url = site_event_id + race_identifier
+            logger.info(f"f1_url: {f1_url}")
+            season_grid_map = get_season_grid_map(is_f1_feed=True, season=year)
+            rows = fetch_race_results(f1_url, season_grid_map, race_id, race_type, year, q2_id, q1_id)
+            if len(rows) < 10:
+                logger.warning(f"Insufficient race results fetched for URL: {f1_url}. Expected at least 10, got {len(rows)}.")
+                return
+            for row in rows:
+                create_race_result(is_f1_feed=True, json_str=json.dumps(row))
+
+            update_config_for_race_result(is_f1_feed=True, gp_id=gp_id)
+            logger.info("######################")
+            logger.info(f"updating stats for year: {year}")
+            process_update_f1_stats(season_year=year)
+            did_upload = True
+
+    else:
+        logger.info("race results already present in strapi. no action needed.")
+
+    # ── Block 2: fastest laps (main race only) ─────────────────────────────
+    if original_race_type == main_race:
+        logger.info("checking for fastest lap data to be uploaded...")
+        fastest_laps_data = get_fastest_laps_for_gp(is_f1_feed=True, gp_id=gp_id)
+        fastest_laps_count = len(fastest_laps_data['data']['fastestLaps']['data'])
+
+        if fastest_laps_count == 0:
+            logger.info("no fastest lap data found for this gp. fetching and uploading now...")
+            fl_race_identifier = race_type_to_url_map[fastest_laps]  # no reassignment of race_type
+            logger.info(f"race_identifier: {fl_race_identifier}")
+            f1_url = site_event_id + fl_race_identifier
+            logger.info(f"f1_url: {f1_url}")
+            season_grid_map = get_season_grid_map(is_f1_feed=True, season=year)
+            rows = fetch_race_results(f1_url, season_grid_map, race_id, fastest_laps, year, q2_id, q1_id)
+            if len(rows) < 10:
+                logger.warning(f"Insufficient race results fetched for URL: {f1_url}. Expected at least 10, got {len(rows)}.")
+                return
+            for row in rows:
+                create_fastest_lap(is_f1_feed=True, json_str=json.dumps(row))
+
+            update_config_for_race_result(is_f1_feed=True, gp_id=gp_id)
+            logger.info("######################")
+            logger.info(f"updating stats for year: {year} as fastest laps data uploaded")
+            process_update_f1_stats(season_year=year)
+            did_upload = True
+
+    # ── Final step: cache clear + notification (once, after all uploads) ───
+    if did_upload:
+        logger.info("All uploads complete. Waiting 30s before clearing server cache...")
+        time.sleep(30)
+        clear_server_cache()
+        logger.info("Server cache cleared. Waiting 10s before sending notification...")
+        time.sleep(10)
+        logger.info(f"Sending race complete notification for year: {year}")
+        send_race_complete_notification(is_f1=True, race_type=original_race_type, grand_prix=grand_prix)
 
 
 if __name__ == "__main__":
