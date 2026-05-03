@@ -6,6 +6,7 @@ from cron.stats_calc.f1.f1_stats_update import process_update_f1_stats
 from cron.strapi_api.apis import get_latest_past_race, get_race_results_for_race_event, get_season_grid_map, \
     create_race_result, update_config_for_race_result, get_fastest_laps_for_gp, create_fastest_lap, clear_server_cache
 import json
+import time
 from loguru import logger
 
 from cron.utils import f1_graphql_token
@@ -64,11 +65,20 @@ def process():
                 logger.info("######################")
                 logger.info(f"updating stats for year: {year}")
                 process_update_f1_stats(season_year=year)
-                # send notification
+                
+                # send notification with timing
                 logger.info("######################")
+                logger.info("waiting 30 seconds before clearing cache and sending notification...")
+                time.sleep(30)
+                
+                logger.info("clearing server cache...")
+                clear_server_cache()
+                
+                logger.info("waiting 10 seconds before sending race complete notification...")
+                time.sleep(10)
+                
                 logger.info(f"sending race complete notification for year: {year}")
                 send_race_complete_notification(is_f1=True, race_type=race_type, grand_prix=grand_prix)
-                clear_server_cache()
 
         else:
             logger.info("race results already present in strapi. no action needed.")
@@ -99,6 +109,10 @@ def process():
                 logger.info("######################")
                 logger.info(f"updating stats for year: {year} as fastest laps data uploaded")
                 process_update_f1_stats(season_year=year)
+                
+                # clear cache after fastest laps upload
+                logger.info("clearing server cache after fastest laps data upload...")
+                clear_server_cache()
 
 
     else :
