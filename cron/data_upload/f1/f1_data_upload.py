@@ -110,7 +110,7 @@ def process():
                 logger.info(f"updating stats for year: {year} as fastest laps data uploaded")
                 process_update_f1_stats(season_year=year)
                 
-                # clear cache after fastest laps upload
+                # clear cache after all fastest laps data upload completes
                 logger.info("clearing server cache after fastest laps data upload...")
                 clear_server_cache()
 
