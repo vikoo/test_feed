@@ -3,13 +3,13 @@
     "grandPrixes": {
       "data": [
         {
-          "id": "48",
+          "id": "49",
           "attributes": {
-            "name": "FRANCE  GP 26",
-            "startDate": "2026-05-08T08:45:00.000Z",
-            "fullName": "LE MANS",
-            "endDate": "2026-05-10T13:15:00.000Z",
-            "round": "05",
+            "name": "CATALONIA GP 26",
+            "startDate": "2026-05-15T08:45:00.000Z",
+            "fullName": "BARCELONA",
+            "endDate": "2026-05-17T13:00:00.000Z",
+            "round": "06",
             "season": {
               "data": {
                 "attributes": {
@@ -19,16 +19,16 @@
             },
             "track": {
               "data": {
-                "id": "6",
+                "id": "7",
                 "attributes": {
-                  "name": "Le Mans",
-                  "imageOutline": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/tracks/lemans_france.png",
-                  "image": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/wheelie/tracks/detailed/lemans_france.png",
+                  "name": "Circuit de Barcelona-Catalunya",
+                  "imageOutline": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/tracks/catalonia_spain.png",
+                  "image": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/wheelie/tracks/detailed/barcelona_catalunya.png",
                   "imageFancy": null,
-                  "city": "Le Mans",
-                  "country": "France",
-                  "latitude": 47.95646669687018,
-                  "longitude": 0.20821811581208785
+                  "city": "Barcelona",
+                  "country": "Catalonia",
+                  "latitude": 41.5697862727641,
+                  "longitude": 2.2582724648503176
                 }
               }
             }
