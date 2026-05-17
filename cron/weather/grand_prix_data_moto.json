@@ -3,13 +3,13 @@
     "grandPrixes": {
       "data": [
         {
-          "id": "49",
+          "id": "50",
           "attributes": {
-            "name": "CATALONIA GP 26",
-            "startDate": "2026-05-15T08:45:00.000Z",
-            "fullName": "BARCELONA",
-            "endDate": "2026-05-17T13:00:00.000Z",
-            "round": "06",
+            "name": "ITALY GP 26",
+            "startDate": "2026-05-29T06:00:00.000Z",
+            "fullName": "MUGELLO",
+            "endDate": "2026-05-31T16:00:00.000Z",
+            "round": "07",
             "season": {
               "data": {
                 "attributes": {
@@ -19,16 +19,16 @@
             },
             "track": {
               "data": {
-                "id": "7",
+                "id": "8",
                 "attributes": {
-                  "name": "Circuit de Barcelona-Catalunya",
-                  "imageOutline": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/tracks/catalonia_spain.png",
-                  "image": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/wheelie/tracks/detailed/barcelona_catalunya.png",
+                  "name": "Autodromo Internazionale del Mugello",
+                  "imageOutline": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/tracks/mugello_italy.png",
+                  "image": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/wheelie/tracks/detailed/mugello_italy.png",
                   "imageFancy": null,
-                  "city": "Barcelona",
-                  "country": "Catalonia",
-                  "latitude": 41.5697862727641,
-                  "longitude": 2.2582724648503176
+                  "city": "MUGELLO",
+                  "country": "Italy",
+                  "latitude": 43.991144810200765,
+                  "longitude": 11.370570690048549
                 }
               }
             }
