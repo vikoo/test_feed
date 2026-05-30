@@ -88,9 +88,9 @@ def convert_strapi_races_to_driver_map(strapi_races):
 
 def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year, driver_number_to_id_map=None):
     official = moto_gp_race_results.get("official", False)
-    if not official:
-        logger.error("official results not found in MotoGP API response. skipping upload.")
-        return
+    # if not official:
+    #     logger.error("official results not found in MotoGP API response. skipping upload.")
+    #     return
 
     classification = moto_gp_race_results.get("classification", [])
     records = moto_gp_race_results.get("records", [])
