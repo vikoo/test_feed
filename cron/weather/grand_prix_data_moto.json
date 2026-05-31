@@ -1,1 +1,129 @@
-""
+{
+  "data": {
+    "grandPrixes": {
+      "data": [
+        {
+          "id": "51",
+          "attributes": {
+            "name": "HUNGARY GP 26",
+            "startDate": "2026-06-05T08:45:00.000Z",
+            "fullName": "BALATON",
+            "endDate": "2026-06-07T12:45:00.000Z",
+            "round": "08",
+            "season": {
+              "data": {
+                "attributes": {
+                  "year": "2026"
+                }
+              }
+            },
+            "track": {
+              "data": {
+                "id": "23",
+                "attributes": {
+                  "name": "Balaton Park",
+                  "imageOutline": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/tracks/balaton_hungary.png",
+                  "image": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/wheelie/tracks/detailed/balaton_hungary.png",
+                  "imageFancy": null,
+                  "city": "Balaton",
+                  "country": "Hungary",
+                  "latitude": 47.0077160207219,
+                  "longitude": 18.200775418790926
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "races": {
+      "data": [
+        {
+          "id": "517",
+          "attributes": {
+            "type": "PRACTICE",
+            "startTime": "2026-06-05T13:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "51"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "32"
+              }
+            }
+          }
+        },
+        {
+          "id": "519",
+          "attributes": {
+            "type": "QNR1",
+            "startTime": "2026-06-06T08:50:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "51"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "33"
+              }
+            }
+          }
+        },
+        {
+          "id": "520",
+          "attributes": {
+            "type": "QNR2",
+            "startTime": "2026-06-06T09:15:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "51"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "34"
+              }
+            }
+          }
+        },
+        {
+          "id": "521",
+          "attributes": {
+            "type": "Sprint",
+            "startTime": "2026-06-06T13:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "51"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "35"
+              }
+            }
+          }
+        },
+        {
+          "id": "522",
+          "attributes": {
+            "type": "Race",
+            "startTime": "2026-06-07T12:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "51"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "36"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
