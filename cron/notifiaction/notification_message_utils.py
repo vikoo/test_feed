@@ -4,9 +4,19 @@ from loguru import logger
 def get_title_body_for_notification(grand_prix, race_type):
     gp_id = grand_prix["id"]
     gp_name = grand_prix["attributes"]["name"]
-    gp_name =remove_year(gp_name)
-    gp_track = grand_prix["attributes"]["track"]["data"]["attributes"]["name"]
-    gp_country = grand_prix["attributes"]["track"]["data"]["attributes"]["country"]
+    gp_name = remove_year(gp_name)
+    
+    # Safely extract track and country information
+    track_data = grand_prix.get("attributes", {}).get("track", {}).get("data")
+    if not track_data:
+        raise ValueError(f"Track data is missing for grand_prix id: {gp_id}")
+    
+    gp_track = track_data.get("attributes", {}).get("name")
+    gp_country = track_data.get("attributes", {}).get("country")
+    
+    if not gp_track or not gp_country:
+        raise ValueError(f"Track name or country is missing for grand_prix id: {gp_id}")
+    
     logger.info(f"grand_prix: {gp_name} at {gp_track} (id: {gp_id}), race type: {race_type}, country: {gp_country}")
     if race_type == 'Q3':
         race_type = "Qualifying"
