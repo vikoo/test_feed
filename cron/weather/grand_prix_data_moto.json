@@ -1,1 +1,129 @@
-""
+{
+  "data": {
+    "grandPrixes": {
+      "data": [
+        {
+          "id": "53",
+          "attributes": {
+            "name": "NETHERLANDS GP 26",
+            "startDate": "2026-06-26T08:45:00.000Z",
+            "fullName": "ASSEN",
+            "endDate": "2026-06-28T12:45:00.000Z",
+            "round": "10",
+            "season": {
+              "data": {
+                "attributes": {
+                  "year": "2026"
+                }
+              }
+            },
+            "track": {
+              "data": {
+                "id": "9",
+                "attributes": {
+                  "name": "TT Circuit Assen",
+                  "imageOutline": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/tracks/assen_netherlands.png",
+                  "image": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/wheelie/tracks/detailed/assen_netherlands.png",
+                  "imageFancy": null,
+                  "city": "Assen",
+                  "country": "Netherlands",
+                  "latitude": 52.95844358641277,
+                  "longitude": 6.522374175918795
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "races": {
+      "data": [
+        {
+          "id": "531",
+          "attributes": {
+            "type": "PRACTICE",
+            "startTime": "2026-06-26T13:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "53"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "42"
+              }
+            }
+          }
+        },
+        {
+          "id": "533",
+          "attributes": {
+            "type": "QNR1",
+            "startTime": "2026-06-27T08:50:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "53"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "43"
+              }
+            }
+          }
+        },
+        {
+          "id": "534",
+          "attributes": {
+            "type": "QNR2",
+            "startTime": "2026-06-27T09:15:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "53"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "44"
+              }
+            }
+          }
+        },
+        {
+          "id": "535",
+          "attributes": {
+            "type": "Sprint",
+            "startTime": "2026-06-27T13:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "53"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "45"
+              }
+            }
+          }
+        },
+        {
+          "id": "536",
+          "attributes": {
+            "type": "Race",
+            "startTime": "2026-06-28T12:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "53"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "46"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
