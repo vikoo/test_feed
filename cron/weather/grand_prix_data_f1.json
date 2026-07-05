@@ -1,1 +1,129 @@
-""
+{
+  "data": {
+    "grandPrixes": {
+      "data": [
+        {
+          "id": "83",
+          "attributes": {
+            "name": "Belgium GP 26",
+            "startDate": "2026-07-17T11:30:00.000Z",
+            "fullName": "2026 Belgian Grand Prix",
+            "endDate": "2026-07-19T14:30:00.000Z",
+            "round": "10",
+            "season": {
+              "data": {
+                "attributes": {
+                  "year": "2026"
+                }
+              }
+            },
+            "track": {
+              "data": {
+                "id": "17",
+                "attributes": {
+                  "name": "Circuit de Spa-Francorchamps",
+                  "imageOutline": "https://media.formula1.com/image/upload/content/dam/fom-website/2018-redesign-assets/Track%20icons%204x3/Belgium%20carbon.png.transform/3col-retina/image.png",
+                  "image": "https://media.formula1.com/image/upload/c_fit,h_704/q_auto/v1740000000/common/f1/2026/track/2026trackspafrancorchampsdetailed.webp",
+                  "imageFancy": null,
+                  "city": "Spa-Francorchamps",
+                  "country": "Belgium",
+                  "latitude": 50.44381892165345,
+                  "longitude": 5.96664399510067
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "races": {
+      "data": [
+        {
+          "id": "566",
+          "attributes": {
+            "type": "Q1",
+            "startTime": "2026-07-18T14:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "83"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "57"
+              }
+            }
+          }
+        },
+        {
+          "id": "569",
+          "attributes": {
+            "type": "Race",
+            "startTime": "2026-07-19T13:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "83"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "58"
+              }
+            }
+          }
+        },
+        {
+          "id": "573",
+          "attributes": {
+            "type": "Q1",
+            "startTime": "2026-07-25T14:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "84"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "59"
+              }
+            }
+          }
+        },
+        {
+          "id": "576",
+          "attributes": {
+            "type": "Race",
+            "startTime": "2026-07-26T13:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "84"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "60"
+              }
+            }
+          }
+        },
+        {
+          "id": "679",
+          "attributes": {
+            "type": "SQ1",
+            "startTime": "2026-08-21T14:30:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "85"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "61"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
