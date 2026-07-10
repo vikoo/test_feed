@@ -116,7 +116,7 @@ def process_feed(is_f1_feed: bool, feed, feed_source):
 
 
 if __name__ == "__main__":
-  logger.info("------------- FETCHING F1 FEEDS ------------------")
-  fetch_and_process_feeds(True)
+  # logger.info("------------- FETCHING F1 FEEDS ------------------")
+  # fetch_and_process_feeds(True)
   logger.info("------------- FETCHING MOTO GP FEEDS ------------------")
   fetch_and_process_feeds(False)

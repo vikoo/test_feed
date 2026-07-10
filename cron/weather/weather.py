@@ -91,7 +91,7 @@ def load_grand_prix(is_for_f1: bool) :
 
 
 if __name__ == "__main__":
-    logger.info("------------- FETCHING F1 Weather ------------------")
-    load_grand_prix(is_for_f1=True)
+    # logger.info("------------- FETCHING F1 Weather ------------------")
+    # load_grand_prix(is_for_f1=True)
     logger.info("------------- FETCHING Moto GP Weather ------------------")
     load_grand_prix(is_for_f1=False)

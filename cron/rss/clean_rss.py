@@ -88,18 +88,18 @@ def fetch_and_clean_vote_counts(is_f1_feed: bool):
 
 
 if __name__ == "__main__":
-  logger.info("------------- FETCHING F1 FEEDS ------------------")
+  # logger.info("------------- FETCHING F1 FEEDS ------------------")
   locales_updated = locales
-  locales_updated.add("en")
-  for locale in locales_updated:
-    fetch_and_clean_feeds(True, lang= locale)
+  # locales_updated.add("en")
+  # for locale in locales_updated:
+  #   fetch_and_clean_feeds(True, lang= locale)
   logger.info("------------- FETCHING MOTO GP FEEDS ------------------")
   for locale in locales_updated:
     fetch_and_clean_feeds(False, lang= locale)
   logger.info("------------- Cleaning Votes ------------------")
-  logger.info("------------- FETCHING F1 votes ------------------")
-  fetch_and_clean_votes(True)
-  fetch_and_clean_vote_counts(True)
+  # logger.info("------------- FETCHING F1 votes ------------------")
+  # fetch_and_clean_votes(True)
+  # fetch_and_clean_vote_counts(True)
   logger.info("------------- FETCHING MOTO GP votes ------------------")
   fetch_and_clean_votes(False)
   fetch_and_clean_vote_counts(False)
