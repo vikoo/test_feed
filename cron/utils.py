@@ -13,7 +13,7 @@ load_dotenv()
 # f1_graphql_token = os.getenv("F1_TEST_TOKEN")
 f1_graphql_end_point = "https://apiv2.purplesector.club/graphql"
 f1_graphql_token = os.getenv("F1_TOKEN")
-moto_graphql_end_point = "https://api.wheelie.club/graphql"
+moto_graphql_end_point = "https://api.wheelie.digisaint.com/graphql"
 moto_graphql_token = os.getenv("MOTO_GP_TOKEN")
 
 locales = {"de", "es", "fr", "it", "ja", "pt", "ru", "ko", "zh"}
