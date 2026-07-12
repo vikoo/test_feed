@@ -1,1 +1,129 @@
-""
+{
+  "data": {
+    "grandPrixes": {
+      "data": [
+        {
+          "id": "55",
+          "attributes": {
+            "name": "GREAT BRITAIN GP 26",
+            "startDate": "2026-08-07T10:45:00.000Z",
+            "fullName": "SILVERSTONE",
+            "endDate": "2026-08-09T12:45:00.000Z",
+            "round": "12",
+            "season": {
+              "data": {
+                "attributes": {
+                  "year": "2026"
+                }
+              }
+            },
+            "track": {
+              "data": {
+                "id": "11",
+                "attributes": {
+                  "name": "Silverstone Circuit",
+                  "imageOutline": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/tracks/silverstone_uk.png",
+                  "image": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/wheelie/tracks/detailed/sliverstone_uk.png",
+                  "imageFancy": null,
+                  "city": "Silverstone",
+                  "country": "UK",
+                  "latitude": 52.06822859148499,
+                  "longitude": -1.0229500864301961
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "races": {
+      "data": [
+        {
+          "id": "545",
+          "attributes": {
+            "type": "PRACTICE",
+            "startTime": "2026-08-07T15:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "55"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "52"
+              }
+            }
+          }
+        },
+        {
+          "id": "547",
+          "attributes": {
+            "type": "QNR1",
+            "startTime": "2026-08-08T10:50:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "55"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "53"
+              }
+            }
+          }
+        },
+        {
+          "id": "548",
+          "attributes": {
+            "type": "QNR2",
+            "startTime": "2026-08-08T11:15:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "55"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "54"
+              }
+            }
+          }
+        },
+        {
+          "id": "549",
+          "attributes": {
+            "type": "Sprint",
+            "startTime": "2026-08-08T15:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "55"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "55"
+              }
+            }
+          }
+        },
+        {
+          "id": "550",
+          "attributes": {
+            "type": "Race",
+            "startTime": "2026-08-09T12:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "55"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "56"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
