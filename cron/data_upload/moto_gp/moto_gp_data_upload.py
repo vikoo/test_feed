@@ -4,6 +4,7 @@ from cron.stats_calc.moto_gp.moto_gp_stats_update import process_update_moto_gp_
 from cron.strapi_api.apis import get_latest_past_race, get_race_results_for_race_event, get_season_grid_map, \
     create_race_result, update_race_result, update_config_for_race_result
 import json
+import time
 from loguru import logger
 
 is_update_enabled = False
@@ -151,6 +152,7 @@ def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, 
     process_update_moto_gp_stats(season_year=year)
     logger.info("######################")
     if not is_update_enabled:
+        time.sleep(30)
         logger.info(f"sending race complete notification")
         send_race_complete_notification(is_f1=False, race_type=race_type, grand_prix=grand_prix)
 
