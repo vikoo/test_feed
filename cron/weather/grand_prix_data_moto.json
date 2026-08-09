@@ -1,1 +1,129 @@
-""
+{
+  "data": {
+    "grandPrixes": {
+      "data": [
+        {
+          "id": "56",
+          "attributes": {
+            "name": "ARAGON GP 26",
+            "startDate": "2026-08-28T06:00:00.000Z",
+            "fullName": "ALCAÑIZ",
+            "endDate": "2026-08-30T16:00:00.000Z",
+            "round": "13",
+            "season": {
+              "data": {
+                "attributes": {
+                  "year": "2026"
+                }
+              }
+            },
+            "track": {
+              "data": {
+                "id": "13",
+                "attributes": {
+                  "name": "MotorLand Aragón",
+                  "imageOutline": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/tracks/motorland_aragon.png",
+                  "image": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/wheelie/tracks/detailed/alcaniz_aragon.png",
+                  "imageFancy": null,
+                  "city": "Alcañiz",
+                  "country": "Aragon",
+                  "latitude": 41.08046250650376,
+                  "longitude": -0.20353316387746467
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "races": {
+      "data": [
+        {
+          "id": "552",
+          "attributes": {
+            "type": "PRACTICE",
+            "startTime": "2026-08-28T13:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "56"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "57"
+              }
+            }
+          }
+        },
+        {
+          "id": "554",
+          "attributes": {
+            "type": "QNR1",
+            "startTime": "2026-08-29T08:50:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "56"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "58"
+              }
+            }
+          }
+        },
+        {
+          "id": "555",
+          "attributes": {
+            "type": "QNR2",
+            "startTime": "2026-08-29T09:15:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "56"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "59"
+              }
+            }
+          }
+        },
+        {
+          "id": "556",
+          "attributes": {
+            "type": "Sprint",
+            "startTime": "2026-08-29T13:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "56"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "60"
+              }
+            }
+          }
+        },
+        {
+          "id": "557",
+          "attributes": {
+            "type": "Race",
+            "startTime": "2026-08-30T12:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "56"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "61"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
