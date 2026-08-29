@@ -114,9 +114,9 @@ def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, 
     for index, item in enumerate(classification):
         pos = item.get("position")
         pos = pos if pos is not None else (index + 1)
-        time = item.get("time")
-        if not time:  # Handles None, empty string, or any falsy value
-            time = item.get("best_lap").get("time", "") if item.get("best_lap") else ""
+        result_time = item.get("time")
+        if not result_time:  # Handles None, empty string, or any falsy value
+            result_time = item.get("best_lap").get("time", "") if item.get("best_lap") else ""
 
         race_result_json = {
             "race": race_id,
@@ -124,7 +124,7 @@ def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, 
             "position": pos,
             "points": item.get("points", 0),
             "laps": item.get("total_laps", 0),
-            "time": time,
+            "time": result_time,
             "dnf" : item.get("status") != "INSTND",
 
         }
