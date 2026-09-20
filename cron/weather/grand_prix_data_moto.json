@@ -1,1 +1,129 @@
-""
+{
+  "data": {
+    "grandPrixes": {
+      "data": [
+        {
+          "id": "59",
+          "attributes": {
+            "name": "JAPAN GP 26",
+            "startDate": "2026-10-02T01:45:00.000Z",
+            "fullName": "MOTEGI",
+            "endDate": "2026-10-04T05:45:00.000Z",
+            "round": "16",
+            "season": {
+              "data": {
+                "attributes": {
+                  "year": "2026"
+                }
+              }
+            },
+            "track": {
+              "data": {
+                "id": "17",
+                "attributes": {
+                  "name": "Mobility Resort Motegi",
+                  "imageOutline": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/tracks/motegi_japan.png",
+                  "image": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/wheelie/tracks/detailed/motegi_japan.png",
+                  "imageFancy": null,
+                  "city": "Motegi",
+                  "country": "Japan",
+                  "latitude": 36.53200720724165,
+                  "longitude": 140.2255681713807
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "races": {
+      "data": [
+        {
+          "id": "573",
+          "attributes": {
+            "type": "PRACTICE",
+            "startTime": "2026-10-02T06:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "59"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "72"
+              }
+            }
+          }
+        },
+        {
+          "id": "575",
+          "attributes": {
+            "type": "QNR1",
+            "startTime": "2026-10-03T01:50:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "59"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "73"
+              }
+            }
+          }
+        },
+        {
+          "id": "576",
+          "attributes": {
+            "type": "QNR2",
+            "startTime": "2026-10-03T02:15:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "59"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "74"
+              }
+            }
+          }
+        },
+        {
+          "id": "577",
+          "attributes": {
+            "type": "Sprint",
+            "startTime": "2026-10-03T06:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "59"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "75"
+              }
+            }
+          }
+        },
+        {
+          "id": "578",
+          "attributes": {
+            "type": "Race",
+            "startTime": "2026-10-04T05:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "59"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "76"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
