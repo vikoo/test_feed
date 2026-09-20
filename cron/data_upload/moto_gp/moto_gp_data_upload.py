@@ -130,7 +130,11 @@ def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, 
         }
         rider_id = item["rider"]["id"]
         logger.debug(f"Processing rider_id: {rider_id} at position: {pos}")
-        if item["rider"]["id"] == fastest_lap_rider_id:
+        # Fastest lap is an in-race record only (Grand Prix Race and Sprint). The MotoGP
+        # API also returns a fastestLap record for practice and qualifying, where position 1
+        # is already the fastest by lap-time ranking, so without this guard the badge leaks
+        # onto those sessions. Sprint has no fastestLap record in the API yet, so it stays empty.
+        if race_type in ("Race", "Sprint") and item["rider"]["id"] == fastest_lap_rider_id:
             race_result_json["fastestLap"] = True
             race_result_json["fastestLapTime"] = fastest_lap_record.get("bestLap", {}).get("time", "")
             race_result_json["fastestLapNo"] = fastest_lap_record.get("bestLap", {}).get("number", 0)
