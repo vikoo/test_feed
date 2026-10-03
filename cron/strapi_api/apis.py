@@ -13,11 +13,13 @@ from cron.strapi_api.api_queries import query_get_latest_grand_prixes, mutation_
     mutation_update_team_standing, mutation_update_config_for_stats, mutation_update_race_result, \
     mutation_update_config_for_race_result, query_fastest_laps_for_gp, mutation_post_fastest_lap, \
     mutation_update_constructor_standing_moto_gp, query_get_constructor_standing_moto_gp, \
-    mutation_create_constructor_standing_moto_gp
+    mutation_create_constructor_standing_moto_gp, mutation_create_driver_standing, \
+    query_driver_standings_for_season_grid
 from cron.utils import *
 import requests
 import re
 import json
+import uuid
 from datetime import datetime, timezone
 
 from cron.weather.weather_utils import convert_weather_api_json_to_strapi_json
@@ -33,6 +35,11 @@ def get_headers(is_f1_feed: bool) -> dict[str, str]:
         "Authorization": f"Bearer {token}"
     }
     return headers
+
+def no_cache(query: str) -> str:
+    """The Strapi nginx proxy caches identical GraphQL query requests (X-Cache-Status: HIT) and can return
+    old data for minutes. A unique leading comment makes the request a cache miss. Mutations are not cached."""
+    return f"# {uuid.uuid4().hex}\n{query}"
 
 #----------------------------------------------------------------------------------------------------------------
 # Config relate code
@@ -573,6 +580,53 @@ def get_season_grid_map(is_f1_feed: bool, season: str):
     logger.info(f"season grid map: {result}")
     return result
 
+def get_active_season_grids_by_number(is_f1_feed: bool, season: str) -> dict:
+    """All non-old season grids of a season, as {driver_number: [grid_id, ...]}."""
+    end_point = get_graphql_endpoint(is_f1_feed)
+    response = requests.post(end_point, json={'query': no_cache(query_season_grid), "variables": {"season": season}}, headers=get_headers(is_f1_feed))
+    response.raise_for_status()
+    season_grids = response.json().get("data", {}).get("seasonGrids", {}).get("data", [])
+    result = {}
+    for entry in season_grids:
+        attrs = entry.get("attributes", {})
+        if attrs.get("isOldGrid") is True:
+            continue
+        driver_number = attrs.get("driverNumber")
+        if driver_number is not None and entry.get("id") is not None:
+            result.setdefault(driver_number, []).append(entry["id"])
+    return result
+
+def driver_standing_exists_for_grid(is_f1_feed: bool, grid_id: str) -> bool:
+    end_point = get_graphql_endpoint(is_f1_feed)
+    response = requests.post(end_point, json={'query': no_cache(query_driver_standings_for_season_grid), "variables": {"gridId": str(grid_id)}}, headers=get_headers(is_f1_feed))
+    response.raise_for_status()
+    body = response.json()
+    if body.get("errors"):
+        raise RuntimeError(f"driver standing lookup failed: {body['errors']}")
+    data = body["data"]
+    return len(data["byPrimaryGrid"]["data"]) > 0 or len(data["byExtraGrid"]["data"]) > 0
+
+def create_driver_standing(is_f1_feed: bool, season_id: str, grid_id: str, position: int) -> str:
+    """Create and publish a driver standing row. Raises if Strapi does not return the new row id."""
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = {
+        "input": {
+            "season": str(season_id),
+            "seasonGrid": str(grid_id),
+            "position": position,
+            "points": 0,
+            "publishedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+        }
+    }
+    logger.info(f"create_driver_standing variables: {variables}")
+    response = requests.post(end_point, json={'query': mutation_create_driver_standing, "variables": variables}, headers=get_headers(is_f1_feed))
+    response.raise_for_status()
+    body = response.json()
+    new_id = (((body.get("data") or {}).get("createDriverStanding") or {}).get("data") or {}).get("id")
+    if new_id is None:
+        raise RuntimeError(f"create_driver_standing failed: {body}")
+    return new_id
+
 def create_race_result(is_f1_feed: bool, json_str: str) -> str:
     # Define GraphQL endpoint
     end_point = get_graphql_endpoint(is_f1_feed)
@@ -634,7 +688,7 @@ def fetch_all_race_results(is_f1_feed: bool, season: str):
             "start": start
         }
         logger.debug(f"fetch_all_race_results variables: {variables}")
-        response = requests.post(end_point, json={'query': query_race_results_all, "variables": variables}, headers=get_headers(is_f1_feed))
+        response = requests.post(end_point, json={'query': no_cache(query_race_results_all), "variables": variables}, headers=get_headers(is_f1_feed))
         response.raise_for_status()
         data = response.json()
 
@@ -663,7 +717,7 @@ def fetch_driver_team_standings_for_season(is_f1_feed: bool, season: str) :
     }
     logger.info(f"fetch_driver_team_standings_for_season variables: {variables}")
 
-    response = requests.post(end_point, json={'query': query_driver_and_team_standings, "variables": variables}, headers=get_headers(is_f1_feed))
+    response = requests.post(end_point, json={'query': no_cache(query_driver_and_team_standings), "variables": variables}, headers=get_headers(is_f1_feed))
     response.raise_for_status()
     result = response.json()
 

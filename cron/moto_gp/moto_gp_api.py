@@ -177,3 +177,10 @@ def fetch_constructor_standings(season_uuid: str) :
     events = response.json()
     logger.debug(f"constructor standings: {events}")
     return events
+
+def fetch_rider_standings(season_uuid: str) :
+    rider_standings_end_point = end_point + "/v2/results/world-standings?type=rider&season=" + season_uuid + "&category=" + TARGET_CATEGORY_ID_FOR_RACE_RESULT
+    logger.debug(f"rider_standings_end_point: {rider_standings_end_point}")
+    response = requests.get(rider_standings_end_point, timeout=30)
+    response.raise_for_status()
+    return response.json()
