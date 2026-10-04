@@ -1,1 +1,129 @@
-""
+{
+  "data": {
+    "grandPrixes": {
+      "data": [
+        {
+          "id": "60",
+          "attributes": {
+            "name": "INDONESIA GP 26",
+            "startDate": "2026-10-09T02:45:00.000Z",
+            "fullName": "MANDALIKA",
+            "endDate": "2026-10-11T06:45:00.000Z",
+            "round": "17",
+            "season": {
+              "data": {
+                "attributes": {
+                  "year": "2026"
+                }
+              }
+            },
+            "track": {
+              "data": {
+                "id": "16",
+                "attributes": {
+                  "name": "Pertamina Mandalika Circuit",
+                  "imageOutline": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/tracks/mandalika_indonesia.png",
+                  "image": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/wheelie/tracks/detailed/mandalika_indonesia.png",
+                  "imageFancy": null,
+                  "city": "Mandalika",
+                  "country": "Indonesia",
+                  "latitude": -8.894956094910397,
+                  "longitude": 116.30432455704842
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "races": {
+      "data": [
+        {
+          "id": "580",
+          "attributes": {
+            "type": "PRACTICE",
+            "startTime": "2026-10-09T07:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "60"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "77"
+              }
+            }
+          }
+        },
+        {
+          "id": "582",
+          "attributes": {
+            "type": "QNR1",
+            "startTime": "2026-10-10T02:50:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "60"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "78"
+              }
+            }
+          }
+        },
+        {
+          "id": "583",
+          "attributes": {
+            "type": "QNR2",
+            "startTime": "2026-10-10T03:15:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "60"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "79"
+              }
+            }
+          }
+        },
+        {
+          "id": "584",
+          "attributes": {
+            "type": "Sprint",
+            "startTime": "2026-10-10T07:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "60"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "80"
+              }
+            }
+          }
+        },
+        {
+          "id": "585",
+          "attributes": {
+            "type": "Race",
+            "startTime": "2026-10-11T06:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "60"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "81"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
