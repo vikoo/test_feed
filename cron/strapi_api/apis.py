@@ -622,7 +622,8 @@ def update_race_result(is_f1_feed: bool, json_str: str, row_id: str) -> str:
 #----------------------------------------------------------------------------------------------------------------
 # stats update relate code
 #----------------------------------------------------------------------------------------------------------------
-def fetch_all_race_results(is_f1_feed: bool, season: str):
+def fetch_all_race_results(is_f1_feed: bool, season: str, session_types: list = None, sort: list = None):
+    """session_types / sort: optional overrides; when omitted the query defaults apply (F1 behaviour unchanged)."""
     end_point = get_graphql_endpoint(is_f1_feed)
     race_results = []
     chunk_size = 50
@@ -633,6 +634,10 @@ def fetch_all_race_results(is_f1_feed: bool, season: str):
             "limit": chunk_size,
             "start": start
         }
+        if session_types is not None:
+            variables["types"] = session_types
+        if sort is not None:
+            variables["sort"] = sort
         logger.debug(f"fetch_all_race_results variables: {variables}")
         response = requests.post(end_point, json={'query': query_race_results_all, "variables": variables}, headers=get_headers(is_f1_feed))
         response.raise_for_status()
