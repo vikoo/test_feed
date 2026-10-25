@@ -1,1 +1,129 @@
-""
+{
+  "data": {
+    "grandPrixes": {
+      "data": [
+        {
+          "id": "62",
+          "attributes": {
+            "name": "MALAYSIA GP 26",
+            "startDate": "2026-10-30T02:45:00.000Z",
+            "fullName": "SEPANG",
+            "endDate": "2026-11-01T07:45:00.000Z",
+            "round": "19",
+            "season": {
+              "data": {
+                "attributes": {
+                  "year": "2026"
+                }
+              }
+            },
+            "track": {
+              "data": {
+                "id": "19",
+                "attributes": {
+                  "name": "Petronas Sepang International Circuit",
+                  "imageOutline": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/tracks/sepang_malaysia.png",
+                  "image": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/wheelie/tracks/detailed/sepang_malaysia.png",
+                  "imageFancy": null,
+                  "city": "Sepang",
+                  "country": "Malaysia",
+                  "latitude": 2.76126719034395,
+                  "longitude": 101.73774624664388
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "races": {
+      "data": [
+        {
+          "id": "594",
+          "attributes": {
+            "type": "PRACTICE",
+            "startTime": "2026-10-30T07:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "62"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "87"
+              }
+            }
+          }
+        },
+        {
+          "id": "596",
+          "attributes": {
+            "type": "QNR1",
+            "startTime": "2026-10-31T02:50:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "62"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "88"
+              }
+            }
+          }
+        },
+        {
+          "id": "597",
+          "attributes": {
+            "type": "QNR2",
+            "startTime": "2026-10-31T03:15:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "62"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "89"
+              }
+            }
+          }
+        },
+        {
+          "id": "598",
+          "attributes": {
+            "type": "Sprint",
+            "startTime": "2026-10-31T07:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "62"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "90"
+              }
+            }
+          }
+        },
+        {
+          "id": "599",
+          "attributes": {
+            "type": "Race",
+            "startTime": "2026-11-01T07:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "62"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "91"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
