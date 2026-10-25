@@ -1,4 +1,5 @@
 from cron.strapi_api.apis import update_driver_standings, update_team_standings
+from cron.stats_calc.moto_gp.moto_gp_tie_break import gp_tie_break_key
 from loguru import logger
 
 # MotoGP race type constants  (match the values stored in Strapi)
@@ -95,6 +96,7 @@ def update_moto_gp_stats(season, all_race_results, driver_standings, team_standi
     # SORT DRIVERS + ASSIGN POSITIONS + UPLOAD
     # --------------------------------------------------
     drivers_list = []
+    tie_break_by_stats_id = {}
     for standing in driver_standings:
         grid_id = (
             standing.get("attributes", {})
@@ -104,15 +106,25 @@ def update_moto_gp_stats(season, all_race_results, driver_standings, team_standi
         )
         if driver_multi_season_grid_id_to_stats_map.get(grid_id) is not None:
             logger.debug(f"adding multi GRIDS driverStanding to list: gridId: {grid_id}")
-            drivers_list.append(driver_multi_season_grid_id_to_stats_map[grid_id])
+            stats = driver_multi_season_grid_id_to_stats_map[grid_id]
+            grids = standing.get("attributes", {}).get("grids", {}).get("data", [])
+            tie_grid_ids = [g.get("id") for g in grids]
         else:
             logger.debug(f"adding single driverStanding: gridId to list: gridId: {grid_id}")
-            drivers_list.append(driver_season_grid_id_to_stats_map[grid_id])
+            stats = driver_season_grid_id_to_stats_map[grid_id]
+            tie_grid_ids = [grid_id]
+        drivers_list.append(stats)
+        # FIM Art. 1.28.7: Grand Prix race countback, Sprints excluded. Kept outside the
+        # stats dict because that dict is uploaded as-is to Strapi.
+        tie_break_by_stats_id[id(stats)] = gp_tie_break_key([
+            r for r in all_race_results
+            if _get_val(r, ["attributes", "seasonGrid", "data", "id"]) in tie_grid_ids
+        ])
 
     drivers_list.sort(
         key=lambda x: (
             -x["points"],
-            x["bestRaceFinish"],
+            *tie_break_by_stats_id[id(x)],
             x["position"]
         )
     )
