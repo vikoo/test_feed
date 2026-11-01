@@ -3,13 +3,13 @@
     "grandPrixes": {
       "data": [
         {
-          "id": "62",
+          "id": "46",
           "attributes": {
-            "name": "MALAYSIA GP 26",
-            "startDate": "2026-10-30T02:45:00.000Z",
-            "fullName": "SEPANG",
-            "endDate": "2026-11-01T07:45:00.000Z",
-            "round": "19",
+            "name": "QATAR GP 26",
+            "startDate": "2026-11-06T12:45:00.000Z",
+            "fullName": "LUSAIL",
+            "endDate": "2026-11-08T05:45:00.000Z",
+            "round": "20",
             "season": {
               "data": {
                 "attributes": {
@@ -19,16 +19,16 @@
             },
             "track": {
               "data": {
-                "id": "19",
+                "id": "2",
                 "attributes": {
-                  "name": "Petronas Sepang International Circuit",
-                  "imageOutline": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/tracks/sepang_malaysia.png",
-                  "image": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/wheelie/tracks/detailed/sepang_malaysia.png",
+                  "name": "Lusail International Circuit",
+                  "imageOutline": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/tracks/lusail_qatar.png",
+                  "image": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/wheelie/tracks/detailed/lusail_qatar.png",
                   "imageFancy": null,
-                  "city": "Sepang",
-                  "country": "Malaysia",
-                  "latitude": 2.76126719034395,
-                  "longitude": 101.73774624664388
+                  "city": "Lusail",
+                  "country": "Qatar",
+                  "latitude": 25.48880446178941,
+                  "longitude": 51.45111134123874
                 }
               }
             }
@@ -39,86 +39,86 @@
     "races": {
       "data": [
         {
-          "id": "594",
+          "id": "482",
           "attributes": {
             "type": "PRACTICE",
-            "startTime": "2026-10-30T07:00:00.000Z",
+            "startTime": "2026-11-06T17:00:00.000Z",
             "grandPrix": {
               "data": {
-                "id": "62"
+                "id": "46"
               }
             },
             "weather": {
               "data": {
-                "id": "87"
+                "id": "22"
               }
             }
           }
         },
         {
-          "id": "596",
+          "id": "484",
           "attributes": {
             "type": "QNR1",
-            "startTime": "2026-10-31T02:50:00.000Z",
+            "startTime": "2026-11-07T12:40:00.000Z",
             "grandPrix": {
               "data": {
-                "id": "62"
+                "id": "46"
               }
             },
             "weather": {
               "data": {
-                "id": "88"
+                "id": "23"
               }
             }
           }
         },
         {
-          "id": "597",
+          "id": "485",
           "attributes": {
             "type": "QNR2",
-            "startTime": "2026-10-31T03:15:00.000Z",
+            "startTime": "2026-11-07T13:05:00.000Z",
             "grandPrix": {
               "data": {
-                "id": "62"
+                "id": "46"
               }
             },
             "weather": {
               "data": {
-                "id": "89"
+                "id": "24"
               }
             }
           }
         },
         {
-          "id": "598",
+          "id": "486",
           "attributes": {
             "type": "Sprint",
-            "startTime": "2026-10-31T07:00:00.000Z",
+            "startTime": "2026-11-07T17:00:00.000Z",
             "grandPrix": {
               "data": {
-                "id": "62"
+                "id": "46"
               }
             },
             "weather": {
               "data": {
-                "id": "90"
+                "id": "25"
               }
             }
           }
         },
         {
-          "id": "599",
+          "id": "487",
           "attributes": {
             "type": "Race",
-            "startTime": "2026-11-01T07:00:00.000Z",
+            "startTime": "2026-11-08T17:00:00.000Z",
             "grandPrix": {
               "data": {
-                "id": "62"
+                "id": "46"
               }
             },
             "weather": {
               "data": {
-                "id": "91"
+                "id": "26"
               }
             }
           }
