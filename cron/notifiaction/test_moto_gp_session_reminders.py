@@ -8,12 +8,16 @@ from cron.notifiaction.notification_message_utils import get_title_body_for_noti
 from cron.utils import locales
 
 FP1 = datetime(2026, 11, 20, 10, 45, tzinfo=timezone.utc)
+GP_NAMES_2026 = ["THAILAND GP 26", "BRAZIL GP 26", "USA GP 26", "SPAIN GP 26", "FRANCE  GP 26", "CATALONIA GP 26",
+                 "ITALY GP 26", "HUNGARY GP 26", "CZECHIA GP 26", "NETHERLANDS GP 26", "GERMANY  GP 26",
+                 "GREAT BRITAIN GP 26", "ARAGON GP 26", "SAN MARINO GP 26", "AUSTRIA GP 26", "JAPAN GP 26",
+                 "INDONESIA GP 26", "AUSTRALIA GP 26", "MALAYSIA GP 26", "QATAR GP 26", "PORTUGAL GP 26",
+                 "VALENCIA GP 26"]
 
 
-def race(rid, rtype, start, cancelled=None, city="Portimão", country="Portugal"):
+def race(rid, rtype, start, cancelled=None, name="PORTUGAL GP 26"):
     return {"id": str(rid), "attributes": {"type": rtype, "startTime": start.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
-            "grandPrix": {"data": {"id": "47", "attributes": {"name": "PORTUGAL GP 26", "isCancelled": cancelled,
-                          "track": {"data": {"attributes": {"city": city, "country": country}}}}}}}}
+            "grandPrix": {"data": {"id": "47", "attributes": {"name": name, "isCancelled": cancelled}}}}}
 
 
 class Store(rem.SentStore):
@@ -32,90 +36,31 @@ class RemindersTest(unittest.TestCase):
     def setUp(self):
         logger.remove()
 
-    def test_every_pool_line_passes_the_checks_with_real_names(self):
-        cities = [("Portimão", "Portugal"), ("Sachsenring", "Germany"), ("Termas de Río Hondo", "Argentina"),
-                  ("Mandalika", "Indonesia"), ("Valencia", "Spain")]
-        names = ["M. Marquez", "F. Di Giannantonio", "R. Fernandez"]
-        bad = []
-        for lang, sessions in rem.POOLS.items():
+    def test_every_language_and_every_2026_gp_passes_the_checks(self):
+        self.assertEqual(set(rem.TEMPLATES), {"en", *locales})
+        for lang, sessions in rem.TEMPLATES.items():
             self.assertEqual(set(sessions), set(rem.REMIND_TYPES), lang)
-            for rtype, pool in sessions.items():
-                fact_free_bodies = [b for b in pool["bodies"] if "{leader}" not in b and "{pole}" not in b]
-                self.assertTrue(fact_free_bodies, (lang, rtype))
-                for city, country in cities:
-                    v = {"flag": rem.flag(country), "city": city, "country": country}
-                    for t in pool["titles"]:
-                        title = t.format(**v)
-                        if not rem.valid(title, "ok 🏁") and "{city}" not in t:
-                            bad.append((lang, rtype, title))
-                    for b in fact_free_bodies:
-                        if not rem.valid("ok 🏁", b.format(**v)):
-                            bad.append((lang, rtype, b))
-        self.assertEqual(bad, [])
-        for rtype in rem.REMIND_TYPES:
-            for name in names:
-                msgs = rem.build_messages(race(1, rtype, FP1), {"leader": name, "gap": 123, "pole": name})
+        for name in GP_NAMES_2026:
+            for rtype in rem.REMIND_TYPES:
+                msgs = rem.build_messages(race(1, rtype, FP1, name=name))
                 self.assertEqual(set(msgs), {"en", *locales})
-                for lang, (title, body) in msgs.items():
-                    self.assertTrue(rem.valid(title, body), (lang, rtype, title, body))
 
-    def _gp_race(self, rtype, rnd, year=2026):
-        r = race(1, rtype, FP1)
-        a = r["attributes"]["grandPrix"]["data"]["attributes"]
-        a["round"] = str(rnd); a["season"] = {"data": {"attributes": {"year": str(year)}}}
-        return r
+    def test_copy_is_the_same_every_weekend_except_the_gp_name(self):
+        a = rem.build_messages(race(1, "QNR1", FP1, name="PORTUGAL GP 26"))
+        b = rem.build_messages(race(2, "QNR1", FP1, name="VALENCIA GP 26"))
+        self.assertEqual(a["en"], ("🎯 Portugal GP: Qualifying", "The fight for pole starts now ⏱️ who takes P1? 🔥"))
+        for lang in a:
+            self.assertEqual(a[lang][1], b[lang][1])
+            self.assertEqual(a[lang][0].replace("Portugal", "Valencia"), b[lang][0])
 
-    def test_rotation_uses_every_pair_and_never_repeats_back_to_back(self):
-        for rtype in rem.REMIND_TYPES:
-            for lang in ("en", "it", "es"):
-                seq = [rem.build_messages(self._gp_race(rtype, rnd))[lang] for rnd in range(1, 37)]
-                v = {"flag": "🇵🇹", "city": "Portimão", "country": "Portugal"}
-                nt = len([t for t in rem.POOLS[lang][rtype]["titles"] if rem.valid(rem._fill(t, v) or "{", "ok 🏁")])
-                nb = len([b for b in rem.POOLS[lang][rtype]["bodies"] if rem.valid("ok 🏁", rem._fill(b, v) or "{")])
-                if not (nb == 2 and nt % 2 == 0):
-                    self.assertEqual(len(set(seq)), nt * nb, (rtype, lang))
-                for a, b in zip(seq, seq[1:]):
-                    self.assertNotEqual(a[0], b[0], (rtype, lang, "heading repeated next weekend"))
-                    self.assertNotEqual(a[1], b[1], (rtype, lang, "body repeated next weekend"))
+    def test_gp_display_name(self):
+        self.assertEqual(rem.gp_display_name("GERMANY  GP 26"), "Germany GP")
+        self.assertEqual(rem.gp_display_name("USA GP 26"), "USA GP")
+        self.assertEqual(rem.gp_display_name("GREAT BRITAIN GP 26"), "Great Britain GP")
 
-    def test_rotation_for_every_pool_size(self):
-        for nt in range(1, 8):
-            for nb in range(1, 8):
-                seq = [rem.rotation(seed, nt, nb) for seed in range(46000, 46000 + nt * nb * 3)]
-                for a, b in zip(seq, seq[1:]):
-                    if nt > 1: self.assertNotEqual(a[0], b[0], (nt, nb))
-                    if nb > 1: self.assertNotEqual(a[1], b[1], (nt, nb))
-                if not (nb == 2 and nt % 2 == 0):
-                    self.assertEqual(len(set(seq)), nt * nb, (nt, nb))
-
-    def test_next_season_does_not_replay_this_season(self):
-        same = sum(rem.build_messages(self._gp_race("QNR1", rnd, 2026))["en"] == rem.build_messages(self._gp_race("QNR1", rnd, 2027))["en"]
-                   for rnd in range(1, 23))
-        self.assertEqual(same, 0)
-
-    def test_facts_only_in_their_sessions(self):
-        facts = {"leader": "M. Marquez", "gap": 44, "pole": "J. Martin"}
-        for rnd in range(1, 7):
-            for rtype in ("FP2", "QNR1", "Race"):
-                r = race(1, rtype, FP1); r["attributes"]["grandPrix"]["data"]["attributes"]["round"] = str(rnd)
-                text = " ".join(" ".join(x) for x in rem.build_messages(r, facts).values())
-                self.assertNotIn("Marquez", text, "no standings outside Friday")
-                if rtype != "Race":
-                    self.assertNotIn("Martin", text)
-
-    def test_missing_fact_falls_back_to_a_fact_free_line(self):
-        for rnd in range(1, 7):
-            r = race(1, "Race", FP1); r["attributes"]["grandPrix"]["data"]["attributes"]["round"] = str(rnd)
-            for title, body in rem.build_messages(r, {}).values():
-                self.assertTrue(rem.valid(title, body))
-
-    def test_short_name(self):
-        self.assertEqual(rem.short_name("Marc Marquez"), "M. Marquez")
-        self.assertEqual(rem.short_name("Fabio Di Giannantonio"), "F. Di Giannantonio")
-
-    def test_flag_fallback(self):
-        self.assertEqual(rem.flag("Spain"), "🇪🇸")
-        self.assertEqual(rem.flag("Atlantis"), "🏁")
+    def test_a_line_that_fails_the_checks_is_not_sent(self):
+        with self.assertRaises(ValueError):
+            rem.build_messages(race(1, "QNR1", FP1, name="AN EXTREMELY LONG GRAND PRIX NAME GP 26"))
 
     def test_due_window_and_session_rules(self):
         now = FP1 - timedelta(minutes=15)
@@ -124,18 +69,16 @@ class RemindersTest(unittest.TestCase):
                  race(605, "Sprint", FP1 + timedelta(minutes=10))]
         self.assertEqual([r["id"] for r in rem.due(races, now, set())], ["600", "603"])
         self.assertEqual(rem.due(races, now, {"600", "603"}), [])
-        self.assertEqual(rem.due([race(600, "FP1", FP1)], FP1, set()), [])  # started: too late
+        self.assertEqual(rem.due([race(600, "FP1", FP1)], FP1, set()), [])
         self.assertEqual(rem.due([race(600, "FP1", FP1)], FP1 - timedelta(minutes=16), set()), [])
 
     def test_dry_run_sends_nothing(self):
-        sent = []
-        st = Store()
+        sent, st = [], Store()
         probs = rem.run_pass(FP1 - timedelta(minutes=14), lambda a, b: [race(600, "FP1", FP1)], st, sent.append, False)
         self.assertEqual((sent, probs, st.marked), ([], [], []))
 
     def test_sends_once_and_records(self):
-        sent = []
-        st = Store()
+        sent, st = [], Store()
         for minute in (15, 13, 11):
             rem.run_pass(FP1 - timedelta(minutes=minute), lambda a, b: [race(600, "FP1", FP1)], st, sent.append, True)
         self.assertEqual(len(sent), 1); self.assertEqual(st.marked, ["600"])
@@ -147,13 +90,12 @@ class RemindersTest(unittest.TestCase):
 
     def test_too_many_due_sends_nothing(self):
         sent = []
-        races = [race(i, "FP1", FP1) for i in range(3)]
-        probs = rem.run_pass(FP1 - timedelta(minutes=5), lambda a, b: races, Store(), sent.append, True)
+        probs = rem.run_pass(FP1 - timedelta(minutes=5), lambda a, b: [race(i, "FP1", FP1) for i in range(3)], Store(), sent.append, True)
         self.assertEqual(sent, []); self.assertTrue(probs)
 
     def test_results_push_uses_plain_session_names(self):
         gp = race(1, "Race", FP1)["attributes"]["grandPrix"]["data"]
-        gp["attributes"]["track"]["data"]["attributes"]["name"] = "Algarve"
+        gp["attributes"]["track"] = {"data": {"attributes": {"name": "Algarve", "country": "Portugal"}}}
         self.assertEqual(get_title_body_for_notification(gp, "QNR2")[0], "PORTUGAL GP: Qualifying Results Out!")
         self.assertEqual(get_title_body_for_notification(gp, "PRACTICE")[0], "PORTUGAL GP: Practice Results Out!")
 
