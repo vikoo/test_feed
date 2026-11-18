@@ -980,3 +980,28 @@ query_races_starting_between = """
             }
         }
 """
+
+
+query_race_results_for_grand_prix = """
+        query RaceResultsForGrandPrix($gpId: ID!, $types: [String]) {
+            raceResults(
+                filters: { race: { grandPrix: { id: { eq: $gpId } }, type: { in: $types } } }
+                pagination: { limit: 200 }
+            ) {
+                data {
+                    id
+                    attributes {
+                        position
+                        finalPos
+                        sprintFinalPos
+                        fastestLap
+                        fastestLapNo
+                        fastestLapTime
+                        race { data { id attributes { type } } }
+                        seasonGrid { data { id attributes { driverNumber } } }
+                    }
+                }
+            }
+        }
+"""
+

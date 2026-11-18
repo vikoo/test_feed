@@ -14,7 +14,7 @@ from cron.strapi_api.api_queries import query_get_latest_grand_prixes, mutation_
     mutation_update_config_for_race_result, query_fastest_laps_for_gp, mutation_post_fastest_lap, \
     mutation_update_constructor_standing_moto_gp, query_get_constructor_standing_moto_gp, \
     mutation_create_constructor_standing_moto_gp, mutation_create_driver_standing, \
-    query_driver_standings_for_season_grid, query_races_starting_between
+    query_driver_standings_for_season_grid, query_races_starting_between, query_race_results_for_grand_prix
 from cron.utils import *
 import requests
 import re
@@ -588,6 +588,18 @@ def build_season_grid_map(season_grids: list, fill_from_old_grids: bool = False)
 
     logger.info(f"season grid map: {result}")
     return result
+
+
+def get_race_results_for_grand_prix(is_f1_feed: bool, gp_id: str, types: list) -> list:
+    """Result rows of the given session types of one Grand Prix, with grid and fastest-lap fields."""
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = {"gpId": str(gp_id), "types": types}
+    response = requests.post(end_point, json={'query': no_cache(query_race_results_for_grand_prix), "variables": variables}, headers=get_headers(is_f1_feed))
+    response.raise_for_status()
+    body = response.json()
+    if body.get("errors"):
+        raise RuntimeError(f"race results lookup failed: {body['errors']}")
+    return body["data"]["raceResults"]["data"]
 
 
 def get_races_starting_between(is_f1_feed: bool, start_iso: str, end_iso: str) -> list:
