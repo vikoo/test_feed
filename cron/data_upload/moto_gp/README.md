@@ -11,3 +11,16 @@ to run script
       ```bash
       python cron/data_upload/moto_gp/moto_gp_data_upload.py
    
+
+## Weekend runner (race-result.yml)
+
+GitHub starts scheduled runs of this repo only about every 4 hours, so `weekend_runner.py` does not rely
+on the cron cadence. A run polls every 2 minutes, ingests each session as soon as its classification is
+published (never earlier than the minimum session length after the start), and before the 6 hour job
+limit starts a new run of the workflow while a session is waiting or the next one starts within 26 hours.
+Away from race weekends it exits within a minute. Manual runs are not needed during a weekend; the
+`once` mode keeps the old single pass.
+
+A rider with no season grid no longer aborts the run halfway: the session is skipped with nothing
+written, the other sessions still run, and the job ends red so the failure email goes out. Riders whose
+only grid is marked `isOldGrid` (substitutes after their weekend) use that grid.

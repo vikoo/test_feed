@@ -14,7 +14,7 @@ from cron.strapi_api.api_queries import query_get_latest_grand_prixes, mutation_
     mutation_update_config_for_race_result, query_fastest_laps_for_gp, mutation_post_fastest_lap, \
     mutation_update_constructor_standing_moto_gp, query_get_constructor_standing_moto_gp, \
     mutation_create_constructor_standing_moto_gp, mutation_create_driver_standing, \
-    query_driver_standings_for_season_grid
+    query_driver_standings_for_season_grid, query_races_starting_between
 from cron.utils import *
 import requests
 import re
@@ -550,35 +550,56 @@ def get_fastest_laps_for_gp(is_f1_feed: bool, gp_id: str) -> str:
     logger.debug(f"get_fastest_laps_for_gp response: {data}")
     return data
 
-def get_season_grid_map(is_f1_feed: bool, season: str):
+def get_season_grid_map(is_f1_feed: bool, season: str, fill_from_old_grids: bool = False):
     end_point = get_graphql_endpoint(is_f1_feed)
     variables = {
         "season": season
     }
     logger.info(f"get_season_grid variables: {variables}")
-    response = requests.post(end_point, json={'query': query_season_grid, "variables": variables}, headers=get_headers(is_f1_feed))
+    response = requests.post(end_point, json={'query': no_cache(query_season_grid), "variables": variables}, headers=get_headers(is_f1_feed))
     data = response.json()
     # logger.debug(f"get_season_grid response: {data}")
+    return build_season_grid_map(data.get("data", {}).get("seasonGrids", {}).get("data", []), fill_from_old_grids)
+
+
+def build_season_grid_map(season_grids: list, fill_from_old_grids: bool = False) -> dict:
+    """{driver_number: grid_id} over the non-old grids. With fill_from_old_grids, a number that has no
+    non-old grid falls back to its newest isOldGrid grid: substitute rides (e.g. #41, #30, #15 at Honda HRC
+    in 2026) are marked old after the weekend, and the uploader must not fail when that rider rides again."""
     result = {}
-
-    season_grids = data.get("data", {}).get("seasonGrids", {}).get("data", [])
-
+    old = {}
     for entry in season_grids:
         attrs = entry.get("attributes", {})
-        is_old = attrs.get("isOldGrid")
-
-        # Skip if isOldGrid is True
-        if is_old is True:
-            continue
-
         driver_number = attrs.get("driverNumber")
         entry_id = entry.get("id")
+        if driver_number is None or entry_id is None:
+            continue
+        if attrs.get("isOldGrid") is True:
+            if driver_number not in old or int(entry_id) > int(old[driver_number]):
+                old[driver_number] = entry_id
+            continue
+        result[driver_number] = entry_id
 
-        if driver_number is not None and entry_id is not None:
-            result[driver_number] = entry_id
+    if fill_from_old_grids:
+        for driver_number, entry_id in old.items():
+            if driver_number not in result:
+                logger.warning(f"rider #{driver_number} has only an old season grid, using grid {entry_id}")
+                result[driver_number] = entry_id
 
     logger.info(f"season grid map: {result}")
     return result
+
+
+def get_races_starting_between(is_f1_feed: bool, start_iso: str, end_iso: str) -> list:
+    """Sessions (Strapi races) whose startTime is in [start_iso, end_iso], earliest first."""
+    end_point = get_graphql_endpoint(is_f1_feed)
+    variables = {"from": start_iso, "to": end_iso}
+    response = requests.post(end_point, json={'query': no_cache(query_races_starting_between), "variables": variables}, headers=get_headers(is_f1_feed))
+    response.raise_for_status()
+    body = response.json()
+    if body.get("errors"):
+        raise RuntimeError(f"races lookup failed: {body['errors']}")
+    return body["data"]["races"]["data"]
 
 def get_active_season_grids_by_number(is_f1_feed: bool, season: str) -> dict:
     """All non-old season grids of a season, as {driver_number: [grid_id, ...]}."""
