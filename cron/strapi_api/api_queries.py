@@ -669,6 +669,7 @@ query_driver_and_team_standings = """
                             data {
                                 id
                                 attributes {
+                                    driverNumber
                                     driver {
                                         data {
                                             id
@@ -721,6 +722,7 @@ query_driver_and_team_standings = """
                             data {
                                 id
                                 attributes {
+                                    driverNumber
                                     driver {
                                         data {
                                             id
@@ -821,6 +823,37 @@ query_driver_and_team_standings = """
                 }
             }
         } 
+"""
+
+mutation_create_driver_standing = """
+        mutation CreateDriverStanding($input: DriverStandingInput!) {
+            createDriverStanding(data: $input) {
+                data {
+                    id
+                }
+            }
+        }
+"""
+
+query_driver_standings_for_season_grid = """
+        query DriverStandingsForSeasonGrid($gridId: ID!) {
+            byPrimaryGrid: driverStandings(
+                filters: { seasonGrid: { id: { eq: $gridId } } },
+                pagination: { limit: 5 }
+            ) {
+                data {
+                    id
+                }
+            }
+            byExtraGrid: driverStandings(
+                filters: { grids: { id: { eq: $gridId } } },
+                pagination: { limit: 5 }
+            ) {
+                data {
+                    id
+                }
+            }
+        }
 """
 
 mutation_update_driver_standing = """
