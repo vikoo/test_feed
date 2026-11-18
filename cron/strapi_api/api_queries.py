@@ -547,12 +547,13 @@ mutation_update_race_result = """
 """
 
 query_race_results_all = """
-        query GetRacesForSeason($season: String!,$limit: Int, $start: Int) {
+        query GetRacesForSeason($season: String!,$limit: Int, $start: Int, $types: [String] = ["Race", "Q3","Sprint","SQ3", "QNR1", "QNR2"], $sort: [String] = []) {
             raceResults(
                 pagination: {
                     limit: $limit,
                     start: $start
                 }
+                sort: $sort
                 filters: {
                     race: {
                         grandPrix: {
@@ -563,7 +564,7 @@ query_race_results_all = """
                             }
                         }
                         type:{
-                            in: ["Race", "Q3","Sprint","SQ3", "QNR1", "QNR2"]
+                            in: $types
                         }
                     }
                 }

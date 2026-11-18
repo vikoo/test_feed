@@ -6,6 +6,7 @@ MOTO_RACE_RACE   = "Race"
 MOTO_RACE_SPRINT = "Sprint"
 MOTO_RACE_QUALI1 = "QNR1"
 MOTO_RACE_QUALI2 = "QNR2"
+MOTO_PRACTICE_TYPES = ("FP1", "PRACTICE", "FP2")
 
 
 def update_moto_gp_stats(season, all_race_results, driver_standings, team_standings):
@@ -207,6 +208,26 @@ def _safe_float(v, default=0.0):
         return default
 
 
+def _start_key(r):
+    """(grand prix, rider) of a result row, to match a Sprint or Race row with that rider's qualifying row."""
+    gp_id = _get_val(r, ["attributes", "race", "data", "attributes", "grandPrix", "data", "id"])
+    rider = _get_val(r, ["attributes", "seasonGrid", "data", "attributes", "driver", "data", "id"])
+    if rider is None:
+        rider = ("grid", _get_val(r, ["attributes", "seasonGrid", "data", "id"]))
+    return gp_id, rider
+
+
+def _took_part(r):
+    rtype = _get_val(r, ["attributes", "race", "data", "attributes", "type"])
+    if rtype in (MOTO_RACE_RACE, MOTO_RACE_SPRINT):
+        return True
+    if rtype not in (MOTO_RACE_QUALI1, MOTO_RACE_QUALI2, *MOTO_PRACTICE_TYPES):
+        return False
+    t = _get_val(r, ["attributes", "time"])
+    has_time = isinstance(t, str) and t.strip() != "" and t.strip().upper() != "DNF"
+    return _safe_int(_get_val(r, ["attributes", "laps"])) > 0 or has_time
+
+
 def _safe_int(v, default=0):
     try:
         return int(v)
@@ -267,13 +288,15 @@ def populate_moto_gp_driver_data(
         m[points_key]     = sum(_safe_float(_get_val(r, ["attributes", "points"]), 0.0) for r in races)
         m[avg_points_key] = m[points_key] / len(races) if races else 0.0
 
-        m[wins_key]    = sum(1 for r in races if effective_pos(r) == 1)
-        m[podiums_key] = sum(1 for r in races if 1 <= effective_pos(r) <= 3)
+        # a rider who did not finish has no finishing place, whatever position the row carries
+        classified = [r for r in races if _get_val(r, ["attributes", "dnf"]) is not True]
+        m[wins_key]    = sum(1 for r in classified if effective_pos(r) == 1)
+        m[podiums_key] = sum(1 for r in classified if 1 <= effective_pos(r) <= 3)
 
         if top5_key is not None:
-            m[top5_key] = sum(1 for r in races if 1 <= effective_pos(r) <= 5)
+            m[top5_key] = sum(1 for r in classified if 1 <= effective_pos(r) <= 5)
 
-        m[top_finish_key] = sum(1 for r in races if 1 <= effective_pos(r) <= top_limit)
+        m[top_finish_key] = sum(1 for r in classified if 1 <= effective_pos(r) <= top_limit)
 
         m[fl_key] = sum(
             1 for r in races
@@ -352,47 +375,40 @@ def populate_moto_gp_driver_data(
         m[best_quali_key] = min(quali_positions) if quali_positions else 0
         m[avg_quali_key]  = sum(quali_positions) / len(qualis) if quali_positions else -999
 
-        # Grid for start position: qnr1_rest (position > 2 only, unmodified) + qnr2
-        # Mirrors Dart: var qualisForGrid = qnr1 + qnr2  (where qnr1 is already filtered to position > 2)
-        qualis_for_grid = qnr1_rest + qnr2
+        # Grid slot per rider and GP, as stored on the qualifying rows: Race slot = finalPos ?? position,
+        # Sprint slot = sprintFinalPos ?? finalPos ?? position. A Q1 row without finalPos is Q1 position + 10.
+        # Q2 rows are read last, so they win over a stray Q1 row of the same rider.
+        def grid_slot(r):
+            if is_sprint and _get_val(r, ["attributes", "sprintFinalPos"]) is not None:
+                return _safe_int(_get_val(r, ["attributes", "sprintFinalPos"]))
+            if _get_val(r, ["attributes", "finalPos"]) is not None:
+                return _safe_int(_get_val(r, ["attributes", "finalPos"]))
+            pos = _safe_int(_get_val(r, ["attributes", "position"]))
+            is_q1 = _get_val(r, ["attributes", "race", "data", "attributes", "type"]) == MOTO_RACE_QUALI1
+            return pos + 10 if is_q1 else pos
 
-        if is_sprint:
-            # Sprint grid: sprintFinalPos ?? finalPos ?? position
-            def sprint_grid_pos(r):
-                sfp = _get_val(r, ["attributes", "sprintFinalPos"])
-                if sfp is not None:
-                    return _safe_int(sfp)
-                fp = _get_val(r, ["attributes", "finalPos"])
-                if fp is not None:
-                    return _safe_int(fp)
-                return _safe_int(_get_val(r, ["attributes", "position"]))
+        slots = {}
+        for r in qnr1_rest + qnr2:
+            slots[_start_key(r)] = grid_slot(r)
 
-            m[poles_key]         = sum(1 for r in qualis_for_grid if sprint_grid_pos(r) == 1)
-            m[first_row_key]     = sum(1 for r in qualis_for_grid if 1 <= sprint_grid_pos(r) <= 3)
-            m[q3_appearances_key] = len(qnr2)
+        # Start-grid stats count only the Sprints or Races the rider started (a row in that session),
+        # so a non-starter or a cancelled race does not count as a start.
+        starts = []
+        for r in race_list_of_type(MOTO_RACE_SPRINT if is_sprint else MOTO_RACE_RACE):
+            slot = slots.get(_start_key(r))
+            if slot is not None and slot > 0 and effective_pos(r) > 0:
+                starts.append((slot, effective_pos(r)))
 
-            grid_positions = [sprint_grid_pos(r) for r in qualis_for_grid]
-            m[avg_start_grid_key] = sum(grid_positions) / len(qualis_for_grid) if qualis_for_grid else -999
-
+        # Pole is earned in qualifying: Q2 position 1, not the grid slot after penalties.
+        m[poles_key]          = sum(1 for r in qnr2 if _safe_int(_get_val(r, ["attributes", "position"])) == 1)
+        m[first_row_key]      = sum(1 for slot, _ in starts if slot <= 3)
+        m[q3_appearances_key] = len(qnr2)
+        if starts:
+            m[avg_start_grid_key] = sum(slot for slot, _ in starts) / len(starts)
+            m[avg_pos_gained_key] = m[avg_start_grid_key] - sum(fin for _, fin in starts) / len(starts)
         else:
-            # Race grid: finalPos ?? position
-            def race_grid_pos(r):
-                fp = _get_val(r, ["attributes", "finalPos"])
-                if fp is not None:
-                    return _safe_int(fp)
-                return _safe_int(_get_val(r, ["attributes", "position"]) or 0)
-
-            m[poles_key]         = sum(1 for r in qualis_for_grid if race_grid_pos(r) == 1)
-            m[first_row_key]     = sum(1 for r in qualis_for_grid if 1 <= race_grid_pos(r) <= 3)
-            m[q3_appearances_key] = len(qnr2)
-
-            grid_positions = [race_grid_pos(r) for r in qualis_for_grid]
-            m[avg_start_grid_key] = sum(grid_positions) / len(qualis_for_grid) if qualis_for_grid else -999
-
-        if m.get(avg_finish_key) == -999:
+            m[avg_start_grid_key] = -999
             m[avg_pos_gained_key] = -999
-        else:
-            m[avg_pos_gained_key] = m[avg_start_grid_key] - m[avg_finish_key]
 
     # Race quali
     populate_quali_data(
@@ -415,10 +431,14 @@ def populate_moto_gp_driver_data(
     # ------------------------------------------------------------------ #
     #  Unique GP count                                                     #
     # ------------------------------------------------------------------ #
+    # FIM Grand Prix World Championship Regulations Art. 1.11.9: a rider took part in the event when he
+    # started the Sprint or the Race, or rode in a practice or qualifying session (a lap or a time).
+    # An entry without a lap and without a time (for example 0 laps, OUTSTND) does not count.
     unique_gp_ids = {
         _get_val(r, ["attributes", "race", "data", "attributes", "grandPrix", "data", "id"])
         for r in race_results
         if _get_val(r, ["attributes", "race", "data", "attributes", "grandPrix", "data", "id"]) is not None
+        and _took_part(r)
     }
     m["noOfGPs"] = len(unique_gp_ids)
 

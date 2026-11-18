@@ -13,7 +13,10 @@ from cron.strapi_api.apis import fetch_all_race_results, fetch_driver_team_stand
 
 def process_update_moto_gp_stats(season_year: str):
     logger.info("Processing MotoGP stats update...")
-    race_results = fetch_all_race_results(is_f1_feed=False, season=season_year)
+    # Practice is read only for the GP count (FIM Art. 1.11.9). A fixed sort keeps the start/limit paging complete.
+    race_results = fetch_all_race_results(is_f1_feed=False, season=season_year,
+                                          session_types=["Race", "Sprint", "QNR1", "QNR2", "FP1", "PRACTICE", "FP2"],
+                                          sort=["id:asc"])
     logger.info(f"Fetched {len(race_results)}")
     driver_standings, team_standings = fetch_driver_team_standings_for_season(is_f1_feed=False, season=season_year)
     update_moto_gp_stats(season_year, race_results, driver_standings, team_standings)
