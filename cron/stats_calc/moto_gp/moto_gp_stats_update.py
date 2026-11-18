@@ -3,12 +3,27 @@ from datetime import datetime, timezone
 
 from loguru import logger
 
-from cron.moto_gp.moto_gp_api import fetch_season, fetch_constructor_standings
+from cron.moto_gp.moto_gp_api import fetch_season, fetch_constructor_standings, fetch_rider_standings
 from cron.race_schedule.moto_gp.moto_gp_schedule_utils import valid_year, contains_season
+from cron.stats_calc.moto_gp.moto_gp_standings_sync import ensure_driver_standings, warn_uncounted_result_grids
 from cron.stats_calc.moto_gp.moto_gp_stats_update_utils import update_moto_gp_stats
 from cron.strapi_api.apis import fetch_all_race_results, fetch_driver_team_standings_for_season, \
     update_config_for_stats, fetch_constructor_standings_for_season_moto_gp, \
-    update_constructor_standings_for_season_moto_gp, create_constructor_standings_for_season_moto_gp
+    update_constructor_standings_for_season_moto_gp, create_constructor_standings_for_season_moto_gp, \
+    get_active_season_grids_by_number, driver_standing_exists_for_grid, create_driver_standing
+
+
+def ensure_driver_standings_for_season(season_year: str, driver_standings, team_standings):
+    return ensure_driver_standings(
+        driver_standings,
+        team_standings,
+        fetch_official=lambda: fetch_rider_standings(fetch_season(year=season_year)),
+        fetch_grids=lambda: get_active_season_grids_by_number(is_f1_feed=False, season=season_year),
+        exists=lambda grid_id: driver_standing_exists_for_grid(is_f1_feed=False, grid_id=grid_id),
+        create=lambda season_id, grid_id, position: create_driver_standing(
+            is_f1_feed=False, season_id=season_id, grid_id=grid_id, position=position
+        ),
+    )
 
 
 def process_update_moto_gp_stats(season_year: str):
@@ -16,6 +31,8 @@ def process_update_moto_gp_stats(season_year: str):
     race_results = fetch_all_race_results(is_f1_feed=False, season=season_year)
     logger.info(f"Fetched {len(race_results)}")
     driver_standings, team_standings = fetch_driver_team_standings_for_season(is_f1_feed=False, season=season_year)
+    driver_standings = ensure_driver_standings_for_season(season_year, driver_standings, team_standings)
+    warn_uncounted_result_grids(race_results, driver_standings)
     update_moto_gp_stats(season_year, race_results, driver_standings, team_standings)
     process_constructor_stats_update(season_year)
     update_config_for_stats(is_f1_feed=False, season_year=season_year)
