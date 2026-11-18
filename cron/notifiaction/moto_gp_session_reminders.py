@@ -279,8 +279,13 @@ def _fill(template: str, values: dict):
         return None
 
 
-def pick(lang: str, rtype: str, values: dict, round_no: int):
-    """(title, body) for one language, or None when no line passes the checks."""
+def pick(lang: str, rtype: str, values: dict, seed: int):
+    """(title, body) for one language, or None when no line passes the checks.
+
+    seed = season * 23 + round, unique per Grand Prix across seasons. The heading moves one step per
+    round; the body also moves one step per round plus one extra step per full heading cycle, so every
+    heading meets every body (36 pairs for a 6 x 6 pool) before any pair comes back, and two weekends
+    in a row never share a heading or a body."""
     pool = POOLS.get(lang, POOLS["en"])[rtype]
     titles = [t for t in (_fill(x, values) for x in pool["titles"]) if t]
     bodies = [b for b in (_fill(x, values) for x in pool["bodies"]) if b]
@@ -288,7 +293,21 @@ def pick(lang: str, rtype: str, values: dict, round_no: int):
     bodies = [b for b in bodies if valid("ok 🏁", b)]
     if not titles or not bodies:
         return None
-    return titles[round_no % len(titles)], bodies[(round_no * 5 + 2) % len(bodies)]
+    ti, bi = rotation(seed, len(titles), len(bodies))
+    return titles[ti], bodies[bi]
+
+
+def rotation(seed: int, nt: int, nb: int):
+    """(heading index, body index) for a seed. Heading: one step per weekend. Body: j + k*c, where j is
+    the step inside the heading cycle and k the cycle number. c is coprime with nb (so every pair comes
+    up) and chosen so the body also changes across a cycle boundary. If no such c exists (2 bodies and an
+    even heading count), bodies just alternate: no back-to-back repeat beats full coverage."""
+    j, k = seed % nt, seed // nt
+    from math import gcd
+    for c in range(1, max(nb, 2)):
+        if gcd(c, nb) == 1 and (nb == 1 or (nt - 1 - c) % nb != 0):
+            return j, (j + k * c) % nb
+    return j, seed % nb
 
 
 def flag(country: str) -> str:
@@ -322,13 +341,16 @@ def build_messages(race, facts: dict = None) -> dict:
     for key, value in (facts or {}).items():
         if value not in (None, "") and rtype in FACT_SESSIONS.get(key, ()):
             values[key] = value
+    gp_attrs = _gp(race).get("attributes") or {}
     try:
-        round_no = int((_gp(race).get("attributes") or {}).get("round") or 0)
+        round_no = int(gp_attrs.get("round") or 0)
+        year = int((((gp_attrs.get("season") or {}).get("data") or {}).get("attributes") or {}).get("year") or 0)
     except ValueError:
-        round_no = 0
+        round_no, year = 0, 0
+    seed = year * 23 + round_no
     out = {}
     for lang in ["en", *sorted(locales)]:
-        chosen = pick(lang, rtype, values, round_no)
+        chosen = pick(lang, rtype, values, seed)
         if chosen:
             out[lang] = chosen
     if "en" not in out:

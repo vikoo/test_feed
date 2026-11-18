@@ -59,12 +59,39 @@ class RemindersTest(unittest.TestCase):
                 for lang, (title, body) in msgs.items():
                     self.assertTrue(rem.valid(title, body), (lang, rtype, title, body))
 
-    def test_rotation_changes_the_copy_between_rounds(self):
-        seen = set()
-        for rnd in range(1, 7):
-            r = race(1, "QNR1", FP1); r["attributes"]["grandPrix"]["data"]["attributes"]["round"] = str(rnd)
-            seen.add(rem.build_messages(r)["en"])
-        self.assertEqual(len(seen), 6)
+    def _gp_race(self, rtype, rnd, year=2026):
+        r = race(1, rtype, FP1)
+        a = r["attributes"]["grandPrix"]["data"]["attributes"]
+        a["round"] = str(rnd); a["season"] = {"data": {"attributes": {"year": str(year)}}}
+        return r
+
+    def test_rotation_uses_every_pair_and_never_repeats_back_to_back(self):
+        for rtype in rem.REMIND_TYPES:
+            for lang in ("en", "it", "es"):
+                seq = [rem.build_messages(self._gp_race(rtype, rnd))[lang] for rnd in range(1, 37)]
+                v = {"flag": "🇵🇹", "city": "Portimão", "country": "Portugal"}
+                nt = len([t for t in rem.POOLS[lang][rtype]["titles"] if rem.valid(rem._fill(t, v) or "{", "ok 🏁")])
+                nb = len([b for b in rem.POOLS[lang][rtype]["bodies"] if rem.valid("ok 🏁", rem._fill(b, v) or "{")])
+                if not (nb == 2 and nt % 2 == 0):
+                    self.assertEqual(len(set(seq)), nt * nb, (rtype, lang))
+                for a, b in zip(seq, seq[1:]):
+                    self.assertNotEqual(a[0], b[0], (rtype, lang, "heading repeated next weekend"))
+                    self.assertNotEqual(a[1], b[1], (rtype, lang, "body repeated next weekend"))
+
+    def test_rotation_for_every_pool_size(self):
+        for nt in range(1, 8):
+            for nb in range(1, 8):
+                seq = [rem.rotation(seed, nt, nb) for seed in range(46000, 46000 + nt * nb * 3)]
+                for a, b in zip(seq, seq[1:]):
+                    if nt > 1: self.assertNotEqual(a[0], b[0], (nt, nb))
+                    if nb > 1: self.assertNotEqual(a[1], b[1], (nt, nb))
+                if not (nb == 2 and nt % 2 == 0):
+                    self.assertEqual(len(set(seq)), nt * nb, (nt, nb))
+
+    def test_next_season_does_not_replay_this_season(self):
+        same = sum(rem.build_messages(self._gp_race("QNR1", rnd, 2026))["en"] == rem.build_messages(self._gp_race("QNR1", rnd, 2027))["en"]
+                   for rnd in range(1, 23))
+        self.assertEqual(same, 0)
 
     def test_facts_only_in_their_sessions(self):
         facts = {"leader": "M. Marquez", "gap": 44, "pole": "J. Martin"}
