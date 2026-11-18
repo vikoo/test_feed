@@ -60,6 +60,10 @@ jobs:
           FIREBASE_CONFIG_DEV: ${{ secrets.FIREBASE_CONFIG_DEV }}
           RUNNER_MAX_MINUTES: ${{ inputs.max_minutes || '330' }}
           RUNNER_LOOKAHEAD_HOURS: ${{ inputs.lookahead_hours || '26' }}
+          # Session reminder pushes go out only when the repository variable MOTOZ_SESSION_PUSH is "on"
+          # (Settings > Secrets and variables > Actions > Variables). Anything else: dry run, logged only.
+          MOTOZ_SESSION_PUSH: ${{ vars.MOTOZ_SESSION_PUSH }}
+          GITHUB_TOKEN: ${{ github.token }}   # records reminded sessions on the motogp-state branch
         run: |
           if [ "${{ inputs.mode }}" = "once" ]; then
             python -m cron.data_upload.moto_gp.moto_gp_data_upload

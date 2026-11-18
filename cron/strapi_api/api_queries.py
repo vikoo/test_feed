@@ -962,6 +962,17 @@ query_races_starting_between = """
                     attributes {
                         type
                         startTime
+                        grandPrix {
+                            data {
+                                id
+                                attributes {
+                                    name
+                                    shortName
+                                    isCancelled
+                                    track { data { attributes { city country } } }
+                                }
+                            }
+                        }
                     }
                 }
             }

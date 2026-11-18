@@ -24,3 +24,12 @@ Away from race weekends it exits within a minute. Manual runs are not needed dur
 A rider with no season grid no longer aborts the run halfway: the session is skipped with nothing
 written, the other sessions still run, and the job ends red so the failure email goes out. Riders whose
 only grid is marked `isOldGrid` (substitutes after their weekend) use that grid.
+
+## Session reminder pushes
+
+The runner also sends the reminder push about 15 minutes before FP1, Practice, FP2, Q1, Sprint and Race
+(no Q2, no Warm Up, nothing for a cancelled Grand Prix), with hand-written copy per language
+(`cron/notifiaction/moto_gp_session_reminders.py`). It sends only when the repository variable
+`MOTOZ_SESSION_PUSH` is `on`; otherwise it logs "would send". Reminded sessions are recorded in
+`session_reminders_sent.json` on the `motogp-state` branch, so a session is never reminded twice.
+The results push now names sessions plainly (Practice, Qualifying) and is not sent after Q1.

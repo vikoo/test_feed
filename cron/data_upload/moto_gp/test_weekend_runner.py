@@ -56,6 +56,11 @@ class RunnerTest(unittest.TestCase):
         chain, _ = wr.run(clock=c, sleep=c.sleep, process=lambda now: summary(waiting=["POR Race"]), next_start_fn=lambda now: None, max_minutes=60)
         self.assertTrue(chain)
 
+    def test_polling_does_not_overshoot_the_next_event(self):
+        poll = timedelta(seconds=120)
+        self.assertEqual(wr.next_wake(T0, True, T0 + timedelta(seconds=60), T0 + timedelta(hours=1), poll), T0 + timedelta(seconds=60))
+        self.assertEqual(wr.next_wake(T0, True, T0 + timedelta(hours=2), T0 + timedelta(hours=3), poll), T0 + poll)
+
     def test_never_chains_a_run_that_ended_quickly(self):
         self.assertFalse(wr.should_chain(True, T0, T0 + timedelta(minutes=5), T0))
         self.assertTrue(wr.should_chain(True, None, T0 + timedelta(minutes=30), T0))

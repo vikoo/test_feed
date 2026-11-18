@@ -20,6 +20,7 @@ from datetime import datetime, timedelta, timezone
 from loguru import logger
 
 from cron.data_upload.moto_gp import moto_gp_data_upload as uploader
+from cron.notifiaction import moto_gp_session_reminders as reminders
 from cron.strapi_api.apis import get_races_starting_between
 
 MAX_MINUTES = int(os.getenv("RUNNER_MAX_MINUTES", "330"))
@@ -36,16 +37,39 @@ def iso(dt: datetime) -> str:
 
 
 def next_session_start(now: datetime):
+    """Next moment the runner must be awake: a session start or a reminder time (start minus 15 min)."""
     races = get_races_starting_between(False, iso(now), iso(now + timedelta(hours=CHAIN_LOOKAHEAD_HOURS)))
-    starts = [uploader.parse_time(r["attributes"]["startTime"]) for r in races]
-    starts = [s for s in starts if s > now]
-    return min(starts) if starts else None
+    events = []
+    for r in races:
+        start = uploader.parse_time(r["attributes"]["startTime"])
+        events.append(start)
+        if reminders.wants_reminder(r):
+            events.append(start - reminders.LEAD)
+    events = [e for e in events if e > now]
+    return min(events) if events else None
+
+
+def _send_reminder(messages):
+    from cron.notifiaction.notification_utils import send_localized_notification_to_topic
+    send_localized_notification_to_topic(is_f1=False, is_prod=True, messages=messages)
+
+
+def make_reminder_pass():
+    """Reminder pass bound to the real Strapi, GitHub record and Firebase sender."""
+    store = reminders.SentStore()
+    enabled = os.getenv("MOTOZ_SESSION_PUSH", "").strip().lower() == "on"
+    logger.info(f"session reminders {'ON' if enabled else 'dry run (MOTOZ_SESSION_PUSH is not on)'}")
+    logged = set()
+    fetch = lambda start, end: get_races_starting_between(False, iso(start), iso(end))
+    return lambda now: reminders.run_pass(now, fetch, store, _send_reminder, enabled, logged)
 
 
 def next_wake(now: datetime, waiting: bool, next_start, deadline: datetime, poll: timedelta):
     """When to run the next ingest pass, or None when nothing can happen before the deadline."""
     if waiting:
         wake = now + poll
+        if next_start is not None and now < next_start < wake:
+            wake = next_start  # a reminder or session start falls inside the poll interval: be on time
     elif next_start is not None:
         wake = max(next_start, now + poll)
     else:
@@ -61,7 +85,8 @@ def should_chain(waiting: bool, next_start, now: datetime, started_at: datetime)
 
 
 def run(clock=lambda: datetime.now(timezone.utc), sleep=time.sleep, process=uploader.process,
-        next_start_fn=next_session_start, max_minutes=MAX_MINUTES, poll_seconds=POLL_SECONDS):
+        next_start_fn=next_session_start, max_minutes=MAX_MINUTES, poll_seconds=POLL_SECONDS,
+        remind=lambda now: []):
     started_at = clock()
     deadline = started_at + timedelta(minutes=max_minutes)
     poll = timedelta(seconds=poll_seconds)
@@ -70,6 +95,11 @@ def run(clock=lambda: datetime.now(timezone.utc), sleep=time.sleep, process=uplo
 
     while True:
         now = clock()
+        try:
+            problems += remind(now)
+        except Exception as e:
+            logger.exception(f"reminder pass failed: {type(e).__name__}: {e}")
+            problems.append(f"reminder pass: {type(e).__name__}: {e}")
         try:
             summary = process(now=now)
             problems += summary["skipped_missing_grid"] + summary["errors"]
@@ -103,7 +133,7 @@ def run(clock=lambda: datetime.now(timezone.utc), sleep=time.sleep, process=uplo
 
 def main():
     socket.setdefaulttimeout(90)  # the Strapi helpers send requests without a timeout; never hang a 6 h job
-    chain, problems = run()
+    chain, problems = run(remind=make_reminder_pass())
     problems = list(dict.fromkeys(problems))  # a skipped session is retried, and reported, on every pass
     out = os.getenv("GITHUB_OUTPUT")
     if out:

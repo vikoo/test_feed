@@ -209,7 +209,8 @@ def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, 
     logger.info(f"update stats")
     process_update_moto_gp_stats(season_year=year)
     logger.info("######################")
-    if not is_update_enabled:
+    # No results push after Q1: Q2 starts minutes later and its push ("Qualifying") covers both.
+    if not is_update_enabled and race_type != "QNR1":
         time.sleep(30)
         logger.info(f"sending race complete notification")
         send_race_complete_notification(is_f1=False, race_type=race_type, grand_prix=grand_prix)
