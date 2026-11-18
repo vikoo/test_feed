@@ -948,3 +948,22 @@ mutation_create_constructor_standing_moto_gp = """
         }
     }
 """
+
+
+query_races_starting_between = """
+        query RacesStartingBetween($from: DateTime!, $to: DateTime!) {
+            races(
+                filters: { startTime: { gte: $from, lte: $to } }
+                sort: "startTime:asc"
+                pagination: { limit: 50 }
+            ) {
+                data {
+                    id
+                    attributes {
+                        type
+                        startTime
+                    }
+                }
+            }
+        }
+"""

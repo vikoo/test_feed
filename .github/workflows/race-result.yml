@@ -1,21 +1,42 @@
 name: Race Result Fetcher
 
+# GitHub starts scheduled runs in this repo only about every 4 hours, whatever the cron says
+# (Qatar 2026 weekend: 18 scheduled runs instead of 576). So the crons below are only kick-offs:
+# the job (cron/data_upload/moto_gp/weekend_runner.py) waits for each session, ingests it as soon
+# as its classification is published, and starts a new run of this workflow before the 6 hour job
+# limit while the weekend is still on. Away from race weekends a run exits within a minute.
 on:
   schedule:
-    # Runs every 15 minutes on Friday, Saturday, Sunday, and Monday (explicitly for each day)
-    - cron: "*/10 * * * 1"
-    - cron: "*/10 * * * 5"
-    - cron: "*/10 * * * 6"
-    - cron: "*/10 * * * 0"
+    # Thursday to Monday, every hour at minute 17 (off the busy top of the hour).
+    - cron: "17 * * * 4,5,6,0,1"
 
   workflow_dispatch:       # allow manual run
+    inputs:
+      mode:
+        description: "runner = wait for sessions all weekend; once = single ingest pass (old behaviour)"
+        default: "runner"
+        type: choice
+        options: [runner, once]
+      max_minutes:
+        description: "runner only: minutes before handing over to a new run"
+        default: "330"
+      lookahead_hours:
+        description: "runner only: keep handing over while the next session starts within this many hours"
+        default: "26"
 
 permissions:
   contents: write
+  actions: write           # lets the job start the next run of this workflow
+
+# One ingest at a time, so two runs never create the same session's rows twice.
+concurrency:
+  group: motogp-race-results
+  cancel-in-progress: false
 
 jobs:
   race-results:
     runs-on: ubuntu-latest
+    timeout-minutes: 350
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
@@ -29,6 +50,7 @@ jobs:
         run: pip install -r cron/requirements.txt  # dependencies
 
       - name: Run Race Result Scripts
+        id: runner
         env:
           MOTO_GP_TOKEN: ${{ secrets.MOTO_GP_TOKEN }}
           F1_TOKEN: ${{ secrets.F1_TOKEN }}
@@ -36,6 +58,18 @@ jobs:
           TOMORROW_IO_API_KEY: ${{ secrets.TOMORROW_IO_API_KEY }}
           FIREBASE_CONFIG_PROD: ${{ secrets.FIREBASE_CONFIG_PROD }}
           FIREBASE_CONFIG_DEV: ${{ secrets.FIREBASE_CONFIG_DEV }}
+          RUNNER_MAX_MINUTES: ${{ inputs.max_minutes || '330' }}
+          RUNNER_LOOKAHEAD_HOURS: ${{ inputs.lookahead_hours || '26' }}
         run: |
-          python -m cron.data_upload.moto_gp.moto_gp_data_upload
+          if [ "${{ inputs.mode }}" = "once" ]; then
+            python -m cron.data_upload.moto_gp.moto_gp_data_upload
+          else
+            python -m cron.data_upload.moto_gp.weekend_runner
+          fi
 #          python -m cron.data_upload.f1.f1_data_upload
+
+      - name: Continue the weekend in a new run
+        if: always() && steps.runner.outputs.chain == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run race-result.yml --ref "${{ github.ref_name }}"

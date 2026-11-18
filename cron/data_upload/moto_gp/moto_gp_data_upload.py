@@ -3,14 +3,36 @@ from cron.notifiaction.notification_utils import send_race_complete_notification
 from cron.stats_calc.moto_gp.moto_gp_stats_update import process_update_moto_gp_stats
 from cron.strapi_api.apis import get_latest_past_race, get_race_results_for_race_event, get_season_grid_map, \
     create_race_result, update_race_result, update_config_for_race_result
+from datetime import datetime, timezone
 import json
+import sys
 import time
 from loguru import logger
 
 is_update_enabled = False
 
+# A classification cannot be final before the session has run this long (minutes after startTime).
+MIN_SESSION_MINUTES = {"FP1": 45, "PRACTICE": 60, "FP2": 30, "QNR1": 15, "QNR2": 15, "Sprint": 20, "Race": 40}
+# A started session without a classification counts as "waiting" for this long, then it is given up
+# (cancelled or never published), so a runner does not wait for it forever.
+WAITING_WINDOW_HOURS = 8
 
-def process():
+
+class MissingSeasonGridError(Exception):
+    def __init__(self, numbers):
+        self.numbers = numbers
+        super().__init__(f"no season grid for rider numbers {numbers}")
+
+
+def parse_time(value: str) -> datetime:
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+
+def process(now: datetime = None) -> dict:
+    """Ingest every recent session that has no rows yet. Returns what happened per session so a caller
+    (weekend_runner) knows whether to keep polling. One failing session no longer stops the others."""
+    now = now or datetime.now(timezone.utc)
+    summary = {"ingested": [], "waiting": [], "skipped_missing_grid": [], "errors": []}
     logger.info("fetching the schedule")
     json_data = get_latest_past_race(is_f1_feed=False)
 
@@ -21,31 +43,57 @@ def process():
         race_id = race_entry["id"]
         race_type = race_entry["attributes"]["type"]
         grand_prix = race_entry["attributes"]["grandPrix"]["data"]
+        label = f'{grand_prix["attributes"].get("shortName")} {race_type} (race {race_id})'
         logger.info(f"race_id: {race_id} --- race_type: {race_type}")
-        strapi_races = get_race_results_for_race_event(is_f1_feed=False, race_id=race_id)
-        race_result_count = len(strapi_races['data']['raceResults']['data'])
-        logger.info(f"race_result_count from strapi: {race_result_count}")
 
-        # Build a minimal json_data-like structure scoped to this race entry
-        race_json_data = {"data": {"races": {"data": [race_entry]}}}
+        started = parse_time(race_entry["attributes"]["startTime"])
+        age_minutes = (now - started).total_seconds() / 60
+        if age_minutes < MIN_SESSION_MINUTES.get(race_type, 0):
+            logger.info(f"{label} started {age_minutes:.0f} min ago, not finished yet")
+            summary["waiting"].append(label)
+            continue
 
-        if not is_update_enabled:
-            if race_result_count == 0:
+        try:
+            strapi_races = get_race_results_for_race_event(is_f1_feed=False, race_id=race_id)
+            race_result_count = len(strapi_races['data']['raceResults']['data'])
+            logger.info(f"race_result_count from strapi: {race_result_count}")
+
+            # Build a minimal json_data-like structure scoped to this race entry
+            race_json_data = {"data": {"races": {"data": [race_entry]}}}
+
+            status = "exists"
+            if not is_update_enabled:
+                if race_result_count == 0:
+                    moto_gp_race_results, season_grid_map, year = fetch_and_upload_race_data(race_json_data)
+                    status = upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year)
+                else:
+                    logger.info("Race results already exist in Strapi. No need to fetch from MotoGP API.")
+            else:
+                logger.info("UPDATE is enabled")
                 moto_gp_race_results, season_grid_map, year = fetch_and_upload_race_data(race_json_data)
-                upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year)
-            else:
-                logger.info("Race results already exist in Strapi. No need to fetch from MotoGP API.")
-        else:
-            logger.info("UPDATE is enabled")
-            moto_gp_race_results, season_grid_map, year = fetch_and_upload_race_data(race_json_data)
-            if race_result_count == 0:
-                upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year)
-            else:
-                # Convert strapi races to driver number -> race result id mapping
-                driver_number_to_id_map = convert_strapi_races_to_driver_map(strapi_races)
-                logger.info(f"Driver number to ID map: {driver_number_to_id_map}")
-                logger.info("Race results already exist in Strapi. No need to fetch from MotoGP API.")
-                upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year, driver_number_to_id_map)
+                if race_result_count == 0:
+                    status = upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year)
+                else:
+                    # Convert strapi races to driver number -> race result id mapping
+                    driver_number_to_id_map = convert_strapi_races_to_driver_map(strapi_races)
+                    logger.info(f"Driver number to ID map: {driver_number_to_id_map}")
+                    status = upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year, driver_number_to_id_map)
+        except MissingSeasonGridError as e:
+            logger.error(f"{label} NOT ingested, nothing written: {e}. Create or un-old the season grid, then rerun.")
+            summary["skipped_missing_grid"].append(f"{label}: {e.numbers}")
+            continue
+        except Exception as e:
+            logger.exception(f"{label} failed: {type(e).__name__}: {e}")
+            summary["errors"].append(f"{label}: {type(e).__name__}: {e}")
+            continue
+
+        if status == "ingested":
+            summary["ingested"].append(label)
+        elif status == "no_classification" and age_minutes < WAITING_WINDOW_HOURS * 60:
+            summary["waiting"].append(label)
+
+    logger.info(f"summary: {summary}")
+    return summary
 
 
 def fetch_and_upload_race_data(json_data):
@@ -61,7 +109,7 @@ def fetch_and_upload_race_data(json_data):
     session_uuid = fetch_session(session_type=session_type, event_uuid=event_uuid)
     logger.info(f"session_uuid: {session_uuid}")
     moto_gp_race_results = fetch_race_results(session_uuid)
-    season_grid_map = get_season_grid_map(is_f1_feed=False, season=year)
+    season_grid_map = get_season_grid_map(is_f1_feed=False, season=year, fill_from_old_grids=True)
     return moto_gp_race_results, season_grid_map, year
 
 def convert_strapi_races_to_driver_map(strapi_races):
@@ -102,7 +150,13 @@ def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, 
     logger.info(f"gp_id: {gp_id} ")
     if classification is None or len(classification) == 0:
         logger.warning("No classification data found in MotoGP API response.")
-        return
+        return "no_classification"
+
+    # Check every rider before the first write: a missing grid used to raise KeyError halfway through,
+    # leaving a partial session that later runs never completed (they only ingest sessions with 0 rows).
+    missing = sorted({item["rider"]["number"] for item in classification if item["rider"]["number"] not in season_grid_map})
+    if missing:
+        raise MissingSeasonGridError(missing)
 
     for record in records:
         if record.get("type") == "fastestLap":
@@ -159,7 +213,10 @@ def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, 
         time.sleep(30)
         logger.info(f"sending race complete notification")
         send_race_complete_notification(is_f1=False, race_type=race_type, grand_prix=grand_prix)
+    return "ingested"
 
 
 if __name__ == "__main__":
-    process()
+    result = process()
+    if result["skipped_missing_grid"] or result["errors"]:
+        sys.exit(1)
