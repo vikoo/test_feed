@@ -962,6 +962,7 @@ query_races_starting_between = """
                     attributes {
                         type
                         startTime
+                        siteEventId
                         grandPrix {
                             data {
                                 id
@@ -970,6 +971,8 @@ query_races_starting_between = """
                                     shortName
                                     isCancelled
                                     siteEventId
+                                    startDate
+                                    endDate
                                     round
                                     season { data { attributes { year } } }
                                     track { data { attributes { city country } } }
@@ -994,6 +997,9 @@ query_race_results_for_grand_prix = """
                     attributes {
                         position
                         points
+                        laps
+                        time
+                        dnf
                         finalPos
                         sprintFinalPos
                         fastestLap

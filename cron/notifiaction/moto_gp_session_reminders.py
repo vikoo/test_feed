@@ -183,7 +183,8 @@ MISMATCH = timedelta(minutes=5)
 _official_cache = {}
 
 
-def fetch_official_starts(site_event_id: str) -> dict:
+def fetch_official_sessions(site_event_id: str) -> dict:
+    """{session type: {"start": datetime, "status": "NOT-STARTED"/"FINISHED"/"CANCELLED"/...}}."""
     r = requests.get(f"https://api.motogp.pulselive.com/motogp/v1/events/{site_event_id}",
                      headers={"User-Agent": "Mozilla/5.0"}, timeout=30)
     r.raise_for_status()
@@ -191,8 +192,34 @@ def fetch_official_starts(site_event_id: str) -> dict:
     for b in r.json().get("broadcasts") or []:
         if (b.get("category") or {}).get("acronym") == "MGP" and b.get("type") == "SESSION" \
                 and b.get("shortname") in OFFICIAL_TYPES and b.get("date_start"):
-            out.setdefault(OFFICIAL_TYPES[b["shortname"]], datetime.fromisoformat(b["date_start"]).astimezone(timezone.utc))
+            out.setdefault(OFFICIAL_TYPES[b["shortname"]],
+                           {"start": datetime.fromisoformat(b["date_start"]).astimezone(timezone.utc),
+                            "status": str(b.get("status") or "").upper()})
     return out
+
+
+def fetch_official_starts(site_event_id: str) -> dict:
+    return {t: v["start"] for t, v in fetch_official_sessions(site_event_id).items()}
+
+
+_status_cache = {}
+
+
+def official_status(race, now: datetime, fetch=fetch_official_sessions, ttl=timedelta(minutes=5)) -> str:
+    """Official session status ("CANCELLED" for a cancelled session), "" when unknown."""
+    site_event_id = (_gp(race).get("attributes") or {}).get("siteEventId")
+    if not site_event_id:
+        return ""
+    hit = _status_cache.get(site_event_id)
+    if not hit or now - hit[0] >= ttl:
+        try:
+            hit = (now, fetch(site_event_id))
+            _status_cache[site_event_id] = hit
+        except Exception as e:
+            logger.warning(f"official status unavailable for {site_event_id}: {type(e).__name__}: {e}")
+            if not hit:
+                return ""
+    return (hit[1].get(race["attributes"]["type"]) or {}).get("status", "")
 
 
 def official_starts(site_event_id, now: datetime, fetch=fetch_official_starts, ttl=timedelta(minutes=10)) -> dict:
@@ -221,12 +248,16 @@ def effective_start(race, now: datetime, official=official_starts) -> datetime:
     return official(site_event_id, now).get(race["attributes"]["type"]) or strapi_start(race)
 
 
-def due(races, now: datetime, sent_ids, official=official_starts):
-    """Sessions whose reminder is due now: official start within the lead time, not started, not yet sent."""
+def due(races, now: datetime, sent_ids, official=official_starts, status=official_status):
+    """Sessions whose reminder is due now: official start within the lead time, not started, not yet sent,
+    and not cancelled in the official timetable (Australia 2026 Race)."""
     out = []
     for r in races:
         start = effective_start(r, now, official)
         if wants_reminder(r) and timedelta(0) < start - now <= LEAD and str(r["id"]) not in sent_ids:
+            if status(r, now) == "CANCELLED":
+                logger.info(f"race {r['id']} {r['attributes']['type']} is cancelled in the official timetable: no reminder")
+                continue
             out.append(r)
     return out
 

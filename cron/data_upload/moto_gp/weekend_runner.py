@@ -90,7 +90,7 @@ def should_chain(waiting: bool, next_start, now: datetime, started_at: datetime)
 
 def run(clock=lambda: datetime.now(timezone.utc), sleep=time.sleep, process=uploader.process,
         next_start_fn=next_session_start, max_minutes=MAX_MINUTES, poll_seconds=POLL_SECONDS,
-        remind=lambda now: [], post_race=lambda now: (False, [])):
+        remind=lambda now: [], post_race=lambda now: (False, []), time_sync=lambda now: []):
     started_at = clock()
     deadline = started_at + timedelta(minutes=max_minutes)
     poll = timedelta(seconds=poll_seconds)
@@ -101,6 +101,11 @@ def run(clock=lambda: datetime.now(timezone.utc), sleep=time.sleep, process=uplo
     while True:
         now = clock()
         ok = True
+        try:
+            problems += time_sync(now)  # upcoming session times = official timetable (throttled to hourly)
+        except Exception as e:
+            logger.exception(f"session time check failed: {type(e).__name__}: {e}")
+            problems.append(f"session time check: {type(e).__name__}: {e}")
         try:
             problems += remind(now)
         except Exception as e:
@@ -153,8 +158,10 @@ def main():
     socket.setdefaulttimeout(90)  # the Strapi helpers send requests without a timeout; never hang a 6 h job
     started = datetime.now(timezone.utc)
     try:
-        from cron.data_upload.moto_gp import post_race
-        chain, problems = run(remind=make_reminder_pass(), post_race=post_race.make_pass())
+        from cron.data_upload.moto_gp import post_race, time_sync, auto_grid
+        uploader.on_missing_grid = auto_grid.make_handler()  # new substitute / wild card: create the grid
+        chain, problems = run(remind=make_reminder_pass(), post_race=post_race.make_pass(),
+                              time_sync=time_sync.make_pass())
     except Exception as e:
         # Unexpected crash: hand over only if this run lasted long enough (never a tight re-dispatch loop).
         logger.exception(f"runner crashed: {type(e).__name__}: {e}")

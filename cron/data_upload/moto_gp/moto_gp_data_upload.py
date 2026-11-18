@@ -19,6 +19,10 @@ WAITING_WINDOW_HOURS = 8
 ZERO_POINTS_WAIT_HOURS = 3
 
 
+# Set by the weekend runner: on_missing_grid(year, gp_short_name, numbers) -> (all created: bool, problems).
+on_missing_grid = None
+
+
 class MissingSeasonGridError(Exception):
     def __init__(self, numbers):
         self.numbers = numbers
@@ -54,39 +58,29 @@ def process(now: datetime = None) -> dict:
             summary["waiting"].append(label)
             continue
 
-        try:
-            strapi_races = get_race_results_for_race_event(is_f1_feed=False, race_id=race_id)
-            race_result_count = len(strapi_races['data']['raceResults']['data'])
-            logger.info(f"race_result_count from strapi: {race_result_count}")
-
-            # Build a minimal json_data-like structure scoped to this race entry
-            race_json_data = {"data": {"races": {"data": [race_entry]}}}
-
-            status = "exists"
-            if not is_update_enabled:
-                if race_result_count == 0:
-                    moto_gp_race_results, season_grid_map, year = fetch_and_upload_race_data(race_json_data)
-                    status = upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year, race_start=race_entry["attributes"]["startTime"])
-                else:
-                    logger.info("Race results already exist in Strapi. No need to fetch from MotoGP API.")
-            else:
-                logger.info("UPDATE is enabled")
-                moto_gp_race_results, season_grid_map, year = fetch_and_upload_race_data(race_json_data)
-                if race_result_count == 0:
-                    status = upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year, race_start=race_entry["attributes"]["startTime"])
-                else:
-                    # Convert strapi races to driver number -> race result id mapping
-                    driver_number_to_id_map = convert_strapi_races_to_driver_map(strapi_races)
-                    logger.info(f"Driver number to ID map: {driver_number_to_id_map}")
-                    status = upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year, driver_number_to_id_map, race_start=race_entry["attributes"]["startTime"])
-        except MissingSeasonGridError as e:
-            logger.error(f"{label} NOT ingested, nothing written: {e}. Create or un-old the season grid, then rerun.")
-            summary["skipped_missing_grid"].append(f"{label}: {e.numbers}")
-            continue
-        except Exception as e:
-            logger.exception(f"{label} failed: {type(e).__name__}: {e}")
-            summary["errors"].append(f"{label}: {type(e).__name__}: {e}")
-            continue
+        for attempt in (1, 2):
+            try:
+                status = _process_session(race_entry, race_id, race_type, grand_prix)
+                break
+            except MissingSeasonGridError as e:
+                year = grand_prix["attributes"]["season"]["data"]["attributes"]["year"]
+                if attempt == 1 and on_missing_grid:
+                    try:
+                        ok, grid_problems = on_missing_grid(year, grand_prix["attributes"]["shortName"], e.numbers)
+                    except Exception as ex:
+                        ok, grid_problems = False, [f"grid creation failed: {type(ex).__name__}: {ex}"]
+                    summary["errors"].extend(f"{label}: {p}" for p in grid_problems)
+                    if ok:
+                        continue  # grids created: ingest the session now
+                logger.error(f"{label} NOT ingested, nothing written: {e}. Create or un-old the season grid, then rerun.")
+                summary["skipped_missing_grid"].append(f"{label}: {e.numbers}")
+                status = "skipped"
+                break
+            except Exception as e:
+                logger.exception(f"{label} failed: {type(e).__name__}: {e}")
+                summary["errors"].append(f"{label}: {type(e).__name__}: {e}")
+                status = "failed"
+                break
 
         if status == "ingested":
             summary["ingested"].append(label)
@@ -95,6 +89,35 @@ def process(now: datetime = None) -> dict:
 
     logger.info(f"summary: {summary}")
     return summary
+
+
+def _process_session(race_entry, race_id, race_type, grand_prix):
+    """Ingest one session if it has no rows yet. Returns ingested / no_classification / exists."""
+    strapi_races = get_race_results_for_race_event(is_f1_feed=False, race_id=race_id)
+    race_result_count = len(strapi_races['data']['raceResults']['data'])
+    logger.info(f"race_result_count from strapi: {race_result_count}")
+
+    # Build a minimal json_data-like structure scoped to this race entry
+    race_json_data = {"data": {"races": {"data": [race_entry]}}}
+
+    status = "exists"
+    if not is_update_enabled:
+        if race_result_count == 0:
+            moto_gp_race_results, season_grid_map, year = fetch_and_upload_race_data(race_json_data)
+            status = upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year, race_start=race_entry["attributes"]["startTime"])
+        else:
+            logger.info("Race results already exist in Strapi. No need to fetch from MotoGP API.")
+    else:
+        logger.info("UPDATE is enabled")
+        moto_gp_race_results, season_grid_map, year = fetch_and_upload_race_data(race_json_data)
+        if race_result_count == 0:
+            status = upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year, race_start=race_entry["attributes"]["startTime"])
+        else:
+            # Convert strapi races to driver number -> race result id mapping
+            driver_number_to_id_map = convert_strapi_races_to_driver_map(strapi_races)
+            logger.info(f"Driver number to ID map: {driver_number_to_id_map}")
+            status = upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year, driver_number_to_id_map, race_start=race_entry["attributes"]["startTime"])
+    return status
 
 
 def fetch_and_upload_race_data(json_data):

@@ -55,3 +55,19 @@ After each Sprint and Race the runner, every 15 minutes until done:
   difference (late penalty, missing points, wrong red-flag part). It does not rewrite results.
 It then reruns the stats and bumps the results cache of that Grand Prix. A missing PDF is retried for
 8 hours after the session start, then reported.
+
+## More automation (corrections.py, time_sync.py, auto_grid.py)
+
+- Result corrections, every finished session (FP1 to Race), every 15 minutes during the weekend: times and
+  laps from the API (cross-checked with the FIM PDF for Sprint and Race), Sprint/Race order including
+  non-classified riders from the PDF, dnf, and points after penalties when the API and the PDF agree.
+  Disagreements are reported, not written.
+- Standings check after each Sprint and Race: riders, teams and constructors against the official tables
+  (alarm only).
+- Session times: every run (hourly, every day) sets upcoming session times (next 8 days) to the official
+  timetable when they differ by 5+ minutes and both are more than 6 hours away (same-day delays are kept as
+  planned). GP window kept consistent; calendar cache bumped.
+- Reminders skip a session the official timetable marks CANCELLED.
+- New substitute or wild card: the season grid is created (team-mate's bike and colour, default photo) and,
+  for a substitute, linked to the team; the session is then ingested. The run ends red with what was done:
+  add the photo and check the decision. No team-mate grid to copy = nothing created, alarm.

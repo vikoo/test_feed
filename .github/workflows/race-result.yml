@@ -7,8 +7,9 @@ name: Race Result Fetcher
 # limit while the weekend is still on. Away from race weekends a run exits within a minute.
 on:
   schedule:
-    # Thursday to Monday, every hour at minute 17 (off the busy top of the hour).
-    - cron: "17 * * * 4,5,6,0,1"
+    # Every hour at minute 17 (off the busy top of the hour), every day: on weekdays a run only checks the
+    # upcoming session times against the official timetable and exits within a minute or two.
+    - cron: "17 * * * *"
 
   workflow_dispatch:       # allow manual run
     inputs:

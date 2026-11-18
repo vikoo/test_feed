@@ -95,6 +95,12 @@ class RemindersTest(unittest.TestCase):
         r = race(600, "FP1", FP1); r["attributes"]["grandPrix"]["data"]["attributes"]["siteEventId"] = "x"
         self.assertEqual(rem.effective_start(r, now, lambda sid, n: rem.official_starts(sid, n, fetch=boom)), FP1)
 
+    def test_session_cancelled_in_official_timetable_gets_no_reminder(self):
+        r = race(592, "Race", FP1, name="AUSTRALIA GP 26")
+        cancelled = lambda race_, now: "CANCELLED"
+        self.assertEqual(rem.due([r], FP1 - timedelta(minutes=10), set(), lambda sid, n: {}, cancelled), [])
+        self.assertEqual(len(rem.due([r], FP1 - timedelta(minutes=10), set(), lambda sid, n: {}, lambda race_, now: "NOT-STARTED")), 1)
+
     def test_dry_run_sends_nothing(self):
         sent, st = [], Store()
         probs = rem.run_pass(FP1 - timedelta(minutes=14), lambda a, b: [race(600, "FP1", FP1)], st, sent.append, False)
