@@ -32,17 +32,59 @@ class RemindersTest(unittest.TestCase):
     def setUp(self):
         logger.remove()
 
-    def test_copy_follows_the_playbook_in_every_language(self):
+    def test_every_pool_line_passes_the_checks_with_real_names(self):
+        cities = [("Portimão", "Portugal"), ("Sachsenring", "Germany"), ("Termas de Río Hondo", "Argentina"),
+                  ("Mandalika", "Indonesia"), ("Valencia", "Spain")]
+        names = ["M. Marquez", "F. Di Giannantonio", "R. Fernandez"]
+        bad = []
+        for lang, sessions in rem.POOLS.items():
+            self.assertEqual(set(sessions), set(rem.REMIND_TYPES), lang)
+            for rtype, pool in sessions.items():
+                fact_free_bodies = [b for b in pool["bodies"] if "{leader}" not in b and "{pole}" not in b]
+                self.assertTrue(fact_free_bodies, (lang, rtype))
+                for city, country in cities:
+                    v = {"flag": rem.flag(country), "city": city, "country": country}
+                    for t in pool["titles"]:
+                        title = t.format(**v)
+                        if not rem.valid(title, "ok 🏁") and "{city}" not in t:
+                            bad.append((lang, rtype, title))
+                    for b in fact_free_bodies:
+                        if not rem.valid("ok 🏁", b.format(**v)):
+                            bad.append((lang, rtype, b))
+        self.assertEqual(bad, [])
         for rtype in rem.REMIND_TYPES:
-            msgs = rem.build_messages(race(1, rtype, FP1))
-            self.assertEqual(set(msgs), {"en", *locales})
-            for lang, (title, body) in msgs.items():
-                self.assertTrue(title and body, (lang, rtype))
-                self.assertNotIn("{", title + body)
-                self.assertLessEqual(len(body), 50, (lang, rtype, body))
-                self.assertNotIn("15", title + body, "never promise a lead time")
-        self.assertEqual(rem.build_messages(race(1, "FP1", FP1))["en"][0], "🇵🇹 Portimão is back!")
-        self.assertEqual(rem.build_messages(race(1, "Race", FP1))["en"][0], "🏆 Portugal GP is go!")
+            for name in names:
+                msgs = rem.build_messages(race(1, rtype, FP1), {"leader": name, "gap": 123, "pole": name})
+                self.assertEqual(set(msgs), {"en", *locales})
+                for lang, (title, body) in msgs.items():
+                    self.assertTrue(rem.valid(title, body), (lang, rtype, title, body))
+
+    def test_rotation_changes_the_copy_between_rounds(self):
+        seen = set()
+        for rnd in range(1, 7):
+            r = race(1, "QNR1", FP1); r["attributes"]["grandPrix"]["data"]["attributes"]["round"] = str(rnd)
+            seen.add(rem.build_messages(r)["en"])
+        self.assertEqual(len(seen), 6)
+
+    def test_facts_only_in_their_sessions(self):
+        facts = {"leader": "M. Marquez", "gap": 44, "pole": "J. Martin"}
+        for rnd in range(1, 7):
+            for rtype in ("FP2", "QNR1", "Race"):
+                r = race(1, rtype, FP1); r["attributes"]["grandPrix"]["data"]["attributes"]["round"] = str(rnd)
+                text = " ".join(" ".join(x) for x in rem.build_messages(r, facts).values())
+                self.assertNotIn("Marquez", text, "no standings outside Friday")
+                if rtype != "Race":
+                    self.assertNotIn("Martin", text)
+
+    def test_missing_fact_falls_back_to_a_fact_free_line(self):
+        for rnd in range(1, 7):
+            r = race(1, "Race", FP1); r["attributes"]["grandPrix"]["data"]["attributes"]["round"] = str(rnd)
+            for title, body in rem.build_messages(r, {}).values():
+                self.assertTrue(rem.valid(title, body))
+
+    def test_short_name(self):
+        self.assertEqual(rem.short_name("Marc Marquez"), "M. Marquez")
+        self.assertEqual(rem.short_name("Fabio Di Giannantonio"), "F. Di Giannantonio")
 
     def test_flag_fallback(self):
         self.assertEqual(rem.flag("Spain"), "🇪🇸")

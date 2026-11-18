@@ -969,6 +969,8 @@ query_races_starting_between = """
                                     name
                                     shortName
                                     isCancelled
+                                    round
+                                    season { data { attributes { year } } }
                                     track { data { attributes { city country } } }
                                 }
                             }

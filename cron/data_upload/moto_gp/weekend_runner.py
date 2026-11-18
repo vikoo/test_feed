@@ -54,6 +54,33 @@ def _send_reminder(messages):
     send_localized_notification_to_topic(is_f1=False, is_prod=True, messages=messages)
 
 
+def reminder_facts(race):
+    """Live facts for the copy, from the official MotoGP API. Friday: leader and gap. Sprint and Race:
+    the Q2 pole sitter. Anything that fails is simply left out; fact-free lines are used instead."""
+    from cron.moto_gp.moto_gp_api import fetch_season, fetch_event, fetch_session, fetch_race_results, \
+        fetch_rider_standings
+    rtype = race["attributes"]["type"]
+    gp = race["attributes"]["grandPrix"]["data"]["attributes"]
+    year = gp["season"]["data"]["attributes"]["year"]
+    season_uuid = fetch_season(year)
+    facts = {}
+    if rtype in ("FP1", "PRACTICE"):
+        riders = fetch_rider_standings(season_uuid)["classification"]["rider"]
+        top = sorted(riders, key=lambda e: e["position"])[:2]
+        if len(top) == 2:
+            gap = int(round(float(top[0]["points"]) - float(top[1]["points"])))
+            if gap > 0:  # a tie has no leader to name
+                facts["leader"] = reminders.short_name(top[0]["rider"]["full_name"])
+                facts["gap"] = gap
+    if rtype in ("Sprint", "Race"):
+        event_uuid = fetch_event(event_name=gp["shortName"], season_uuid=season_uuid)
+        q2 = fetch_race_results(fetch_session(session_type="QNR2", event_uuid=event_uuid))
+        first = [c for c in (q2.get("classification") or []) if c.get("position") == 1]
+        if first:
+            facts["pole"] = reminders.short_name(first[0]["rider"]["full_name"])
+    return facts
+
+
 def make_reminder_pass():
     """Reminder pass bound to the real Strapi, GitHub record and Firebase sender."""
     store = reminders.SentStore()
@@ -61,7 +88,7 @@ def make_reminder_pass():
     logger.info(f"session reminders {'ON' if enabled else 'dry run (MOTOZ_SESSION_PUSH is not on)'}")
     logged = set()
     fetch = lambda start, end: get_races_starting_between(False, iso(start), iso(end))
-    return lambda now: reminders.run_pass(now, fetch, store, _send_reminder, enabled, logged)
+    return lambda now: reminders.run_pass(now, fetch, store, _send_reminder, enabled, logged, reminder_facts)
 
 
 def next_wake(now: datetime, waiting: bool, next_start, deadline: datetime, poll: timedelta):
