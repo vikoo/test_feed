@@ -47,7 +47,10 @@ jobs:
           python-version: "3.x"
 
       - name: Install deps
-        run: pip install -r cron/requirements.txt  # dependencies
+        run: |
+          pip install -r cron/requirements.txt  # dependencies
+          # pdftotext, for the FIM grid and classification PDFs. Never fatal: without it only the PDF checks are skipped.
+          (sudo apt-get update -qq > /dev/null && sudo apt-get install -y -qq poppler-utils > /dev/null) || echo "::warning::poppler-utils install failed, PDF checks skipped"
 
       - name: Run Race Result Scripts
         id: runner
@@ -76,4 +79,10 @@ jobs:
         if: always() && steps.runner.outputs.chain == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run race-result.yml --ref "${{ github.ref_name }}"
+        run: |
+          for attempt in 1 2 3; do
+            gh workflow run race-result.yml --ref "${{ github.ref_name }}" && exit 0
+            sleep 20
+          done
+          echo "::error::could not start the next run; the next scheduled kick-off will continue"
+          exit 1

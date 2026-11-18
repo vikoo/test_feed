@@ -33,3 +33,25 @@ The runner also sends the reminder push about 15 minutes before FP1, Practice, F
 `MOTOZ_SESSION_PUSH` is `on`; otherwise it logs "would send". Reminded sessions are recorded in
 `session_reminders_sent.json` on the `motogp-state` branch, so a session is never reminded twice.
 The results push now names sessions plainly (Practice, Qualifying) and is not sent after Q1.
+
+## Operating the reminders during a weekend
+
+- Off for good: set the repository variable `MOTOZ_SESSION_PUSH` to anything other than `on`. A run already in
+  progress keeps the value it started with, so also use the control file below.
+- Pause now, or skip one session (for example one that was cancelled): edit `control.json` on the
+  `motogp-state` branch (GitHub web editor is fine). It is read before every send.
+  - `{"session_push": "off"}` pauses every reminder; `{"session_push": "on"}` or no file resumes.
+  - `{"skip_race_ids": ["606"]}` skips the session with Strapi race id 606.
+- Reminders follow the official motogp.com timetable. When the Strapi time (what the app shows) differs by
+  5 minutes or more, the reminder still goes at the official time and the run ends red with the session
+  named, so the app time can be fixed.
+
+## Post-race checks (post_race.py)
+
+After each Sprint and Race the runner, every 15 minutes until done:
+- sets the official starting grid from the FIM Grid PDF (finalPos / sprintFinalPos on the qualifying rows),
+- sets the Sprint fastest lap from the Sprint Classification PDF when it is missing,
+- compares every rider's stored points with the official classification and ends the run red on any
+  difference (late penalty, missing points, wrong red-flag part). It does not rewrite results.
+It then reruns the stats and bumps the results cache of that Grand Prix. A missing PDF is retried for
+8 hours after the session start, then reported.

@@ -72,6 +72,8 @@ def final_session(sessions: list, api_type: str):
 
 def official_grid(session) -> tuple:
     """(rider numbers in grid order, note). None when the PDF is missing or not readable."""
+    if session and session.get("status") == "CANCELLED":
+        return None, "CANCELLED"
     if not session or session.get("status") != "FINISHED":
         return None, "session not finished"
     url = ((session.get("session_files") or {}).get("grid") or {}).get("url")
@@ -134,7 +136,8 @@ def _rows(fetch_rows, gp_id):
         out.append({"id": r["id"], "type": a["race"]["data"]["attributes"]["type"],
                     "number": a["seasonGrid"]["data"]["attributes"]["driverNumber"],
                     "position": a.get("position"), "finalPos": a.get("finalPos"),
-                    "sprintFinalPos": a.get("sprintFinalPos"), "fastestLap": a.get("fastestLap")})
+                    "sprintFinalPos": a.get("sprintFinalPos"), "fastestLap": a.get("fastestLap"),
+                    "points": a.get("points")})
     return out
 
 
@@ -151,6 +154,8 @@ def run_gp(gp: dict, started: dict, now: datetime, api, fetch_rows, write, apply
     rows = _rows(fetch_rows, gp["id"])
 
     def note(kind, msg):
+        if msg == "CANCELLED":
+            return  # a cancelled session has no grid or classification to wait for (Australia 2026 Race)
         fresh = kind in started and now - started[kind] < timedelta(hours=PENDING_HOURS)
         (pending if fresh else problems).append(f"{label} {kind}: {msg}")
 
@@ -176,8 +181,8 @@ def run_gp(gp: dict, started: dict, now: datetime, api, fetch_rows, write, apply
 
     if "Sprint" in started:
         sprint_rows = [r for r in rows if r["type"] == "Sprint"]
-        if sprint_rows and not any(r["fastestLap"] for r in sprint_rows):
-            spr = final_session(sessions, "SPR")
+        spr = final_session(sessions, "SPR")
+        if sprint_rows and not any(r["fastestLap"] for r in sprint_rows) and (spr or {}).get("status") != "CANCELLED":
             try:
                 cls = api(f"session/{spr['id']}/classification?test=false").get("classification") or [] if spr else []
                 fl, msg = sprint_fastest_lap(spr, cls)
@@ -195,6 +200,28 @@ def run_gp(gp: dict, started: dict, now: datetime, api, fetch_rows, write, apply
                     problems.append(f"{label} Sprint: fastest lap rider #{num} has no Sprint row")
             else:
                 note("Sprint", msg)
+    # Points check: stored Sprint and Race points against the official classification of the final part.
+    # A difference means a late penalty, missing points (Australia 2026 Sprint) or a wrong red-flag part:
+    # it is reported for a person to fix, never rewritten here.
+    for kind, api_type in (("Sprint", "SPR"), ("Race", "RAC")):
+        sess = final_session(sessions, api_type)
+        kind_rows = [r for r in rows if r["type"] == kind]
+        if kind not in started or not sess or sess.get("status") != "FINISHED" or not kind_rows:
+            continue
+        try:
+            cls = api(f"session/{sess['id']}/classification?test=false").get("classification") or []
+        except Exception as e:
+            note(kind, f"classification unavailable for the points check: {type(e).__name__}: {e}")
+            continue
+        if not cls:
+            continue
+        official_pts = {c["rider"]["number"]: float(c.get("points") or 0) for c in cls}
+        stored_pts = {r["number"]: (None if r.get("points") is None else float(r["points"])) for r in kind_rows}
+        diffs = [f"#{n} stored {stored_pts.get(n)} official {p:g}" for n, p in official_pts.items()
+                 if stored_pts.get(n) != p and not (p == 0 and stored_pts.get(n) in (None, 0.0) and n in stored_pts)]
+        diffs += [f"#{n} stored but not in the official classification" for n in stored_pts if n not in official_pts]
+        if diffs:
+            problems.append(f"{label} {kind} points differ from the official classification: {diffs}")
     return changed, pending, problems
 
 
@@ -223,10 +250,12 @@ def make_pass(min_interval=timedelta(minutes=15)):
         gps = {}
         for r in races:
             t = r["attributes"]["type"]
-            if t not in ("Sprint", "Race"):
+            g = (r["attributes"].get("grandPrix") or {}).get("data")
+            if t not in ("Sprint", "Race") or not g:
                 continue
-            g = r["attributes"]["grandPrix"]["data"]
             a = g["attributes"]
+            if a.get("isCancelled") is True:
+                continue  # nothing to correct for a cancelled Grand Prix
             started = datetime.fromisoformat(r["attributes"]["startTime"].replace("Z", "+00:00"))
             gps.setdefault(g["id"], {"gp": {"id": g["id"], "shortName": a["shortName"],
                                             "year": a["season"]["data"]["attributes"]["year"]}, "started": {}})
@@ -239,13 +268,15 @@ def make_pass(min_interval=timedelta(minutes=15)):
                 continue
             try:
                 changed, p, probs = run_gp(item["gp"], item["started"], now, pulselive,
-                                           lambda gid: get_race_results_for_grand_prix(False, gid, ["QNR1", "QNR2", "Sprint"]),
+                                           lambda gid: get_race_results_for_grand_prix(False, gid, ["QNR1", "QNR2", "Sprint", "Race"]),
                                            write)
             except Exception as e:
                 logger.exception(f"post-race pass failed for GP {gp_id}")
                 problems.append(f"post-race GP {gp_id}: {type(e).__name__}: {e}")
-                _state[gp_id] = {"last": now, "pending": True}
-                pending = True
+                # Retry only while the session is recent; an error must not keep the runner alive for 30 h.
+                fresh = any(now - t < timedelta(hours=PENDING_HOURS) for t in item["started"].values())
+                _state[gp_id] = {"last": now, "pending": fresh}
+                pending = pending or fresh
                 continue
             _state[gp_id] = {"last": now, "pending": bool(p)}
             if p:

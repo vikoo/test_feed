@@ -28,6 +28,10 @@ def ensure_driver_standings_for_season(season_year: str, driver_standings, team_
 
 def process_update_moto_gp_stats(season_year: str):
     logger.info("Processing MotoGP stats update...")
+    if not fetch_season(year=season_year):
+        # Off-season (e.g. January before the new season is published): nothing to compute yet.
+        logger.info(f"season {season_year} is not in the MotoGP API yet, nothing to update")
+        return
     # Practice is read only for the GP count (FIM Art. 1.11.9). A fixed sort keeps the start/limit paging complete.
     race_results = fetch_all_race_results(is_f1_feed=False, season=season_year,
                                           session_types=["Race", "Sprint", "QNR1", "QNR2", "FP1", "PRACTICE", "FP2"],

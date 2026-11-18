@@ -30,6 +30,9 @@ POLL_SECONDS = int(os.getenv("RUNNER_POLL_SECONDS", "120"))
 CHAIN_LOOKAHEAD_HOURS = int(os.getenv("RUNNER_LOOKAHEAD_HOURS", "26"))
 # Never chain a run that ended this quickly: a broken run must not re-dispatch itself in a tight loop.
 MIN_MINUTES_BEFORE_CHAIN = 20
+# Stop handing over when nothing has worked for this long (revoked token, long outage), so a broken
+# setup does not chain runs forever; the next scheduled kick-off tries again.
+MAX_HOURS_WITHOUT_SUCCESS = 6
 
 
 def iso(dt: datetime) -> str:
@@ -38,13 +41,14 @@ def iso(dt: datetime) -> str:
 
 def next_session_start(now: datetime):
     """Next moment the runner must be awake: a session start or a reminder time (start minus 15 min)."""
-    races = get_races_starting_between(False, iso(now), iso(now + timedelta(hours=CHAIN_LOOKAHEAD_HOURS)))
+    # From 3 h back: a session whose official time is earlier than Strapi's must still be seen.
+    races = get_races_starting_between(False, iso(now - timedelta(hours=3)), iso(now + timedelta(hours=CHAIN_LOOKAHEAD_HOURS)))
     events = []
     for r in races:
         start = uploader.parse_time(r["attributes"]["startTime"])
         events.append(start)
         if reminders.wants_reminder(r):
-            events.append(start - reminders.LEAD)
+            events.append(reminders.effective_start(r, now) - reminders.LEAD)  # official time wins
     events = [e for e in events if e > now]
     return min(events) if events else None
 
@@ -86,15 +90,17 @@ def should_chain(waiting: bool, next_start, now: datetime, started_at: datetime)
 
 def run(clock=lambda: datetime.now(timezone.utc), sleep=time.sleep, process=uploader.process,
         next_start_fn=next_session_start, max_minutes=MAX_MINUTES, poll_seconds=POLL_SECONDS,
-        remind=lambda now: []):
+        remind=lambda now: [], post_race=lambda now: (False, [])):
     started_at = clock()
     deadline = started_at + timedelta(minutes=max_minutes)
     poll = timedelta(seconds=poll_seconds)
     problems = []
     waiting, next_start = False, None
+    last_ok = started_at
 
     while True:
         now = clock()
+        ok = True
         try:
             problems += remind(now)
         except Exception as e:
@@ -107,14 +113,26 @@ def run(clock=lambda: datetime.now(timezone.utc), sleep=time.sleep, process=uplo
         except Exception as e:  # Strapi or API down: keep the weekend alive and retry
             logger.exception(f"ingest pass failed: {type(e).__name__}: {e}")
             problems.append(f"ingest pass: {type(e).__name__}: {e}")
-            waiting = True
+            waiting, ok = True, False
+        try:
+            post_pending, post_problems = post_race(now)
+            problems += post_problems
+            waiting = waiting or post_pending  # keep polling until the official PDFs are in
+        except Exception as e:
+            logger.exception(f"post-race pass failed: {type(e).__name__}: {e}")
+            problems.append(f"post-race pass: {type(e).__name__}: {e}")
         try:
             next_start = next_start_fn(now)
         except Exception as e:
             logger.exception(f"schedule lookup failed: {type(e).__name__}: {e}")
-            waiting = True
+            waiting, ok = True, False
 
         now = clock()
+        if ok:
+            last_ok = now
+        elif now - last_ok > timedelta(hours=MAX_HOURS_WITHOUT_SUCCESS):
+            logger.error(f"nothing has worked for {MAX_HOURS_WITHOUT_SUCCESS} h: stopping without handing over")
+            return False, problems
         if next_start is None and not waiting:
             logger.info("no session waiting and none in the next hours: weekend done")
             return False, problems
@@ -133,7 +151,15 @@ def run(clock=lambda: datetime.now(timezone.utc), sleep=time.sleep, process=uplo
 
 def main():
     socket.setdefaulttimeout(90)  # the Strapi helpers send requests without a timeout; never hang a 6 h job
-    chain, problems = run(remind=make_reminder_pass())
+    started = datetime.now(timezone.utc)
+    try:
+        from cron.data_upload.moto_gp import post_race
+        chain, problems = run(remind=make_reminder_pass(), post_race=post_race.make_pass())
+    except Exception as e:
+        # Unexpected crash: hand over only if this run lasted long enough (never a tight re-dispatch loop).
+        logger.exception(f"runner crashed: {type(e).__name__}: {e}")
+        chain = datetime.now(timezone.utc) - started >= timedelta(minutes=MIN_MINUTES_BEFORE_CHAIN)
+        problems = [f"runner crashed: {type(e).__name__}: {e}"]
     problems = list(dict.fromkeys(problems))  # a skipped session is retried, and reported, on every pass
     out = os.getenv("GITHUB_OUTPUT")
     if out:

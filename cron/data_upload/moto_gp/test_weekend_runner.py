@@ -124,3 +124,28 @@ class UploaderTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class HardeningTest(unittest.TestCase):
+    def setUp(self):
+        logger.remove()
+
+    def test_long_outage_stops_handing_over(self):
+        c = FakeClock(T0)
+        def process(now): raise ConnectionError("token revoked")
+        chain, problems = wr.run(clock=c, sleep=c.sleep, process=process, next_start_fn=lambda now: None, max_minutes=600)
+        self.assertFalse(chain)
+        self.assertLess(c.t - T0, timedelta(hours=wr.MAX_HOURS_WITHOUT_SUCCESS, minutes=5))
+
+    def test_red_flag_part_one_with_zero_points_is_not_ingested(self):
+        cls = {"classification": [{"position": 1, "rider": {"number": 93, "id": "a"}, "points": 0},
+                                  {"position": 2, "rider": {"number": 89, "id": "b"}, "points": None}], "records": []}
+        recent = (datetime.now(timezone.utc) - timedelta(minutes=50)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+        old = (datetime.now(timezone.utc) - timedelta(hours=4)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+        with mock.patch.object(up, "create_race_result") as create, \
+             mock.patch.object(up, "update_config_for_race_result"), mock.patch.object(up, "process_update_moto_gp_stats"), \
+             mock.patch.object(up, "send_race_complete_notification"), mock.patch.object(up.time, "sleep"):
+            self.assertEqual(up.upload_moto_gp_race_results(cls, {93: "1", 89: "2"}, "600", "Race", {"id": "47"}, "2026", race_start=recent), "no_classification")
+            create.assert_not_called()
+            self.assertEqual(up.upload_moto_gp_race_results(cls, {93: "1", 89: "2"}, "600", "Race", {"id": "47"}, "2026", race_start=old), "ingested")
+            self.assertEqual(create.call_count, 2)

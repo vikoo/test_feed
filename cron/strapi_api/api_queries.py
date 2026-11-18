@@ -969,6 +969,7 @@ query_races_starting_between = """
                                     name
                                     shortName
                                     isCancelled
+                                    siteEventId
                                     round
                                     season { data { attributes { year } } }
                                     track { data { attributes { city country } } }
@@ -992,6 +993,7 @@ query_race_results_for_grand_prix = """
                     id
                     attributes {
                         position
+                        points
                         finalPos
                         sprintFinalPos
                         fastestLap
