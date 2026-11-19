@@ -146,3 +146,81 @@ class CorrectionsTest(unittest.TestCase):
         got = {(r, f): v for r, f, v, _ in fixes}
         self.assertEqual(got[(3, "position")], 2); self.assertEqual(got[(2, "position")], 3)
         self.assertTrue(got[(2, "dnf")]); self.assertTrue(got[(3, "dnf")])
+
+
+class OwedRecomputeTest(unittest.TestCase):
+    """Reviewer case: rows corrected, then the stats call fails. The recompute must still happen."""
+    def setUp(self):
+        logger.remove()
+        pr._state.clear()
+
+    def test_failed_stats_after_a_write_is_retried(self):
+        from datetime import datetime, timedelta, timezone
+        now = datetime(2026, 11, 22, 15, 0, tzinfo=timezone.utc)
+        races = [{"id": "606", "attributes": {"type": "Race", "startTime": "2026-11-22T13:00:00.000Z", "grandPrix": {"data": {
+            "id": "47", "attributes": {"shortName": "POR", "isCancelled": None, "season": {"data": {"attributes": {"year": "2026"}}}}}}}}]
+        calls = {"run_gp": 0, "stats": 0}
+        def run_gp(gp, started, now, api, fetch_rows, write, apply=True):
+            calls["run_gp"] += 1
+            if calls["run_gp"] == 1:
+                write("1", {"position": 2})
+                raise TimeoutError("read timeout after the write")
+            return False, [], []
+        def stats(season_year):
+            calls["stats"] += 1
+            if calls["stats"] == 1:
+                raise ConnectionError("strapi blip")
+        import cron.strapi_api.apis as apis
+        import cron.stats_calc.moto_gp.moto_gp_stats_update as su
+        with mock.patch.object(apis, "get_races_starting_between", return_value=races), \
+             mock.patch.object(apis, "update_race_result"), mock.patch.object(apis, "update_config_for_race_result") as cache, \
+             mock.patch.object(su, "process_update_moto_gp_stats", side_effect=stats), \
+             mock.patch.object(pr, "run_gp", side_effect=run_gp), mock.patch.object(pr, "fetch_standings_diffs", return_value=[]):
+            run = pr.make_pass()
+            pending1, probs1 = run(now)                          # write, timeout, stats fail
+            pending2, probs2 = run(now + timedelta(minutes=2))  # within the 15 min throttle: recompute only
+            pending3, _ = run(now + timedelta(minutes=4))
+        self.assertTrue(pending1); self.assertTrue(probs1)
+        self.assertEqual(calls["stats"], 2)                      # retried once, then done
+        self.assertEqual(cache.call_count, 1)
+        self.assertEqual(calls["run_gp"], 1)                     # throttle kept for the corrections themselves
+        self.assertFalse(pr._state["47"]["stats_owed"])
+
+
+class PartsAndPdfTest(unittest.TestCase):
+    from cron.data_upload.moto_gp import corrections as C
+
+    HEAD = "   Pos Pts # Rider                                         Nation Team                      Motorcycle   Total Time   Km/h   Gap"
+
+    def test_half_points_rows_parse(self):
+        text = "\n".join([self.HEAD,
+            "      1   12.5      73 Alex MARQUEZ                       SPA BK8 Gresini Racing MotoGP    DUCATI     20'02.258   167.3",
+            "      2     10      37 Pedro ACOSTA                       SPA Red Bull KTM Factory Racing  KTM        20'02.299   167.3  0.041",
+            "      3      8      49 Fabio DI GIANNANTONIO              ITA Pertamina Enduro VR46 Racing DUCATI     20'02.715   167.2  0.457",
+            "     16       5 Johann ZARCO                              FRA CASTROL Honda LCR            HONDA      20'30.000   160.0  27.742"])
+        rows = self.C.parse_session_pdf(text)
+        self.assertEqual([(r["pos"], r["pts"], r["num"]) for r in rows], [(1, 12.5, 73), (2, 10, 37), (3, 8, 49), (16, 0, 5)])
+
+    def test_not_on_restart_grid_counts_as_not_classified(self):
+        text = "\n".join([self.HEAD,
+            "      1     25      73 Alex MARQUEZ                       SPA BK8 Gresini Racing MotoGP    DUCATI     41'02.258   167.3",
+            "   Not on restart grid",
+            "            93 Marc MARQUEZ                               SPA Ducati Lenovo Team           DUCATI",])
+        rows = self.C.parse_session_pdf(text)
+        self.assertEqual([(r["num"], r["nc"]) for r in rows], [(73, False), (93, True)])
+
+    def test_abandoned_restart_keeps_part_one(self):
+        sessions = [{"id": "a", "type": "RAC", "number": None, "status": "FINISHED"},
+                    {"id": "b", "type": "RAC", "number": 2, "status": "CANCELLED"}]
+        self.assertEqual(self.C.final_api_session(sessions, "Race")["id"], "a")
+        self.assertEqual(pr.final_session(sessions, "RAC")["id"], "a")
+        sessions[1]["status"] = "FINISHED"
+        self.assertEqual(self.C.final_api_session(sessions, "Race")["id"], "b")
+        self.assertEqual(pr.final_session(sessions, "RAC")["id"], "b")
+        from cron.moto_gp import moto_gp_api as m
+        from unittest import mock
+        for status, want in (("CANCELLED", "a"), ("FINISHED", "b")):
+            sessions[1]["status"] = status
+            with mock.patch.object(m.requests, "get", return_value=mock.Mock(json=lambda: sessions, raise_for_status=lambda: None)):
+                self.assertEqual(m.fetch_session("Race", "ev"), want)
+

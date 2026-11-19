@@ -149,6 +149,7 @@ def fetch_session(session_type: str, event_uuid: str)-> str:
         # A red-flag restart is listed as a second session (RAC and RAC 2, Catalonia 2026); the last part
         # carries the classification and the points.
         parts = [s for s in sessions if s.get("type") == motp_gp_session_type]
+        parts = [s for s in parts if str(s.get("status") or "").upper() != "CANCELLED"] or parts  # abandoned restart
         if parts:
             return max(parts, key=lambda s: s.get("number") or 1)["id"]
         return None

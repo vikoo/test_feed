@@ -49,6 +49,33 @@ class TimeSyncTest(unittest.TestCase):
     def test_official_feed_without_a_session_changes_nothing(self):
         self.assertEqual(ts.plan(races(), lambda sid: {}, datetime(2026, 11, 4, tzinfo=UTC)), ([], {}))
 
+    def test_move_of_more_than_two_days_is_held(self):
+        far = {t: v + timedelta(days=7) for t, v in OFFICIAL.items()}  # wrong event linked
+        held = []
+        changes, gp = ts.plan(races(), lambda sid: far, datetime(2026, 11, 4, tzinfo=UTC), held)
+        self.assertEqual((changes, gp), ([], {})); self.assertEqual(len(held), 7)
+
+    def test_make_pass_writes_only_the_time_and_skips_cancelled(self):
+        from unittest import mock
+        import cron.strapi_api.apis as apis
+        import cron.notifiaction.moto_gp_session_reminders as rem
+        sessions = {t: {"start": v, "status": "CANCELLED" if t == "Race" else "NOT-STARTED"} for t, v in OFFICIAL.items()}
+        puts = []
+        def put(url, json=None, **kw):
+            puts.append((url.rsplit("/api/", 1)[1], json["data"]))
+            return mock.Mock(raise_for_status=lambda: None)
+        with mock.patch.object(apis, "get_races_starting_between", return_value=races()), \
+             mock.patch.object(apis, "update_config_for_gp") as bump, \
+             mock.patch.object(rem, "fetch_official_sessions", side_effect=lambda sid: sessions), \
+             mock.patch("requests.put", side_effect=put):
+            problems = ts.make_pass()(datetime(2026, 11, 4, 12, 0, tzinfo=UTC))
+        self.assertEqual(problems, [])
+        race_puts = [p for p in puts if p[0].startswith("races/")]
+        self.assertEqual(len(race_puts), 6)  # the cancelled Race is not moved
+        self.assertTrue(all(set(d) == {"startTime"} for _, d in race_puts))
+        self.assertNotIn("487", [p[0].split("/")[1] for p in race_puts])
+        self.assertEqual(bump.call_count, 1)
+
 
 if __name__ == "__main__":
     unittest.main()

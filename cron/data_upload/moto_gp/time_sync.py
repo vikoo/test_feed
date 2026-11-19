@@ -17,6 +17,9 @@ LOOKAHEAD = timedelta(days=8)
 MIN_LEAD = timedelta(hours=6)
 MISMATCH = timedelta(minutes=5)
 MIN_RACE_TO_END = timedelta(minutes=45)
+# A real timetable change moves a session by hours (Qatar 2026: 1 h). More than this means a wrong event
+# link (siteEventId) or a wrong date in Strapi: held and reported, never written.
+MAX_MOVE = timedelta(days=2)
 
 
 def _dt(s):
@@ -27,10 +30,12 @@ def _iso(dt):
     return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
 
-def plan(races: list, official_for, now: datetime):
+def plan(races: list, official_for, now: datetime, held=None):
     """races: Strapi races (with grandPrix id, siteEventId, startDate, endDate). official_for(site_event_id) ->
-    {session type: official start}. Returns (session_changes [(race, old, new)], gp_changes {gp_id: fields})."""
+    {session type: official start} (cancelled sessions left out). Returns (session_changes [(race, old, new)],
+    gp_changes {gp_id: fields}). Moves larger than MAX_MOVE are appended to `held` (strings), not planned."""
     changes, gp_changes = [], {}
+    held = held if held is not None else []
     by_gp = {}
     for r in races:
         g = (r["attributes"].get("grandPrix") or {}).get("data")
@@ -49,6 +54,10 @@ def plan(races: list, official_for, now: datetime):
                 continue
             if mine - now <= MIN_LEAD or off - now <= MIN_LEAD:
                 logger.info(f"race {r['id']} {t}: official {off} differs but is too close, left as planned")
+                continue
+            if abs(off - mine) > MAX_MOVE:
+                held.append(f"race {r['id']} {t}: official start {off:%a %d %b %H:%M} UTC is more than "
+                            f"{MAX_MOVE.days} days from Strapi {mine:%a %d %b %H:%M} UTC; not changed, check the event link")
                 continue
             changes.append((r, mine, off))
             new_start[t] = (mine, off)
@@ -71,18 +80,19 @@ def plan(races: list, official_for, now: datetime):
 
 def make_pass(min_interval=timedelta(hours=1)):
     """Bound to Strapi and the official timetable. Returns pass(now) -> problems (list)."""
-    import json
     import requests
-    from cron.notifiaction.moto_gp_session_reminders import fetch_official_starts
-    from cron.strapi_api.apis import get_races_starting_between, update_time_in_race, update_config_for_gp, \
-        get_headers
+    from cron.notifiaction.moto_gp_session_reminders import fetch_official_sessions
+    from cron.strapi_api.apis import get_races_starting_between, update_config_for_gp, get_headers
     from cron.utils import moto_graphql_end_point
 
     state = {"last": None}
+    base = moto_graphql_end_point.rsplit("/graphql", 1)[0]
 
-    def update_gp(gp_id, fields):
-        base = moto_graphql_end_point.rsplit("/graphql", 1)[0]
-        r = requests.put(f"{base}/api/grand-prixes/{gp_id}", json={"data": fields}, headers=get_headers(False), timeout=30)
+    def official_for(site_event_id):
+        return {t: v["start"] for t, v in fetch_official_sessions(site_event_id).items() if v.get("status") != "CANCELLED"}
+
+    def put(path, fields):
+        r = requests.put(f"{base}/api/{path}", json={"data": fields}, headers=get_headers(False), timeout=30)
         r.raise_for_status()
 
     def run(now: datetime):
@@ -92,26 +102,29 @@ def make_pass(min_interval=timedelta(hours=1)):
         problems = []
         try:
             races = get_races_starting_between(False, _iso(now), _iso(now + LOOKAHEAD))
-            changes, gp_changes = plan(races, fetch_official_starts, now)
+            changes, gp_changes = plan(races, official_for, now, problems)
         except Exception as e:
             return [f"session time check failed: {type(e).__name__}: {e}"]
+        failed_gps = set()
         for r, old, new in changes:
             try:
-                res = update_time_in_race(False, _iso(new), r["id"], r["attributes"].get("siteEventId") or "")
-                if (res or {}).get("errors"):
-                    raise RuntimeError(json.dumps(res["errors"])[:300])
+                put(f"races/{r['id']}", {"startTime": _iso(new)})  # only the time: siteEventId stays as it is
                 logger.warning(f"session time fixed from the official timetable: race {r['id']} "
                                f"{r['attributes']['type']} {old:%a %d %b %H:%M} -> {new:%a %d %b %H:%M} UTC")
             except Exception as e:
+                failed_gps.add(((r["attributes"].get("grandPrix") or {}).get("data") or {}).get("id"))
                 problems.append(f"race {r['id']} {r['attributes']['type']}: time fix {old} -> {new} failed: "
                                 f"{type(e).__name__}: {e}")
         for gp_id, fields in gp_changes.items():
+            if gp_id in failed_gps:
+                continue  # window follows the sessions only once they are written (no drift on the retry)
             try:
-                update_gp(gp_id, fields)
+                put(f"grand-prixes/{gp_id}", fields)
                 logger.warning(f"GP {gp_id} window updated: {fields}")
             except Exception as e:
                 problems.append(f"GP {gp_id}: window update {fields} failed: {type(e).__name__}: {e}")
         if changes or gp_changes:
+            state["last"] = None if failed_gps else now  # retry a failed write on the next pass, not in 1 h
             update_config_for_gp(is_f1_feed=False)  # calendar cache: the app refetches the schedule
         return problems
 

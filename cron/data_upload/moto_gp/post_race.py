@@ -67,6 +67,7 @@ def _norm(name: str) -> str:
 def final_session(sessions: list, api_type: str):
     """The session that carries the result: for a red-flag restart the API lists RAC and RAC 2."""
     cands = [s for s in sessions if s.get("type") == api_type]
+    cands = [s for s in cands if s.get("status") != "CANCELLED"] or cands  # an abandoned restart keeps part 1
     return max(cands, key=lambda s: s.get("number") or 1) if cands else None
 
 
@@ -362,29 +363,43 @@ def make_pass(min_interval=timedelta(minutes=15)):
         pending = pending or bool((_state.get("standings") or {}).get("pending"))
         for gp_id, item in gps.items():
             st = _state.get(gp_id)
-            if st and now - st["last"] < min_interval:
+            owed = bool(st and st.get("stats_owed"))  # a write went in but the recompute did not finish
+            if st and now - st["last"] < min_interval and not owed:
                 pending = pending or st["pending"]  # between checks, report what the last check found
                 continue
-            try:
-                changed, p, probs = run_gp(item["gp"], item["started"], now, pulselive,
-                                           lambda gid: get_race_results_for_grand_prix(False, gid, ["FP1", "PRACTICE", "FP2", "QNR1", "QNR2", "Sprint", "Race"]),
-                                           write)
-            except Exception as e:
-                logger.exception(f"post-race pass failed for GP {gp_id}")
-                problems.append(f"post-race GP {gp_id}: {type(e).__name__}: {e}")
-                # Retry only while the session is recent; an error must not keep the runner alive for 30 h.
-                fresh = any(now - t < timedelta(hours=PENDING_HOURS) for t in item["started"].values())
-                _state[gp_id] = {"last": now, "pending": fresh}
-                pending = pending or fresh
-                continue
-            _state[gp_id] = {"last": now, "pending": bool(p)}
-            if p:
-                logger.info(f"post-race pending: {p}")
-                pending = True
-            problems += probs
-            if changed:
-                process_update_moto_gp_stats(season_year=str(item["gp"]["year"]))
-                update_config_for_race_result(is_f1_feed=False, gp_id=gp_id)
+            wrote = []
+            def counted_write(row_id, fields):
+                wrote.append(row_id)  # counted before the call: a timeout after the server applied it still counts
+                write(row_id, fields)
+            if st and now - st["last"] < min_interval:
+                changed, p, probs = False, [], []  # only the owed recompute below
+            else:
+                try:
+                    changed, p, probs = run_gp(item["gp"], item["started"], now, pulselive,
+                                               lambda gid: get_race_results_for_grand_prix(False, gid, ["FP1", "PRACTICE", "FP2", "QNR1", "QNR2", "Sprint", "Race"]),
+                                               counted_write)
+                except Exception as e:
+                    logger.exception(f"post-race pass failed for GP {gp_id}")
+                    problems.append(f"post-race GP {gp_id}: {type(e).__name__}: {e}")
+                    # Retry only while the session is recent; an error must not keep the runner alive for 30 h.
+                    fresh = any(now - t < timedelta(hours=PENDING_HOURS) for t in item["started"].values())
+                    changed, p, probs = False, ["error"] if fresh else [], []
+                _state[gp_id] = {"last": now, "pending": bool(p), "stats_owed": owed}
+                if p:
+                    logger.info(f"post-race pending: {p}")
+                    pending = True
+                problems += probs
+            if changed or wrote or owed:
+                _state[gp_id]["stats_owed"] = True
+                try:
+                    process_update_moto_gp_stats(season_year=str(item["gp"]["year"]))
+                    update_config_for_race_result(is_f1_feed=False, gp_id=gp_id)
+                    _state[gp_id]["stats_owed"] = False
+                except Exception as e:
+                    logger.exception(f"stats or cache update failed for GP {gp_id}, retried next pass")
+                    problems.append(f"post-race GP {gp_id}: stats/cache update failed (retried): {type(e).__name__}: {e}")
+                    # keep the runner polling for it only while the weekend is recent (never 30 h on a bug)
+                    pending = pending or any(now - t < timedelta(hours=PENDING_HOURS) for t in item["started"].values())
         return pending, problems
 
     return run

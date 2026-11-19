@@ -18,6 +18,7 @@ weather workflow pushes to main without pulling, so commits there would break it
 import base64
 import json
 import os
+import time
 from datetime import datetime, timedelta, timezone
 
 import requests
@@ -27,7 +28,7 @@ from cron.utils import locales
 
 LEAD = timedelta(minutes=15)
 REMIND_TYPES = ("FP1", "PRACTICE", "FP2", "QNR1", "Sprint", "Race")
-MAX_PER_PASS = 2  # sessions are at least 25 minutes apart; more than 2 due at once means bad data
+MAX_PER_PASS = 1  # reminded sessions are at least 40 minutes apart; 2 due at once means bad data
 STATE_BRANCH = "motogp-state"
 STATE_PATH = "session_reminders_sent.json"
 CONTROL_PATH = "control.json"
@@ -248,16 +249,27 @@ def effective_start(race, now: datetime, official=official_starts) -> datetime:
     return official(site_event_id, now).get(race["attributes"]["type"]) or strapi_start(race)
 
 
+def session_key(race) -> str:
+    """One key per real session, whatever the Strapi row: a duplicated race row (or a duplicated Grand
+    Prix with the same official event) must not send a second push."""
+    gp = _gp(race)
+    event = (gp.get("attributes") or {}).get("siteEventId") or f"gp{gp.get('id')}"
+    return f"{event}:{race['attributes']['type']}"
+
+
 def due(races, now: datetime, sent_ids, official=official_starts, status=official_status):
-    """Sessions whose reminder is due now: official start within the lead time, not started, not yet sent,
-    and not cancelled in the official timetable (Australia 2026 Race)."""
-    out = []
+    """Sessions whose reminder is due now: official start within the lead time, not started, not yet sent
+    (by race id or by session key), and not cancelled in the official timetable (Australia 2026 Race)."""
+    out, keys = [], set()
     for r in races:
         start = effective_start(r, now, official)
-        if wants_reminder(r) and timedelta(0) < start - now <= LEAD and str(r["id"]) not in sent_ids:
+        key = session_key(r)
+        if wants_reminder(r) and timedelta(0) < start - now <= LEAD and str(r["id"]) not in sent_ids \
+                and key not in sent_ids and key not in keys:
             if status(r, now) == "CANCELLED":
                 logger.info(f"race {r['id']} {r['attributes']['type']} is cancelled in the official timetable: no reminder")
                 continue
+            keys.add(key)
             out.append(r)
     return out
 
@@ -332,24 +344,32 @@ class SentStore:
         if c.status_code not in (201, 422):  # 422: created meanwhile
             c.raise_for_status()
 
-    def mark(self, race_id: str, when: datetime):
-        self.local[str(race_id)] = when.astimezone(timezone.utc).isoformat()
+    def mark(self, keys, when: datetime, attempts: int = 4, pause: float = 5.0):
+        """Record a sent session under every key given (race id and session key)."""
+        keys = [keys] if isinstance(keys, (str, int)) else list(keys)
+        for k in keys:
+            self.local[str(k)] = when.astimezone(timezone.utc).isoformat()
         self.sent = {**self.sent, **self.local}
         if not self.remote:
             return
-        self._ensure_branch()
-        for attempt in range(2):
-            payload = {"message": f"MotoGP session reminder sent: race {race_id}", "branch": STATE_BRANCH,
-                       "content": base64.b64encode(json.dumps(self.sent, indent=1, sort_keys=True).encode()).decode()}
-            if self.sha:
-                payload["sha"] = self.sha
-            r = requests.put(self._url(f"contents/{STATE_PATH}"), headers=self._h(), json=payload, timeout=30)
-            if r.status_code in (409, 422) and attempt == 0:  # stale sha: merge the remote file and retry once
-                self.load()
-                continue
-            r.raise_for_status()
-            self.sha = r.json()["content"]["sha"]
-            return
+        last = None
+        for attempt in range(attempts):
+            try:
+                if attempt:
+                    time.sleep(pause * attempt)
+                    self.load()  # stale sha or a failed write: merge the remote file and retry
+                self._ensure_branch()
+                payload = {"message": f"MotoGP session reminder sent: {', '.join(map(str, keys))}", "branch": STATE_BRANCH,
+                           "content": base64.b64encode(json.dumps(self.sent, indent=1, sort_keys=True).encode()).decode()}
+                if self.sha:
+                    payload["sha"] = self.sha
+                r = requests.put(self._url(f"contents/{STATE_PATH}"), headers=self._h(), json=payload, timeout=30)
+                r.raise_for_status()
+                self.sha = r.json()["content"]["sha"]
+                return
+            except Exception as e:
+                last = e
+        raise last
 
 
 def run_pass(now: datetime, fetch_races, store: SentStore, send, enabled: bool, logged=None,
@@ -362,10 +382,11 @@ def run_pass(now: datetime, fetch_races, store: SentStore, send, enabled: bool, 
         races = fetch_races(now - timedelta(hours=3), now + timedelta(hours=3))
     except Exception as e:
         return [f"reminder lookup failed: {type(e).__name__}: {e}"]
+    # Same-day differences only (time_sync fixes the ones more than 6 h away): keep the planned time
+    # in Strapi, follow the official one for the push, log it once. Not a failure of the run.
     for m in time_mismatches(races, now, official):
         if m not in logged:
-            logger.error(m)
-            problems.append(m)
+            logger.warning(m)
             logged.add(m)
     todo = due(races, now, set(store.sent) | set(store.local), official)
     if todo and enabled:
@@ -380,7 +401,8 @@ def run_pass(now: datetime, fetch_races, store: SentStore, send, enabled: bool, 
                 logger.warning("session reminders paused by control.json on the motogp-state branch")
                 logged.add("paused")
             return problems
-        skip = {str(x) for x in control.get("skip_race_ids") or []}
+        raw = control.get("skip_race_ids") or []
+        skip = {str(x).strip() for x in ([raw] if isinstance(raw, (str, int)) else raw)}
         todo = [r for r in todo if str(r["id"]) not in skip]
     if len(todo) > MAX_PER_PASS:
         return problems + [f"{len(todo)} reminders due at once, nothing sent (check session times): {[r['id'] for r in todo]}"]
@@ -404,7 +426,7 @@ def run_pass(now: datetime, fetch_races, store: SentStore, send, enabled: bool, 
             problems.append(f"{label}: send failed: {type(e).__name__}: {e}")
             continue
         try:
-            store.mark(r["id"], now)
+            store.mark([str(r["id"]), session_key(r)], now)
         except Exception as e:
             problems.append(f"{label}: sent but not recorded, a later run may resend: {type(e).__name__}: {e}")
     return problems

@@ -496,7 +496,7 @@ query_fastest_laps_for_gp = """
 
 query_season_grid = """
         query GetSeasonGridQuery($season:String!) {
-            seasonGrids(filters: { season: { year: { eq: $season} } }, pagination: {pageSize: 60}) {
+            seasonGrids(filters: { season: { year: { eq: $season} } }, pagination: {pageSize: 200}) {
                 data {
                     id
                     attributes {

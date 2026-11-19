@@ -86,6 +86,10 @@ def process(now: datetime = None) -> dict:
             summary["ingested"].append(label)
         elif status == "no_classification" and age_minutes < WAITING_WINDOW_HOURS * 60:
             summary["waiting"].append(label)
+        elif status == "no_classification" and age_minutes < (WAITING_WINDOW_HOURS + 2) * 60:
+            # Reported once, by the pass that stops waiting (the session drops out of the window after).
+            summary["errors"].append(f"{label}: no classification {WAITING_WINDOW_HOURS} h after the start, not ingested "
+                                     f"(fine if the session was cancelled; otherwise ingest it by hand)")
 
     logger.info(f"summary: {summary}")
     return summary

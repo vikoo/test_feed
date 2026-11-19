@@ -28,9 +28,11 @@ class Store(rem.SentStore):
     def load(self):
         if self.fail_load: raise ConnectionError("github down")
         return self.sent
-    def mark(self, race_id, when):
+    def mark(self, keys, when):
         if self.fail_mark: raise ConnectionError("github down")
-        self.sent[str(race_id)] = when.isoformat(); self.marked.append(race_id)
+        keys = [keys] if isinstance(keys, (str, int)) else list(keys)
+        for k in keys: self.sent[str(k)] = when.isoformat()
+        self.marked.append(keys[0])
 
 
 class RemindersTest(unittest.TestCase):
@@ -85,7 +87,8 @@ class RemindersTest(unittest.TestCase):
             problems += rem.run_pass(t, lambda a, b: [r], st, lambda m: sent.append(t), True, logged, official)
             t += timedelta(minutes=1)
         self.assertEqual(sent, [official_fp1 - timedelta(minutes=15)])
-        self.assertEqual(len([p for p in problems if "app shows" in p]), 1)
+        self.assertEqual(len([m for m in logged if "app shows" in str(m)]), 1)  # logged once
+        self.assertEqual(problems, [])  # a same-day difference does not turn the run red
 
     def test_official_feed_down_falls_back_to_strapi_time(self):
         rem._official_cache.clear()
@@ -119,7 +122,7 @@ class RemindersTest(unittest.TestCase):
 
     def test_too_many_due_sends_nothing(self):
         sent = []
-        probs = rem.run_pass(FP1 - timedelta(minutes=5), lambda a, b: [race(i, "FP1", FP1) for i in range(3)], Store(), sent.append, True)
+        probs = rem.run_pass(FP1 - timedelta(minutes=5), lambda a, b: [race(i, k, FP1) for i, k in enumerate(("FP1", "Sprint", "Race"))], Store(), sent.append, True)
         self.assertEqual(sent, []); self.assertTrue(probs)
 
     def test_results_push_uses_plain_session_names(self):
@@ -162,7 +165,8 @@ class HardeningTest(unittest.TestCase):
     def test_failed_record_write_never_resends(self):
         st, get, put = self._remote_store(put_status=500)
         sent = []
-        with mock.patch.object(rem.requests, "get", side_effect=get), mock.patch.object(rem.requests, "put", side_effect=put):
+        with mock.patch.object(rem.requests, "get", side_effect=get), mock.patch.object(rem.requests, "put", side_effect=put), \
+             mock.patch.object(rem.time, "sleep"):
             for minute in (15, 13, 11, 9, 7, 5, 3, 1):
                 rem.run_pass(FP1 - timedelta(minutes=minute), lambda a, b: [race(600, "FP1", FP1)], st, sent.append, True)
         self.assertEqual(len(sent), 1)
@@ -179,3 +183,59 @@ class HardeningTest(unittest.TestCase):
         with mock.patch.dict(rem.TEMPLATES["fr"], {"FP1": ("🏍️ {gp} : un titre beaucoup trop long pour passer", "x 🔥")}):
             msgs = rem.build_messages(race(1, "FP1", FP1))
         self.assertNotIn("fr", msgs); self.assertIn("en", msgs); self.assertEqual(len(msgs), 9)
+
+
+class DuplicateAndControlTest(unittest.TestCase):
+    def setUp(self):
+        logger.remove()
+
+    def test_duplicated_race_row_sends_one_push(self):
+        a, b = race(606, "Race", FP1), race(700, "Race", FP1)
+        st, sent = Store(), []
+        for minute in (14, 12, 10):
+            rem.run_pass(FP1 - timedelta(minutes=minute), lambda x, y: [a, b], st, sent.append, True,
+                         official=lambda sid, now: {})
+        self.assertEqual(len(sent), 1)
+
+    def test_duplicated_gp_with_same_official_event_sends_one_push(self):
+        a, b = race(606, "Race", FP1), race(700, "Race", FP1)
+        b["attributes"]["grandPrix"] = {"data": {"id": "99", "attributes": {"name": "PORTUGAL GP 26", "siteEventId": "por"}}}
+        a["attributes"]["grandPrix"]["data"]["attributes"]["siteEventId"] = "por"
+        st, sent = Store(), []
+        rem.run_pass(FP1 - timedelta(minutes=10), lambda x, y: [a, b], st, sent.append, True, official=lambda sid, now: {})
+        rem.run_pass(FP1 - timedelta(minutes=8), lambda x, y: [b], st, sent.append, True, official=lambda sid, now: {})
+        self.assertEqual(len(sent), 1)
+
+    def test_two_different_sessions_due_at_once_send_nothing(self):
+        st, sent = Store(), []
+        p = rem.run_pass(FP1 - timedelta(minutes=10), lambda x, y: [race(600, "FP1", FP1), race(605, "Sprint", FP1)],
+                         st, sent.append, True, official=lambda sid, now: {})
+        self.assertEqual(sent, []); self.assertTrue(p)
+
+    def test_skip_race_ids_as_string_or_number(self):
+        for raw in ("600", 600, ["600"], [600]):
+            st = Store(); st.remote = True
+            st.control = lambda raw=raw: {"skip_race_ids": raw}
+            sent = []
+            rem.run_pass(FP1 - timedelta(minutes=10), lambda x, y: [race(600, "FP1", FP1)], st, sent.append, True,
+                         official=lambda sid, now: {})
+            self.assertEqual(sent, [], raw)
+
+
+class CancelledStatusCacheTest(unittest.TestCase):
+    def setUp(self):
+        logger.remove()
+        rem._status_cache.clear()
+
+    def test_cancelled_status_seen_earlier_survives_a_feed_outage(self):
+        r = race(606, "Race", FP1)
+        r["attributes"]["grandPrix"]["data"]["attributes"]["siteEventId"] = "por"
+        ok = lambda sid: {"Race": {"start": FP1, "status": "CANCELLED"}}
+        def boom(sid): raise ConnectionError("down")
+        self.assertEqual(rem.official_status(r, FP1 - timedelta(minutes=40), fetch=ok), "CANCELLED")  # runner warm-up
+        self.assertEqual(rem.official_status(r, FP1 - timedelta(minutes=10), fetch=boom), "CANCELLED")  # outage
+        st, sent = Store(), []
+        with mock.patch.object(rem.requests, "get", side_effect=ConnectionError("down")):  # feed down at send time
+            rem.run_pass(FP1 - timedelta(minutes=10), lambda a, b: [r], st, sent.append, True,
+                         official=lambda sid, now: {})
+        self.assertEqual(sent, [])

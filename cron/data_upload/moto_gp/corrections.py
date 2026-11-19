@@ -16,8 +16,9 @@ import re
 
 NATIONS = ("SPA|ITA|FRA|AUS|GBR|GER|JPN|TUR|RSA|BRA|POR|THA|ARG|INA|MAL|QAT|USA|AUT|CZE|NED|HUN|RSM|SUI|BEL|FIN|"
            "MEX|COL|AND|VEN|CAN|IND|KOR|CHN|NZL")
-_ROW = re.compile(r"^\s*(?:(\d{1,2})\s+)?(?:(\d{1,2})\s+)?(\d{1,2})\s+([^\d\s][^\d]*?)\s{2,}")
-_ROW2 = re.compile(r"^\s*(?:(\d{1,2})\s+)?(?:(\d{1,2})\s+)?(\d{1,2})\s+([^\d\s]\S*(?:\s+[^\d\s]\S*)*?)\s+(?:%s)\s" % NATIONS)
+# pos, points (half points in a shortened race: 12.5), number, name
+_ROW = re.compile(r"^\s*(?:(\d{1,2})\s+)?(?:(\d{1,2}(?:\.5)?)\s+)?(\d{1,2})\s+([^\d\s][^\d]*?)\s{2,}")
+_ROW2 = re.compile(r"^\s*(?:(\d{1,2})\s+)?(?:(\d{1,2}(?:\.5)?)\s+)?(\d{1,2})\s+([^\d\s]\S*(?:\s+[^\d\s]\S*)*?)\s+(?:%s)\s" % NATIONS)
 
 # Strapi session type -> predicate on an API session
 SESSION_MAP = {
@@ -52,7 +53,8 @@ def parse_session_pdf(text: str) -> list:
         if re.search(r"\bPos\s+(?:Pts\s+)?(?:#\s+)?Rider", ln):
             in_tab = True
             continue
-        if any(k in ln for k in ("Not classified", "No time set", "Not started", "Disqualified", "Not finished first lap")):
+        if any(k in ln for k in ("Not classified", "No time set", "Not started", "Disqualified", "Not finished first lap",
+                                "Not on restart grid", "Not on Restart Grid")):
             nc = True
             continue
         if "Race condition" in ln:
@@ -66,7 +68,8 @@ def parse_session_pdf(text: str) -> list:
         if not nc and pos is None and pts is not None:
             pos, pts = pts, None
         tm = re.search(r"(\d+'\d\d\.\d{3})", ln)
-        rows.append({"pos": int(pos) if (pos and not nc) else None, "pts": int(pts) if pts else 0,
+        p = float(pts) if pts else 0
+        rows.append({"pos": int(pos) if (pos and not nc) else None, "pts": int(p) if p == int(p) else p,
                      "num": int(num), "name": name.strip(), "nc": nc,
                      "ms": ms(tm.group(1).replace("'", ":")) if tm else None})
     return rows
@@ -74,6 +77,8 @@ def parse_session_pdf(text: str) -> list:
 
 def final_api_session(sessions: list, stype: str):
     cands = [s for s in sessions if SESSION_MAP[stype](s)]
+    if stype in ("Sprint", "Race"):
+        cands = [s for s in cands if s.get("status") != "CANCELLED"] or cands  # an abandoned restart keeps part 1
     return max(cands, key=lambda s: s.get("number") or 1) if cands and stype in ("Sprint", "Race") else \
         (cands[0] if cands else None)
 
