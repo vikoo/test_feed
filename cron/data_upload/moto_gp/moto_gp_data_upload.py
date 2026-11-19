@@ -1,5 +1,6 @@
 from cron.moto_gp.moto_gp_api import fetch_season, fetch_event, fetch_session, fetch_race_results
 from cron.notifiaction.notification_utils import send_race_complete_notification
+from cron.strapi_api.apis import get_config
 from cron.stats_calc.moto_gp.moto_gp_stats_update import process_update_moto_gp_stats
 from cron.strapi_api.apis import get_latest_past_race, get_race_results_for_race_event, get_season_grid_map, \
     create_race_result, update_race_result, update_config_for_race_result
@@ -18,6 +19,32 @@ MIN_SESSION_MINUTES = {"FP1": 45, "PRACTICE": 60, "FP2": 30, "QNR1": 15, "QNR2":
 WAITING_WINDOW_HOURS = 8
 # Riders in these classified positions always score (Race 25..1, Sprint 12..1, also with half points).
 SCORING_POSITIONS = {"Race": 15, "Sprint": 9}
+# "Results are out" is news only near the session (Purple Sector rule): a session written later (a grid
+# fixed days after, a manual rerun) is a data correction and is not announced.
+RESULTS_PUSH_MAX_AGE_HOURS = 24
+
+
+def results_readable(race_id, expected_rows: int, gp_id, attempts: int = 3, pause: float = 10.0):
+    """Read back what the app will read before the push goes out: every row of the session and the results
+    cache key of the Grand Prix. Returns (ok, why not)."""
+    why = "not checked"
+    for attempt in range(attempts):
+        if attempt:
+            time.sleep(pause)
+        try:
+            rows = ((get_race_results_for_race_event(is_f1_feed=False, race_id=race_id).get("data") or {})
+                    .get("raceResults") or {}).get("data") or []
+            cfg = get_config(is_f1_feed=False).get("raceResultFastestLapForGrandPrixJson") or {}
+            cfg = json.loads(cfg) if isinstance(cfg, str) else cfg
+            if len(rows) < expected_rows:
+                why = f"Strapi returns {len(rows)} of {expected_rows} rows"
+            elif str(gp_id) not in {str(k) for k in cfg}:
+                why = f"results cache key for GP {gp_id} missing"
+            else:
+                return True, ""
+        except Exception as e:
+            why = f"read-back failed: {type(e).__name__}: {e}"
+    return False, why
 
 
 def points_missing(classification: list, race_type: str) -> list:
@@ -95,6 +122,9 @@ def process(now: datetime = None) -> dict:
 
         if status == "ingested":
             summary["ingested"].append(label)
+        elif str(status).startswith("ingested_push_held:"):
+            summary["ingested"].append(label)
+            summary["errors"].append(f"{label}: written, results push held ({status.split(':', 1)[1]})")
         elif status == "no_classification" and age_minutes < WAITING_WINDOW_HOURS * 60:
             summary["waiting"].append(label)
         elif status == "no_classification" and age_minutes < (WAITING_WINDOW_HOURS + 2) * 60:
@@ -258,7 +288,16 @@ def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, 
     logger.info("######################")
     # No results push after Q1: Q2 starts minutes later and its push ("Qualifying") covers both.
     if not is_update_enabled and race_type != "QNR1":
+        started = parse_time(race_start) if race_start else None
+        if started and datetime.now(timezone.utc) - started > timedelta(hours=RESULTS_PUSH_MAX_AGE_HOURS):
+            logger.info(f"{race_type} started over {RESULTS_PUSH_MAX_AGE_HOURS} h ago: written without a results push")
+            return "ingested"
         time.sleep(30)
+        ok, why = results_readable(race_id, len(classification), gp_id)
+        if not ok:
+            # The push would open an app that cannot show the results yet: hold it, report it.
+            logger.error(f"{race_type} results push held: {why}")
+            return "ingested_push_held:" + why
         logger.info(f"sending race complete notification")
         send_race_complete_notification(is_f1=False, race_type=race_type, grand_prix=grand_prix)
     return "ingested"
