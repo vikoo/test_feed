@@ -21,7 +21,9 @@ limit starts a new run of the workflow while a session is waiting or the next on
 While idle it still wakes at least every 10 minutes, so a session moved earlier is seen in time. The
 hand-over happens at a quiet moment (no reminder due within 35 minutes, in the last 75 minutes of a job),
 so a new run that takes up to 50 minutes to start cannot make a reminder late or lose it.
-Away from race weekends it exits within a minute. Manual runs are not needed during a weekend; the
+A Sprint or Race is written only once every rider in a scoring position (top 9 / top 15) has points:
+motogp.com often shows the order first and the points a little later; the runner keeps polling every
+2 minutes and writes the result as soon as the points are in. Away from race weekends it exits within a minute. Manual runs are not needed during a weekend; the
 `once` mode keeps the old single pass.
 
 A rider with no season grid no longer aborts the run halfway: the session is skipped with nothing

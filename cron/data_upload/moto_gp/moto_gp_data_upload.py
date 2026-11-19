@@ -16,7 +16,18 @@ MIN_SESSION_MINUTES = {"FP1": 45, "PRACTICE": 60, "FP2": 30, "QNR1": 15, "QNR2":
 # A started session without a classification counts as "waiting" for this long, then it is given up
 # (cancelled or never published), so a runner does not wait for it forever.
 WAITING_WINDOW_HOURS = 8
-ZERO_POINTS_WAIT_HOURS = 3
+# Riders in these classified positions always score (Race 25..1, Sprint 12..1, also with half points).
+SCORING_POSITIONS = {"Race": 15, "Sprint": 9}
+
+
+def points_missing(classification: list, race_type: str) -> list:
+    """Rider numbers in a scoring position that have no points yet. motogp.com often publishes the order
+    of a Sprint or Race before the points; such a classification is not written until the points are in."""
+    n = SCORING_POSITIONS.get(race_type)
+    if not n:
+        return []
+    classified = sorted((c for c in classification if isinstance(c.get("position"), int)), key=lambda c: c["position"])
+    return [c["rider"]["number"] for c in classified[:n] if not (c.get("points") or 0) > 0]
 
 
 # Set by the weekend runner: on_missing_grid(year, gp_short_name, numbers) -> (all created: bool, problems).
@@ -180,14 +191,13 @@ def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, 
         logger.warning("No classification data found in MotoGP API response.")
         return "no_classification"
 
-    # A red-flagged Race or Sprint: the stopped part 1 is published as a full, official classification
-    # with 0 points for everyone (Catalonia 2026) before the API lists the restart. Wait for the restart
-    # for up to ZERO_POINTS_WAIT_HOURS; after that ingest anyway (the post-race points check alarms).
-    if race_type in ("Race", "Sprint") and all(not item.get("points") for item in classification):
-        started = parse_time(race_start) if race_start else None
-        if started and datetime.now(timezone.utc) - started < timedelta(hours=ZERO_POINTS_WAIT_HOURS):
-            logger.warning(f"{race_type} classification has 0 points for every rider (red flag?): waiting")
-            return "no_classification"
+    # Sprint and Race: written only once every rider in a scoring position has points. Covers the order
+    # published before the points, and a red-flag part 1 (0 points for everyone, Catalonia 2026) before
+    # the restart is listed. Polled every 2 minutes; after WAITING_WINDOW_HOURS the run reports it.
+    missing_points = points_missing(classification, race_type)
+    if missing_points:
+        logger.warning(f"{race_type} order is published but riders {missing_points} have no points yet: waiting")
+        return "no_classification"
 
     # Check every rider before the first write: a missing grid used to raise KeyError halfway through,
     # leaving a partial session that later runs never completed (they only ingest sessions with 0 rows).
