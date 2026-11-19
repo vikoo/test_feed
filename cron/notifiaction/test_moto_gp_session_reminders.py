@@ -51,7 +51,7 @@ class RemindersTest(unittest.TestCase):
     def test_copy_is_the_same_every_weekend_except_the_gp_name(self):
         a = rem.build_messages(race(1, "QNR1", FP1, name="PORTUGAL GP 26"))
         b = rem.build_messages(race(2, "QNR1", FP1, name="VALENCIA GP 26"))
-        self.assertEqual(a["en"], ("🎯 Portugal GP: Qualifying", "Pole fight starts now ⏱️🔥"))
+        self.assertEqual(a["en"], ("🎯 Portugal GP: Qualifying", "Q1 and Q2 are about to start ⏱️🔥"))
         for lang in a:
             self.assertEqual(a[lang][1], b[lang][1])
             self.assertEqual(a[lang][0].replace("Portugal", "Valencia"), b[lang][0])
