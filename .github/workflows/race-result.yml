@@ -7,8 +7,9 @@ name: Race Result Fetcher
 # limit while the weekend is still on. Away from race weekends a run exits within a minute.
 on:
   schedule:
-    # Thursday to Monday, every hour at minute 17 (off the busy top of the hour).
-    - cron: "17 * * * 4,5,6,0,1"
+    # Every hour at minute 17 (off the busy top of the hour), every day: on weekdays a run only checks the
+    # upcoming session times against the official timetable and exits within a minute or two.
+    - cron: "17 * * * *"
 
   workflow_dispatch:       # allow manual run
     inputs:
@@ -47,7 +48,10 @@ jobs:
           python-version: "3.x"
 
       - name: Install deps
-        run: pip install -r cron/requirements.txt  # dependencies
+        run: |
+          pip install -r cron/requirements.txt  # dependencies
+          # pdftotext, for the FIM grid and classification PDFs. Never fatal: without it only the PDF checks are skipped.
+          (sudo apt-get update -qq > /dev/null && sudo apt-get install -y -qq poppler-utils > /dev/null) || echo "::warning::poppler-utils install failed, PDF checks skipped"
 
       - name: Run Race Result Scripts
         id: runner
@@ -60,6 +64,10 @@ jobs:
           FIREBASE_CONFIG_DEV: ${{ secrets.FIREBASE_CONFIG_DEV }}
           RUNNER_MAX_MINUTES: ${{ inputs.max_minutes || '330' }}
           RUNNER_LOOKAHEAD_HOURS: ${{ inputs.lookahead_hours || '26' }}
+          # Session reminder pushes go out only when the repository variable MOTOZ_SESSION_PUSH is "on"
+          # (Settings > Secrets and variables > Actions > Variables). Anything else: dry run, logged only.
+          MOTOZ_SESSION_PUSH: ${{ vars.MOTOZ_SESSION_PUSH }}
+          GITHUB_TOKEN: ${{ github.token }}   # records reminded sessions on the motogp-state branch
         run: |
           if [ "${{ inputs.mode }}" = "once" ]; then
             python -m cron.data_upload.moto_gp.moto_gp_data_upload
@@ -72,4 +80,10 @@ jobs:
         if: always() && steps.runner.outputs.chain == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run race-result.yml --ref "${{ github.ref_name }}"
+        run: |
+          for attempt in 1 2 3; do
+            gh workflow run race-result.yml --ref "${{ github.ref_name }}" && exit 0
+            sleep 20
+          done
+          echo "::error::could not start the next run; the next scheduled kick-off will continue"
+          exit 1

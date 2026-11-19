@@ -126,6 +126,24 @@ async def send_notification_to_topic(is_f1: bool, is_prod: bool, title: str, bod
             logger.warning(f"Skipping {locale} translation for this notification.")
 
 
+def send_localized_notification_to_topic(is_f1: bool, is_prod: bool, messages: dict):
+    """Send hand-written copy per language, messages = {lang: (title, body)}, with no machine translation.
+    Raises if the English send fails; another language failing is logged and skipped."""
+    if "en" not in messages:
+        raise ValueError("English copy is required")
+    __init_firebase_admin(is_prod=is_prod)
+    title, body = messages["en"]
+    __send_notification_to_topic_lang(is_f1, title, body, "en")
+    for lang in sorted(locales):
+        if lang not in messages:
+            continue
+        try:
+            title, body = messages[lang]
+            __send_notification_to_topic_lang(is_f1, title, body, lang)
+        except Exception as e:
+            logger.warning(f"send failed for {lang}: {type(e).__name__}: {e}")
+
+
 async def send_config_update_notification(is_f1: bool, is_prod: bool, year: str, grand_prix_id: str):
     # send config update notification
     __init_firebase_admin(is_prod=is_prod)

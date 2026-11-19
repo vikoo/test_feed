@@ -22,7 +22,12 @@ def get_title_body_for_notification(grand_prix, race_type):
         race_type = "Qualifying"
     if race_type == 'SQ3':
         race_type = "Sprint Qualifying"
+    race_type = MOTO_GP_SESSION_NAMES.get(race_type, race_type)
     return __get_final_title_body_for_notification(gp_name, race_type)
+
+
+# MotoGP session types as stored in Strapi -> name shown in the push ("QNR1 Results Out!" before).
+MOTO_GP_SESSION_NAMES = {"PRACTICE": "Practice", "QNR1": "Q1", "QNR2": "Qualifying"}
 
 
 def remove_year(text: str) -> str:

@@ -496,7 +496,7 @@ query_fastest_laps_for_gp = """
 
 query_season_grid = """
         query GetSeasonGridQuery($season:String!) {
-            seasonGrids(filters: { season: { year: { eq: $season} } }, pagination: {pageSize: 60}) {
+            seasonGrids(filters: { season: { year: { eq: $season} } }, pagination: {pageSize: 200}) {
                 data {
                     id
                     attributes {
@@ -962,8 +962,54 @@ query_races_starting_between = """
                     attributes {
                         type
                         startTime
+                        siteEventId
+                        grandPrix {
+                            data {
+                                id
+                                attributes {
+                                    name
+                                    shortName
+                                    isCancelled
+                                    siteEventId
+                                    startDate
+                                    endDate
+                                    round
+                                    season { data { attributes { year } } }
+                                    track { data { attributes { city country } } }
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
 """
+
+
+query_race_results_for_grand_prix = """
+        query RaceResultsForGrandPrix($gpId: ID!, $types: [String]) {
+            raceResults(
+                filters: { race: { grandPrix: { id: { eq: $gpId } }, type: { in: $types } } }
+                pagination: { limit: 200 }
+            ) {
+                data {
+                    id
+                    attributes {
+                        position
+                        points
+                        laps
+                        time
+                        dnf
+                        finalPos
+                        sprintFinalPos
+                        fastestLap
+                        fastestLapNo
+                        fastestLapTime
+                        race { data { id attributes { type } } }
+                        seasonGrid { data { id attributes { driverNumber } } }
+                    }
+                }
+            }
+        }
+"""
+

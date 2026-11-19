@@ -41,20 +41,34 @@ class RunnerTest(unittest.TestCase):
         nxt = lambda now: fp1 if now < fp1 else None
         chain, problems = wr.run(clock=c, sleep=c.sleep, process=process, next_start_fn=nxt, poll_seconds=120)
         self.assertFalse(chain)
-        self.assertEqual(passes[1], fp1)  # slept straight to the session start, no busy polling
-        self.assertTrue(all(b - a <= timedelta(seconds=120) for a, b in zip(passes[1:], passes[2:])))
+        self.assertIn(fp1, passes)  # awake exactly at the session start
+        before = [p for p in passes if p <= fp1]
+        self.assertTrue(all(b - a <= wr.MAX_IDLE for a, b in zip(before, before[1:])))  # timetable re-checked every 10 min
+        self.assertLessEqual(len(before), 5)  # no busy polling while idle
+        after = [p for p in passes if p >= fp1]
+        self.assertTrue(all(b - a <= timedelta(seconds=120) for a, b in zip(after, after[1:])))
         self.assertLess(c.t, fp1 + timedelta(minutes=55))  # results picked up within one poll
 
     def test_chains_when_next_session_is_after_the_job_limit(self):
         c = FakeClock(T0)
         sat = T0 + timedelta(hours=20)
         chain, _ = wr.run(clock=c, sleep=c.sleep, process=lambda now: summary(), next_start_fn=lambda now: sat, max_minutes=330)
-        self.assertTrue(chain); self.assertEqual(c.t, T0 + timedelta(minutes=330))
+        self.assertTrue(chain)
+        self.assertLessEqual(c.t, T0 + timedelta(minutes=330) - wr.HANDOVER_MARGIN)  # hands over before the limit
+        self.assertGreaterEqual(c.t, T0 + timedelta(minutes=330) - wr.HANDOVER_WINDOW)
 
     def test_chains_while_a_session_is_still_waiting_at_the_limit(self):
         c = FakeClock(T0)
         chain, _ = wr.run(clock=c, sleep=c.sleep, process=lambda now: summary(waiting=["POR Race"]), next_start_fn=lambda now: None, max_minutes=60)
         self.assertTrue(chain)
+
+    def test_polling_does_not_overshoot_the_next_event(self):
+        poll = timedelta(seconds=120)
+        self.assertEqual(wr.next_wake(T0, True, T0 + timedelta(seconds=60), T0 + timedelta(hours=1), poll), T0 + timedelta(seconds=60))
+        self.assertEqual(wr.next_wake(T0, True, T0 + timedelta(hours=2), T0 + timedelta(hours=3), poll), T0 + poll)
+        # a reminder that fell during the pass just finished: next pass at once, not one poll later
+        self.assertEqual(wr.next_wake(T0, False, T0 - timedelta(seconds=5), T0 + timedelta(hours=3), poll), T0)
+        self.assertEqual(wr.next_wake(T0, True, T0 - timedelta(seconds=5), T0 + timedelta(hours=3), poll), T0)
 
     def test_never_chains_a_run_that_ended_quickly(self):
         self.assertFalse(wr.should_chain(True, T0, T0 + timedelta(minutes=5), T0))
@@ -66,7 +80,8 @@ class RunnerTest(unittest.TestCase):
         def process(now): raise ConnectionError("strapi down")
         chain, problems = wr.run(clock=c, sleep=c.sleep, process=process, next_start_fn=lambda now: None, max_minutes=30)
         self.assertTrue(chain); self.assertTrue(problems)
-        self.assertEqual(c.t, T0 + timedelta(minutes=30))
+        self.assertLessEqual(c.t, T0 + timedelta(minutes=30))
+        self.assertGreaterEqual(c.t, T0 + timedelta(minutes=wr.MIN_MINUTES_BEFORE_CHAIN))
 
 
 def race(rid, rtype, start, short="POR"):
@@ -119,3 +134,95 @@ class UploaderTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class HardeningTest(unittest.TestCase):
+    def setUp(self):
+        logger.remove()
+
+    def test_long_outage_stops_handing_over(self):
+        c = FakeClock(T0)
+        def process(now): raise ConnectionError("token revoked")
+        chain, problems = wr.run(clock=c, sleep=c.sleep, process=process, next_start_fn=lambda now: None, max_minutes=600)
+        self.assertFalse(chain)
+        self.assertLess(c.t - T0, timedelta(hours=wr.MAX_HOURS_WITHOUT_SUCCESS, minutes=5))
+
+    def test_red_flag_part_one_with_zero_points_is_not_ingested(self):
+        cls = {"classification": [{"position": 1, "rider": {"number": 93, "id": "a"}, "points": 0},
+                                  {"position": 2, "rider": {"number": 89, "id": "b"}, "points": None}], "records": []}
+        recent = (datetime.now(timezone.utc) - timedelta(minutes=50)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+        old = (datetime.now(timezone.utc) - timedelta(hours=4)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+        with mock.patch.object(up, "create_race_result") as create, \
+             mock.patch.object(up, "update_config_for_race_result"), mock.patch.object(up, "process_update_moto_gp_stats"), \
+             mock.patch.object(up, "send_race_complete_notification"), mock.patch.object(up.time, "sleep"):
+            self.assertEqual(up.upload_moto_gp_race_results(cls, {93: "1", 89: "2"}, "600", "Race", {"id": "47"}, "2026", race_start=recent), "no_classification")
+            create.assert_not_called()
+            self.assertEqual(up.upload_moto_gp_race_results(cls, {93: "1", 89: "2"}, "600", "Race", {"id": "47"}, "2026", race_start=old), "ingested")
+            self.assertEqual(create.call_count, 2)
+
+
+class MovedSessionTest(unittest.TestCase):
+    """Reviewer case: Race moved one hour earlier while the runner is idle. The reminder must still go."""
+    def setUp(self):
+        logger.remove()
+
+    def test_session_moved_earlier_while_idle_still_reminded(self):
+        c = FakeClock(datetime(2026, 11, 22, 10, 30, tzinfo=timezone.utc))
+        old, new = datetime(2026, 11, 22, 13, 0, tzinfo=timezone.utc), datetime(2026, 11, 22, 12, 0, tzinfo=timezone.utc)
+        moved_at = datetime(2026, 11, 22, 10, 31, tzinfo=timezone.utc)
+        start = lambda now: new if now >= moved_at else old
+        sent = []
+        def remind(now):
+            if timedelta(0) < start(now) - now <= timedelta(minutes=15) and not sent:
+                sent.append(now)
+            return []
+        nxt = lambda now: min(e for e in (start(now) - timedelta(minutes=15), start(now)) if e > now) if now < start(now) else None
+        wr.run(clock=c, sleep=c.sleep, process=lambda now: summary(), next_start_fn=nxt, remind=remind, max_minutes=330)
+        self.assertEqual(len(sent), 1)
+        self.assertLessEqual(sent[0], new - timedelta(minutes=5))
+
+
+class GiveUpReportTest(unittest.TestCase):
+    def setUp(self):
+        logger.remove()
+
+    def test_session_without_classification_is_reported_once_when_waiting_ends(self):
+        r = [race(607, "Race", "2026-11-22T13:00:00.000Z")]
+        out = []
+        for hours in (7.9, 8.1, 9.0, 11.0):
+            now = up.parse_time("2026-11-22T13:00:00.000Z") + timedelta(hours=hours)
+            with mock.patch.object(up, "get_latest_past_race", return_value={"data": {"races": {"data": r}}}), \
+                 mock.patch.object(up, "_process_session", return_value="no_classification"):
+                s = up.process(now=now)
+            out.append((len(s["waiting"]), len(s["errors"])))
+        self.assertEqual(out, [(1, 0), (0, 1), (0, 1), (0, 0)])
+
+
+class QuietHandoverTest(unittest.TestCase):
+    """Reviewer case: the next run can take 20+ minutes to start. A handover must never sit just before a reminder."""
+    def setUp(self):
+        logger.remove()
+
+    def test_no_reminder_lost_with_a_slow_handover_at_any_start_offset(self):
+        fp1 = datetime(2026, 11, 20, 10, 45, tzinfo=timezone.utc)
+        starts = [fp1, fp1 + timedelta(minutes=255), fp1 + timedelta(hours=23, minutes=25), fp1 + timedelta(hours=24, minutes=5),
+                  fp1 + timedelta(hours=28, minutes=15), fp1 + timedelta(hours=50, minutes=15)]
+        rems = [s - timedelta(minutes=15) for s in starts]
+        for handover in (4, 20, 40):
+            for offset_min in range(0, 26 * 60, 25):
+                c = FakeClock(fp1 - timedelta(minutes=offset_min) - timedelta(minutes=20))
+                sent = []
+                def remind(now):
+                    for s in starts:
+                        if timedelta(0) < s - now <= timedelta(minutes=15) and s not in sent:
+                            sent.append(s)
+                    return []
+                nxt = lambda now: min([e for e in starts + rems if e > now], default=None)
+                nrem = lambda now: min([e for e in rems if e > now], default=None)
+                for _ in range(40):
+                    chain, _p = wr.run(clock=c, sleep=c.sleep, process=lambda now: summary(), next_start_fn=nxt,
+                                       remind=remind, next_reminder_fn=nrem, max_minutes=330)
+                    if not chain:
+                        break
+                    c.t += timedelta(minutes=handover)
+                self.assertEqual(len(sent), 6, (handover, offset_min))
