@@ -105,6 +105,12 @@ def make_pass(min_interval=timedelta(hours=1)):
             changes, gp_changes = plan(races, official_for, now, problems)
         except Exception as e:
             return [f"session time check failed: {type(e).__name__}: {e}"]
+        from cron.notifiaction.moto_gp_session_reminders import copy_problems
+        for name in sorted({((r["attributes"].get("grandPrix") or {}).get("data") or {}).get("attributes", {}).get("name") or ""
+                            for r in races} - {""}):
+            bad = copy_problems(name)
+            if bad:
+                problems.append(f"push copy too long or invalid for {name} (that language would get no push): {bad}")
         failed_gps = set()
         for r, old, new in changes:
             try:

@@ -62,18 +62,18 @@ TEMPLATES = {
         "Race": ("🏆 {gp}: día de carrera", "25 puntos en juego 🏁🔥"),
     },
     "pt": {
-        "FP1": ("🏍️ Chegou o {gp}!", "O FP1 vai começar 🔥👀"),
+        "FP1": ("🏍️ Chegou o {gp}!", "O FP1 já vai começar 🔥👀"),
         "PRACTICE": ("⏱️ {gp}: Treino", "O top 10 vai ao Q2 🏁🔥"),
         "FP2": ("🔧 {gp}: FP2", "Último treino antes do Q1 🛠️👀"),
-        "QNR1": ("🎯 {gp}: Classificação", "A briga pela pole vai começar ⏱️🔥"),
+        "QNR1": ("🎯 {gp}: Classificação", "A briga pela pole já vai começar ⏱️🔥"),
         "Sprint": ("⚡ {gp}: Sprint", "12 pontos em jogo 🏁🔥"),
         "Race": ("🏆 {gp}: dia de corrida", "25 pontos em jogo 🏁🔥"),
     },
     "fr": {
-        "FP1": ("🏍️ {gp} : c'est parti !", "Les FP1 commencent bientôt 🔥👀"),
+        "FP1": ("🏍️ {gp} : c'est parti !", "Les FP1 vont commencer 🔥👀"),
         "PRACTICE": ("⏱️ {gp} : Practice", "Le top 10 file en Q2 🏁🔥"),
         "FP2": ("🔧 {gp} : FP2", "Dernière séance avant la Q1 🛠️👀"),
-        "QNR1": ("🎯 {gp} : Qualifs", "La chasse à la pole commence bientôt ⏱️🔥"),
+        "QNR1": ("🎯 {gp} : Qualifs", "La chasse à la pole va commencer ⏱️🔥"),
         "Sprint": ("⚡ {gp} : Sprint", "12 points en jeu 🏁🔥"),
         "Race": ("🏆 {gp} : jour de course", "25 points en jeu 🏁🔥"),
     },
@@ -200,7 +200,7 @@ RESULT_TEMPLATES = {
         "FP1": ("📊 {gp}: итоги FP1", "Кто был быстрее всех в FP1? 👀🔥"),
         "PRACTICE": ("📊 {gp}: Практика", "Итоги: кто сразу в Q2? 🏁👀"),
         "FP2": ("📊 {gp}: итоги FP2", "Кто был быстрее всех в FP2? 👀🔥"),
-        "QNR2": ("🏁 {gp}: квалификация", "Узнай, кто взял поул 👀🔥"),
+        "QNR2": ("🏁 {gp}: поул определён", "Узнай, кто его взял 👀🔥"),
         "Sprint": ("⚡ {gp}: итоги спринта", "Узнай, кто выиграл спринт 🏆🔥"),
         "Race": ("🏆 {gp}: итоги гонки", "Узнай, кто выиграл гонку 🏆🔥"),
     },
@@ -282,6 +282,20 @@ def build_result_messages(grand_prix: dict, race_type: str) -> dict:
             logger.warning(f"{lang} {race_type} results push fails the checks and is not sent: {title!r} | {body!r}")
             continue
         out[lang] = (title, body)
+    return out
+
+
+def copy_problems(gp_name: str) -> list:
+    """Push lines that would be dropped for this GP name (too long, emoji count...), checked ahead of the
+    weekend so a new or longer GP name is fixed before any language misses a push."""
+    gp = gp_display_name(gp_name)
+    out = []
+    for kind, templates, types in (("reminder", TEMPLATES, REMIND_TYPES), ("results", RESULT_TEMPLATES, RESULT_TYPES)):
+        for lang, sessions in templates.items():
+            for t in types:
+                title, body = sessions[t]
+                if not valid(title.format(gp=gp), body.format(gp=gp)):
+                    out.append(f"{kind} {t} {lang}: {title.format(gp=gp)!r} | {body.format(gp=gp)!r}")
     return out
 
 

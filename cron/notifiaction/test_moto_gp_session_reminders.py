@@ -329,3 +329,14 @@ class ResultsCopyTest(unittest.TestCase):
         self.assertEqual(messages["en"], ("🏆 Portugal GP: Race results", "See who won the Race 🏆🔥"))
         self.assertEqual(messages["it"], ("🏆 Portugal GP: risultati gara", "Scopri chi ha vinto la gara 🏆🔥"))
         self.assertEqual(len(messages), 10)
+
+
+class CopyEarlyWarningTest(unittest.TestCase):
+    def test_every_2026_gp_name_is_clean(self):
+        for name in GP_NAMES_2026:
+            self.assertEqual(rem.copy_problems(name), [], name)
+
+    def test_a_longer_future_name_is_flagged(self):
+        bad = rem.copy_problems("EMILIA ROMAGNA AND RIMINI COAST GP 27")
+        self.assertTrue(bad); self.assertTrue(all(" en:" in b or " " in b for b in bad))
+
