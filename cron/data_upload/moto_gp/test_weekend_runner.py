@@ -157,8 +157,33 @@ class HardeningTest(unittest.TestCase):
              mock.patch.object(up, "send_race_complete_notification"), mock.patch.object(up.time, "sleep"):
             self.assertEqual(up.upload_moto_gp_race_results(cls, {93: "1", 89: "2"}, "600", "Race", {"id": "47"}, "2026", race_start=recent), "no_classification")
             create.assert_not_called()
-            self.assertEqual(up.upload_moto_gp_race_results(cls, {93: "1", 89: "2"}, "600", "Race", {"id": "47"}, "2026", race_start=old), "ingested")
-            self.assertEqual(create.call_count, 2)
+            self.assertEqual(up.upload_moto_gp_race_results(cls, {93: "1", 89: "2"}, "600", "Race", {"id": "47"}, "2026", race_start=old), "no_classification")
+            create.assert_not_called()  # never written with missing points, however long it takes
+
+    def test_order_published_before_points_waits(self):
+        pts = [25, 20, 16, 13, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+        full = [{"position": i + 1, "rider": {"number": i + 1, "id": str(i)}, "points": p} for i, p in enumerate(pts)] + \
+               [{"position": 16, "rider": {"number": 16, "id": "16"}, "points": 0},
+                {"position": None, "rider": {"number": 17, "id": "17"}, "points": 0}]  # out of the points, DNF
+        self.assertEqual(up.points_missing(full, "Race"), [])
+        partial = [dict(c) for c in full]; partial[3]["points"] = None; partial[14]["points"] = 0
+        self.assertEqual(up.points_missing(partial, "Race"), [4, 15])
+        self.assertEqual(up.points_missing(full[:5] + [{"position": None, "rider": {"number": 9}, "points": 0}], "Race"), [])  # 5 finishers
+        sprint = [{"position": i + 1, "rider": {"number": i + 1}, "points": p} for i, p in enumerate([12, 9, 7, 6, 5, 4, 3, 2, 1, 0])]
+        self.assertEqual(up.points_missing(sprint, "Sprint"), [])
+        half = [{"position": i + 1, "rider": {"number": i + 1}, "points": p} for i, p in enumerate([12.5, 10, 8, 6.5, 5.5, 5, 4.5, 4, 3.5, 3, 2.5, 2, 1.5, 1, 0.5])]
+        self.assertEqual(up.points_missing(half, "Race"), [])
+        self.assertEqual(up.points_missing(partial, "QNR2"), [])
+
+    def test_points_in_means_written_at_once(self):
+        cls = {"classification": [{"position": 1, "rider": {"number": 93, "id": "a"}, "points": 25},
+                                  {"position": 2, "rider": {"number": 89, "id": "b"}, "points": 20}], "records": []}
+        recent = (datetime.now(timezone.utc) - timedelta(minutes=45)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+        with mock.patch.object(up, "create_race_result") as create, \
+             mock.patch.object(up, "update_config_for_race_result"), mock.patch.object(up, "process_update_moto_gp_stats"), \
+             mock.patch.object(up, "send_race_complete_notification"), mock.patch.object(up.time, "sleep"):
+            self.assertEqual(up.upload_moto_gp_race_results(cls, {93: "1", 89: "2"}, "600", "Race", {"id": "47"}, "2026", race_start=recent), "ingested")
+        self.assertEqual(create.call_count, 2)
 
 
 class MovedSessionTest(unittest.TestCase):
