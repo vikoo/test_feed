@@ -39,7 +39,7 @@ The runner also sends the reminder push about 15 minutes before FP1, Practice, F
 `session_reminders_sent.json` on the `motogp-state` branch, by Strapi race id and by official event and
 session, so a session is never reminded twice (not even when Strapi holds a duplicated race row). Never
 more than one reminder per pass: two different sessions due at once means bad data, nothing is sent.
-The results push now names sessions plainly (Practice, Qualifying) and is not sent after Q1. It goes out
+The results push uses fixed, hand-written copy per session and language (`RESULT_TEMPLATES` in the same file, no machine translation) and is not sent after Q1. It goes out
 only once the app can read the results: the rows of the session and the results cache key are read back
 from Strapi first (held and reported otherwise). A session written more than 24 hours after its start (a
 grid fixed days later, a manual rerun) is not announced.
