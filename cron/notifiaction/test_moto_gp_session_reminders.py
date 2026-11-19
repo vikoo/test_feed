@@ -239,3 +239,55 @@ class CancelledStatusCacheTest(unittest.TestCase):
             rem.run_pass(FP1 - timedelta(minutes=10), lambda a, b: [r], st, sent.append, True,
                          official=lambda sid, now: {})
         self.assertEqual(sent, [])
+
+
+class LastMomentChangeTest(unittest.TestCase):
+    """Ankur: check the latest schedule before every push and move the push if MotoGP changed it."""
+    def setUp(self):
+        logger.remove()
+        rem._official_cache.clear(); rem._status_cache.clear()
+
+    def _race(self):
+        r = race(600, "FP1", FP1)
+        r["attributes"]["grandPrix"]["data"]["attributes"]["siteEventId"] = "por"
+        return r
+
+    def test_session_moved_later_at_the_last_moment_moves_the_push(self):
+        moved = FP1 + timedelta(minutes=30)
+        calls = []
+        def feed(sid):
+            calls.append(1)
+            return {"FP1": {"start": moved, "status": "NOT-STARTED"}}
+        with mock.patch.object(rem, "fetch_official_sessions", side_effect=feed):
+            r, st, sent = self._race(), Store(), []
+            rem._official_cache["por"] = (FP1 - timedelta(minutes=20), {"FP1": FP1})
+            rem._status_cache["por"] = (FP1 - timedelta(minutes=20), {"FP1": {"start": FP1, "status": "NOT-STARTED"}})
+            orig = rem.refresh_official
+            with mock.patch.object(rem, "refresh_official", side_effect=lambda sid, now: orig(sid, now, fetch=feed)):
+                t = FP1 - timedelta(minutes=15)
+                while t < moved:
+                    rem.run_pass(t, lambda a, b: [r], st, lambda m, t=t: sent.append(t), True)
+                    t += timedelta(minutes=1)
+        self.assertEqual(sent, [moved - timedelta(minutes=15)])  # not at the old time, at the new one
+
+    def test_session_cancelled_at_the_last_moment_sends_nothing(self):
+        r, st, sent = self._race(), Store(), []
+        rem._official_cache["por"] = (FP1 - timedelta(minutes=20), {"FP1": FP1})
+        rem._status_cache["por"] = (FP1 - timedelta(minutes=20), {"FP1": {"start": FP1, "status": "NOT-STARTED"}})
+        feed = lambda sid: {"FP1": {"start": FP1, "status": "CANCELLED"}}
+        orig = rem.refresh_official
+        with mock.patch.object(rem, "refresh_official", side_effect=lambda sid, now: orig(sid, now, fetch=feed)):
+            rem.run_pass(FP1 - timedelta(minutes=14), lambda a, b: [r], st, sent.append, True)
+        self.assertEqual(sent, [])
+
+    def test_feed_down_at_send_time_uses_the_last_copy(self):
+        r, st, sent = self._race(), Store(), []
+        rem._official_cache["por"] = (FP1 - timedelta(minutes=20), {"FP1": FP1})
+        rem._status_cache["por"] = (FP1 - timedelta(minutes=20), {"FP1": {"start": FP1, "status": "NOT-STARTED"}})
+        def down(sid): raise ConnectionError("down")
+        orig = rem.refresh_official
+        with mock.patch.object(rem, "refresh_official", side_effect=lambda sid, now: orig(sid, now, fetch=down)), \
+             mock.patch.object(rem.requests, "get", side_effect=ConnectionError("down")):
+            rem.run_pass(FP1 - timedelta(minutes=14), lambda a, b: [r], st, sent.append, True)
+        self.assertEqual(len(sent), 1)
+

@@ -49,6 +49,8 @@ The results push now names sessions plainly (Practice, Qualifying) and is not se
   `motogp-state` branch (GitHub web editor is fine). It is read before every send.
   - `{"session_push": "off"}` pauses every reminder; `{"session_push": "on"}` or no file resumes.
   - `{"skip_race_ids": ["606"]}` skips the session with Strapi race id 606 (`"606"` or `606` work too).
+- Reminders follow the official motogp.com timetable, read again right before every push: a session moved
+  at the last moment is reminded at its new time, one cancelled at the last moment is not reminded.
 - Reminders follow the official motogp.com timetable. A same-day difference with Strapi (what the app
   shows) is logged as a warning; differences more than 6 hours ahead are fixed by the time check below.
 
