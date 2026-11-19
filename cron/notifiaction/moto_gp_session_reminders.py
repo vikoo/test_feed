@@ -38,82 +38,82 @@ CONTROL_PATH = "control.json"
 # change it only here. No slang, no facts that change between weekends, never a lead time.
 TEMPLATES = {
     "en": {
-        "FP1": ("🏍️ {gp} is here!", "FP1 starts now 🔥👀"),
+        "FP1": ("🏍️ {gp} is here!", "FP1 is about to start 🔥👀"),
         "PRACTICE": ("⏱️ {gp}: Practice", "Top 10 go to Q2 🏁🔥"),
         "FP2": ("🔧 {gp}: FP2", "Last practice before Q1 🛠️👀"),
-        "QNR1": ("🎯 {gp}: Qualifying", "Pole fight starts now ⏱️🔥"),
+        "QNR1": ("🎯 {gp}: Qualifying", "Pole fight is about to start ⏱️🔥"),
         "Sprint": ("⚡ {gp}: Sprint", "12 points up for grabs 🏁🔥"),
         "Race": ("🏆 {gp}: Race day", "25 points on the line 🏁🔥"),
     },
     "it": {
-        "FP1": ("🏍️ {gp}: si parte!", "Le FP1 iniziano ora 🔥👀"),
-        "PRACTICE": ("⏱️ {gp}: Prove", "La top 10 va in Q2 🏁🔥"),
+        "FP1": ("🏍️ {gp}: si parte!", "Le FP1 stanno per iniziare 🔥👀"),
+        "PRACTICE": ("⏱️ {gp}: Practice", "La top 10 va in Q2 🏁🔥"),
         "FP2": ("🔧 {gp}: FP2", "Ultime libere prima della Q1 🛠️👀"),
-        "QNR1": ("🎯 {gp}: Qualifiche", "Caccia alla pole al via ⏱️🔥"),
+        "QNR1": ("🎯 {gp}: Qualifiche", "La caccia alla pole sta per iniziare ⏱️🔥"),
         "Sprint": ("⚡ {gp}: Sprint", "12 punti in palio 🏁🔥"),
         "Race": ("🏆 {gp}: giorno di gara", "25 punti in palio 🏁🔥"),
     },
     "es": {
-        "FP1": ("🏍️ ¡Llega el {gp}!", "Arranca la FP1 🔥👀"),
+        "FP1": ("🏍️ ¡Llega el {gp}!", "La FP1 empieza en breve 🔥👀"),
         "PRACTICE": ("⏱️ {gp}: Práctica", "El top 10 va a Q2 🏁🔥"),
         "FP2": ("🔧 {gp}: FP2", "Última práctica antes de la Q1 🛠️👀"),
-        "QNR1": ("🎯 {gp}: Clasificación", "Arranca la lucha por la pole ⏱️🔥"),
+        "QNR1": ("🎯 {gp}: Clasificación", "La lucha por la pole empieza en breve ⏱️🔥"),
         "Sprint": ("⚡ {gp}: Sprint", "12 puntos en juego 🏁🔥"),
         "Race": ("🏆 {gp}: día de carrera", "25 puntos en juego 🏁🔥"),
     },
     "pt": {
-        "FP1": ("🏍️ Chegou o {gp}!", "O FP1 começa agora 🔥👀"),
+        "FP1": ("🏍️ Chegou o {gp}!", "O FP1 já vai começar 🔥👀"),
         "PRACTICE": ("⏱️ {gp}: Treino", "O top 10 vai ao Q2 🏁🔥"),
         "FP2": ("🔧 {gp}: FP2", "Último treino antes do Q1 🛠️👀"),
-        "QNR1": ("🎯 {gp}: Classificação", "A briga pela pole começa ⏱️🔥"),
+        "QNR1": ("🎯 {gp}: Classificação", "A briga pela pole já vai começar ⏱️🔥"),
         "Sprint": ("⚡ {gp}: Sprint", "12 pontos em jogo 🏁🔥"),
         "Race": ("🏆 {gp}: dia de corrida", "25 pontos em jogo 🏁🔥"),
     },
     "fr": {
-        "FP1": ("🏍️ {gp} : c'est parti !", "Les FP1 démarrent 🔥👀"),
+        "FP1": ("🏍️ {gp} : c'est parti !", "Les FP1 vont commencer 🔥👀"),
         "PRACTICE": ("⏱️ {gp} : Practice", "Le top 10 file en Q2 🏁🔥"),
         "FP2": ("🔧 {gp} : FP2", "Dernière séance avant la Q1 🛠️👀"),
-        "QNR1": ("🎯 {gp} : Qualifs", "La chasse à la pole commence ⏱️🔥"),
+        "QNR1": ("🎯 {gp} : Qualifs", "La chasse à la pole va commencer ⏱️🔥"),
         "Sprint": ("⚡ {gp} : Sprint", "12 points en jeu 🏁🔥"),
         "Race": ("🏆 {gp} : jour de course", "25 points en jeu 🏁🔥"),
     },
     "de": {
-        "FP1": ("🏍️ {gp}: Es geht los!", "FP1 beginnt jetzt 🔥👀"),
+        "FP1": ("🏍️ {gp}: Es geht los!", "FP1 beginnt gleich 🔥👀"),
         "PRACTICE": ("⏱️ {gp}: Practice", "Top 10 direkt in Q2 🏁🔥"),
         "FP2": ("🔧 {gp}: FP2", "Letztes Training vor Q1 🛠️👀"),
-        "QNR1": ("🎯 {gp}: Qualifying", "Der Kampf um die Pole beginnt ⏱️🔥"),
+        "QNR1": ("🎯 {gp}: Qualifying", "Der Kampf um die Pole beginnt gleich ⏱️🔥"),
         "Sprint": ("⚡ {gp}: Sprint", "12 Punkte zu holen 🏁🔥"),
         "Race": ("🏆 {gp}: Renntag", "25 Punkte zu holen 🏁🔥"),
     },
     "ja": {
-        "FP1": ("🏍️ {gp}開幕！", "FP1スタート 🔥👀"),
+        "FP1": ("🏍️ {gp}開幕！", "まもなくFP1スタート 🔥👀"),
         "PRACTICE": ("⏱️ {gp}：プラクティス", "トップ10はQ2直行 🏁🔥"),
         "FP2": ("🔧 {gp}：FP2", "予選前の最後の走行 🛠️👀"),
-        "QNR1": ("🎯 {gp}：予選", "ポール争いスタート ⏱️🔥"),
+        "QNR1": ("🎯 {gp}：予選", "まもなくポール争いスタート ⏱️🔥"),
         "Sprint": ("⚡ {gp}：スプリント", "12ポイントをかけた戦い 🏁🔥"),
         "Race": ("🏆 {gp}：決勝", "25ポイントをかけた戦い 🏁🔥"),
     },
     "ko": {
-        "FP1": ("🏍️ {gp} 개막!", "FP1 시작 🔥👀"),
+        "FP1": ("🏍️ {gp} 개막!", "FP1 곧 시작 🔥👀"),
         "PRACTICE": ("⏱️ {gp}: 프랙티스", "톱10은 Q2 직행 🏁🔥"),
         "FP2": ("🔧 {gp}: FP2", "예선 전 마지막 주행 🛠️👀"),
-        "QNR1": ("🎯 {gp}: 예선", "폴 포지션 경쟁 시작 ⏱️🔥"),
+        "QNR1": ("🎯 {gp}: 예선", "폴 포지션 경쟁 곧 시작 ⏱️🔥"),
         "Sprint": ("⚡ {gp}: 스프린트", "12점이 걸린 승부 🏁🔥"),
         "Race": ("🏆 {gp}: 결승", "25점이 걸린 승부 🏁🔥"),
     },
     "zh": {
-        "FP1": ("🏍️ {gp}开幕！", "FP1开始了 🔥👀"),
+        "FP1": ("🏍️ {gp}开幕！", "FP1即将开始 🔥👀"),
         "PRACTICE": ("⏱️ {gp}：练习赛", "前10名直通Q2 🏁🔥"),
         "FP2": ("🔧 {gp}：FP2", "排位赛前最后一节练习 🛠️👀"),
-        "QNR1": ("🎯 {gp}：排位赛", "杆位争夺战开始 ⏱️🔥"),
+        "QNR1": ("🎯 {gp}：排位赛", "杆位争夺战即将开始 ⏱️🔥"),
         "Sprint": ("⚡ {gp}：冲刺赛", "争夺12个积分 🏁🔥"),
         "Race": ("🏆 {gp}：正赛日", "争夺25个积分 🏁🔥"),
     },
     "ru": {
-        "FP1": ("🏍️ {gp} начинается!", "FP1 стартует 🔥👀"),
+        "FP1": ("🏍️ {gp} начинается!", "FP1 скоро стартует 🔥👀"),
         "PRACTICE": ("⏱️ {gp}: Практика", "Топ-10 сразу в Q2 🏁🔥"),
         "FP2": ("🔧 {gp}: FP2", "Последняя практика перед Q1 🛠️👀"),
-        "QNR1": ("🎯 {gp}: Квалификация", "Борьба за поул начинается ⏱️🔥"),
+        "QNR1": ("🎯 {gp}: Квалификация", "Борьба за поул скоро начнётся ⏱️🔥"),
         "Sprint": ("⚡ {gp}: Спринт", "На кону 12 очков 🏁🔥"),
         "Race": ("🏆 {gp}: День гонки", "На кону 25 очков 🏁🔥"),
     },
@@ -134,7 +134,7 @@ RESULT_TEMPLATES = {
     },
     "it": {
         "FP1": ("📊 {gp}: risultati FP1", "Scopri il più veloce delle FP1 👀🔥"),
-        "PRACTICE": ("📊 {gp}: Prove", "Risultati: chi va in Q2? 🏁👀"),
+        "PRACTICE": ("📊 {gp}: Practice", "Risultati: chi va in Q2? 🏁👀"),
         "FP2": ("📊 {gp}: risultati FP2", "Scopri il più veloce delle FP2 👀🔥"),
         "QNR2": ("🏁 {gp}: griglia decisa", "Scopri chi ha la pole 👀🔥"),
         "Sprint": ("⚡ {gp}: Sprint", "Risultati: scopri chi ha vinto la Sprint 🏆🔥"),
@@ -200,7 +200,7 @@ RESULT_TEMPLATES = {
         "FP1": ("📊 {gp}: итоги FP1", "Кто был быстрее всех в FP1? 👀🔥"),
         "PRACTICE": ("📊 {gp}: Практика", "Итоги: кто сразу в Q2? 🏁👀"),
         "FP2": ("📊 {gp}: итоги FP2", "Кто был быстрее всех в FP2? 👀🔥"),
-        "QNR2": ("🏁 {gp}: решётка готова", "Узнай, кто взял поул 👀🔥"),
+        "QNR2": ("🏁 {gp}: поул определён", "Узнай, кто его взял 👀🔥"),
         "Sprint": ("⚡ {gp}: итоги спринта", "Узнай, кто выиграл спринт 🏆🔥"),
         "Race": ("🏆 {gp}: итоги гонки", "Узнай, кто выиграл гонку 🏆🔥"),
     },
@@ -282,6 +282,20 @@ def build_result_messages(grand_prix: dict, race_type: str) -> dict:
             logger.warning(f"{lang} {race_type} results push fails the checks and is not sent: {title!r} | {body!r}")
             continue
         out[lang] = (title, body)
+    return out
+
+
+def copy_problems(gp_name: str) -> list:
+    """Push lines that would be dropped for this GP name (too long, emoji count...), checked ahead of the
+    weekend so a new or longer GP name is fixed before any language misses a push."""
+    gp = gp_display_name(gp_name)
+    out = []
+    for kind, templates, types in (("reminder", TEMPLATES, REMIND_TYPES), ("results", RESULT_TEMPLATES, RESULT_TYPES)):
+        for lang, sessions in templates.items():
+            for t in types:
+                title, body = sessions[t]
+                if not valid(title.format(gp=gp), body.format(gp=gp)):
+                    out.append(f"{kind} {t} {lang}: {title.format(gp=gp)!r} | {body.format(gp=gp)!r}")
     return out
 
 
