@@ -239,6 +239,21 @@ def official_starts(site_event_id, now: datetime, fetch=fetch_official_starts, t
     return starts
 
 
+def refresh_official(site_event_id, now: datetime, fetch=fetch_official_sessions) -> bool:
+    """Read the official timetable again, bypassing the caches (last check before a push).
+    False when the feed is unreachable: the cached times and status are kept."""
+    if not site_event_id:
+        return False
+    try:
+        sessions = fetch(site_event_id)
+    except Exception as e:
+        logger.warning(f"official timetable re-check failed for {site_event_id}, using the last copy: {type(e).__name__}: {e}")
+        return False
+    _official_cache[site_event_id] = (now, {t: v["start"] for t, v in sessions.items()})
+    _status_cache[site_event_id] = (now, sessions)
+    return True
+
+
 def strapi_start(race) -> datetime:
     return datetime.fromisoformat(race["attributes"]["startTime"].replace("Z", "+00:00"))
 
@@ -404,6 +419,16 @@ def run_pass(now: datetime, fetch_races, store: SentStore, send, enabled: bool, 
         raw = control.get("skip_race_ids") or []
         skip = {str(x).strip() for x in ([raw] if isinstance(raw, (str, int)) else raw)}
         todo = [r for r in todo if str(r["id"]) not in skip]
+    if todo and official is official_starts:
+        # Last check before a push: the latest official timetable. A session moved or cancelled at the last
+        # moment is no longer due now; the runner wakes again at the new reminder time.
+        for site_event_id in {(_gp(r).get("attributes") or {}).get("siteEventId") for r in todo}:
+            refresh_official(site_event_id, now)
+        before = {str(r["id"]): effective_start(r, now, official) for r in todo}
+        todo = [r for r in due(races, now, set(store.sent) | set(store.local), official) if str(r["id"]) in before]
+        for rid in set(before) - {str(r["id"]) for r in todo}:
+            logger.warning(f"race {rid}: changed in the latest official timetable just before the push; "
+                           f"not sent now (sent at the new time if it still runs)")
     if len(todo) > MAX_PER_PASS:
         return problems + [f"{len(todo)} reminders due at once, nothing sent (check session times): {[r['id'] for r in todo]}"]
 
