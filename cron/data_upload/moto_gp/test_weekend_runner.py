@@ -181,9 +181,51 @@ class HardeningTest(unittest.TestCase):
         recent = (datetime.now(timezone.utc) - timedelta(minutes=45)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
         with mock.patch.object(up, "create_race_result") as create, \
              mock.patch.object(up, "update_config_for_race_result"), mock.patch.object(up, "process_update_moto_gp_stats"), \
-             mock.patch.object(up, "send_race_complete_notification"), mock.patch.object(up.time, "sleep"):
+             mock.patch.object(up, "send_race_complete_notification") as push, mock.patch.object(up.time, "sleep"), \
+             mock.patch.object(up, "results_readable", return_value=(True, "")):
             self.assertEqual(up.upload_moto_gp_race_results(cls, {93: "1", 89: "2"}, "600", "Race", {"id": "47"}, "2026", race_start=recent), "ingested")
-        self.assertEqual(create.call_count, 2)
+        self.assertEqual(create.call_count, 2); push.assert_called_once()
+
+
+class ResultsPushTest(unittest.TestCase):
+    """Purple Sector rules: announce only fresh sessions, and only once the app can read the results."""
+    def setUp(self):
+        logger.remove()
+
+    CLS = {"classification": [{"position": 1, "rider": {"number": 93, "id": "a"}, "points": 25}], "records": []}
+
+    def _upload(self, hours_ago, readable=(True, "")):
+        start = (datetime.now(timezone.utc) - timedelta(hours=hours_ago)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+        with mock.patch.object(up, "create_race_result"), mock.patch.object(up, "update_config_for_race_result"), \
+             mock.patch.object(up, "process_update_moto_gp_stats"), mock.patch.object(up.time, "sleep"), \
+             mock.patch.object(up, "send_race_complete_notification") as push, \
+             mock.patch.object(up, "results_readable", return_value=readable):
+            status = up.upload_moto_gp_race_results(self.CLS, {93: "1"}, "600", "Race", {"id": "47"}, "2026", race_start=start)
+        return status, push.call_count
+
+    def test_fresh_session_is_announced(self):
+        self.assertEqual(self._upload(1), ("ingested", 1))
+
+    def test_session_written_a_day_later_is_not_announced(self):
+        self.assertEqual(self._upload(30), ("ingested", 0))
+
+    def test_push_held_when_the_app_cannot_read_the_results_yet(self):
+        status, pushes = self._upload(1, readable=(False, "Strapi returns 0 of 1 rows"))
+        self.assertEqual(pushes, 0); self.assertTrue(status.startswith("ingested_push_held:"))
+
+    def test_held_push_is_reported_and_the_session_counts_as_written(self):
+        r = [race(607, "Race", "2026-11-22T13:00:00.000Z")]
+        with mock.patch.object(up, "get_latest_past_race", return_value={"data": {"races": {"data": r}}}), \
+             mock.patch.object(up, "_process_session", return_value="ingested_push_held:Strapi returns 0 of 22 rows"):
+            s = up.process(now=up.parse_time("2026-11-22T14:00:00.000Z"))
+        self.assertEqual(len(s["ingested"]), 1); self.assertIn("push held", s["errors"][0])
+
+    def test_read_back_retries_then_passes(self):
+        answers = iter([{"data": {"raceResults": {"data": []}}}, {"data": {"raceResults": {"data": [1, 2]}}}])
+        with mock.patch.object(up, "get_race_results_for_race_event", side_effect=lambda **kw: next(answers)), \
+             mock.patch.object(up, "get_config", return_value={"raceResultFastestLapForGrandPrixJson": {"47": "1"}}), \
+             mock.patch.object(up.time, "sleep"):
+            self.assertEqual(up.results_readable("600", 2, "47"), (True, ""))
 
 
 class MovedSessionTest(unittest.TestCase):
