@@ -119,6 +119,93 @@ TEMPLATES = {
     },
 }
 
+# Results push ("results are in"), sent by the uploader once a session's results are readable in Strapi.
+# Same rules as TEMPLATES: fixed copy per session and language, the GP name the only variable, approved by
+# Ankur once (direction approved 2026-11-19). No push after Q1: the Qualifying one (after Q2) covers both.
+RESULT_TYPES = ("FP1", "PRACTICE", "FP2", "QNR2", "Sprint", "Race")
+RESULT_TEMPLATES = {
+    "en": {
+        "FP1": ("📊 {gp}: FP1 results", "See who topped FP1 👀🔥"),
+        "PRACTICE": ("📊 {gp}: Practice", "Results are in: who made Q2? 🏁👀"),
+        "FP2": ("📊 {gp}: FP2 results", "See who topped FP2 👀🔥"),
+        "QNR2": ("🏁 {gp}: Grid is set", "See who took pole 👀🔥"),
+        "Sprint": ("⚡ {gp}: Sprint results", "See who won the Sprint 🏆🔥"),
+        "Race": ("🏆 {gp}: Race results", "See who won the Race 🏆🔥"),
+    },
+    "it": {
+        "FP1": ("📊 {gp}: risultati FP1", "Scopri il più veloce delle FP1 👀🔥"),
+        "PRACTICE": ("📊 {gp}: Prove", "Risultati: chi va in Q2? 🏁👀"),
+        "FP2": ("📊 {gp}: risultati FP2", "Scopri il più veloce delle FP2 👀🔥"),
+        "QNR2": ("🏁 {gp}: griglia decisa", "Scopri chi ha la pole 👀🔥"),
+        "Sprint": ("⚡ {gp}: Sprint", "Risultati: scopri chi ha vinto la Sprint 🏆🔥"),
+        "Race": ("🏆 {gp}: risultati gara", "Scopri chi ha vinto la gara 🏆🔥"),
+    },
+    "es": {
+        "FP1": ("📊 {gp}: resultados FP1", "Mira quién fue el más rápido en FP1 👀🔥"),
+        "PRACTICE": ("📊 {gp}: Práctica", "Resultados: ¿quién va a Q2? 🏁👀"),
+        "FP2": ("📊 {gp}: resultados FP2", "Mira quién fue el más rápido en FP2 👀🔥"),
+        "QNR2": ("🏁 {gp}: parrilla lista", "Mira quién se llevó la pole 👀🔥"),
+        "Sprint": ("⚡ {gp}: Sprint", "Resultados: mira quién ganó la Sprint 🏆🔥"),
+        "Race": ("🏆 {gp}: resultado final", "Mira quién ganó la carrera 🏆🔥"),
+    },
+    "pt": {
+        "FP1": ("📊 {gp}: resultado FP1", "Veja quem foi o mais rápido no FP1 👀🔥"),
+        "PRACTICE": ("📊 {gp}: Treino", "Resultados: quem vai ao Q2? 🏁👀"),
+        "FP2": ("📊 {gp}: resultado FP2", "Veja quem foi o mais rápido no FP2 👀🔥"),
+        "QNR2": ("🏁 {gp}: grid definido", "Veja quem ficou com a pole 👀🔥"),
+        "Sprint": ("⚡ {gp}: Sprint", "Resultado: veja quem venceu a Sprint 🏆🔥"),
+        "Race": ("🏆 {gp}: resultado final", "Veja quem venceu a corrida 🏆🔥"),
+    },
+    "fr": {
+        "FP1": ("📊 {gp} : résultats FP1", "Qui a dominé les FP1 ? 👀🔥"),
+        "PRACTICE": ("📊 {gp} : Practice", "Résultats : qui file en Q2 ? 🏁👀"),
+        "FP2": ("📊 {gp} : résultats FP2", "Qui a dominé les FP2 ? 👀🔥"),
+        "QNR2": ("🏁 {gp} : grille connue", "Découvre qui a signé la pole 👀🔥"),
+        "Sprint": ("⚡ {gp} : Sprint", "Résultats : découvre qui a gagné 🏆🔥"),
+        "Race": ("🏆 {gp} : résultat final", "Découvre le vainqueur de la course 🏆🔥"),
+    },
+    "de": {
+        "FP1": ("📊 {gp}: FP1-Ergebnis", "Wer war in FP1 vorne? 👀🔥"),
+        "PRACTICE": ("📊 {gp}: Practice", "Ergebnis da: Wer ist direkt in Q2? 🏁👀"),
+        "FP2": ("📊 {gp}: FP2-Ergebnis", "Wer war in FP2 vorne? 👀🔥"),
+        "QNR2": ("🏁 {gp}: Grid steht", "Sieh, wer auf Pole steht 👀🔥"),
+        "Sprint": ("⚡ {gp}: Sprint-Ergebnis", "Sieh, wer den Sprint gewonnen hat 🏆🔥"),
+        "Race": ("🏆 {gp}: Rennergebnis", "Sieh, wer das Rennen gewonnen hat 🏆🔥"),
+    },
+    "ja": {
+        "FP1": ("📊 {gp}：FP1結果", "FP1トップは誰？ 👀🔥"),
+        "PRACTICE": ("📊 {gp}：プラクティス結果", "Q2直行は誰？ 🏁👀"),
+        "FP2": ("📊 {gp}：FP2結果", "FP2トップは誰？ 👀🔥"),
+        "QNR2": ("🏁 {gp}：グリッド確定", "ポールポジションは誰？ 👀🔥"),
+        "Sprint": ("⚡ {gp}：スプリント結果", "スプリント優勝は誰？ 🏆🔥"),
+        "Race": ("🏆 {gp}：決勝結果", "決勝の優勝は誰？ 🏆🔥"),
+    },
+    "ko": {
+        "FP1": ("📊 {gp}: FP1 결과", "FP1 1위는 누구? 👀🔥"),
+        "PRACTICE": ("📊 {gp}: 프랙티스 결과", "Q2 직행은 누구? 🏁👀"),
+        "FP2": ("📊 {gp}: FP2 결과", "FP2 1위는 누구? 👀🔥"),
+        "QNR2": ("🏁 {gp}: 그리드 확정", "폴 포지션은 누구? 👀🔥"),
+        "Sprint": ("⚡ {gp}: 스프린트 결과", "스프린트 우승자는 누구? 🏆🔥"),
+        "Race": ("🏆 {gp}: 결승 결과", "결승 우승자는 누구? 🏆🔥"),
+    },
+    "zh": {
+        "FP1": ("📊 {gp}：FP1成绩", "看看谁是FP1最快 👀🔥"),
+        "PRACTICE": ("📊 {gp}：练习赛成绩", "谁直通Q2？ 🏁👀"),
+        "FP2": ("📊 {gp}：FP2成绩", "看看谁是FP2最快 👀🔥"),
+        "QNR2": ("🏁 {gp}：发车顺序出炉", "看看谁拿下杆位 👀🔥"),
+        "Sprint": ("⚡ {gp}：冲刺赛成绩", "看看谁赢下冲刺赛 🏆🔥"),
+        "Race": ("🏆 {gp}：正赛成绩", "看看谁赢下正赛 🏆🔥"),
+    },
+    "ru": {
+        "FP1": ("📊 {gp}: итоги FP1", "Кто был быстрее всех в FP1? 👀🔥"),
+        "PRACTICE": ("📊 {gp}: Практика", "Итоги: кто сразу в Q2? 🏁👀"),
+        "FP2": ("📊 {gp}: итоги FP2", "Кто был быстрее всех в FP2? 👀🔥"),
+        "QNR2": ("🏁 {gp}: решётка готова", "Узнай, кто взял поул 👀🔥"),
+        "Sprint": ("⚡ {gp}: итоги спринта", "Узнай, кто выиграл спринт 🏆🔥"),
+        "Race": ("🏆 {gp}: итоги гонки", "Узнай, кто выиграл гонку 🏆🔥"),
+    },
+}
+
 MAX_TITLE, MAX_BODY = 35, 50
 _UPPER_WORDS = {"GP", "USA", "UK"}
 
@@ -172,6 +259,27 @@ def build_messages(race) -> dict:
             if lang == "en":
                 raise ValueError(f"en {rtype} fails the checks: {title!r} | {body!r}")
             logger.warning(f"{lang} {rtype} fails the checks and is not sent: {title!r} | {body!r}")
+            continue
+        out[lang] = (title, body)
+    return out
+
+
+def build_result_messages(grand_prix: dict, race_type: str) -> dict:
+    """{lang: (title, body)} for the results push of one session. Same checks as build_messages: a failing
+    language is dropped, English failing raises (nothing is sent)."""
+    gp = gp_display_name((grand_prix.get("attributes") or {}).get("name"))
+    if not gp:
+        raise ValueError(f"Grand Prix name missing for GP {grand_prix.get('id')}")
+    if race_type not in RESULT_TYPES:
+        raise ValueError(f"no results push for session type {race_type}")
+    out = {}
+    for lang in ["en", *sorted(locales)]:
+        title, body = RESULT_TEMPLATES[lang][race_type]
+        title, body = title.format(gp=gp), body.format(gp=gp)
+        if not valid(title, body):
+            if lang == "en":
+                raise ValueError(f"en {race_type} results push fails the checks: {title!r} | {body!r}")
+            logger.warning(f"{lang} {race_type} results push fails the checks and is not sent: {title!r} | {body!r}")
             continue
         out[lang] = (title, body)
     return out

@@ -154,7 +154,7 @@ class HardeningTest(unittest.TestCase):
         old = (datetime.now(timezone.utc) - timedelta(hours=4)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
         with mock.patch.object(up, "create_race_result") as create, \
              mock.patch.object(up, "update_config_for_race_result"), mock.patch.object(up, "process_update_moto_gp_stats"), \
-             mock.patch.object(up, "send_race_complete_notification"), mock.patch.object(up.time, "sleep"):
+             mock.patch.object(up, "send_results_push"), mock.patch.object(up.time, "sleep"):
             self.assertEqual(up.upload_moto_gp_race_results(cls, {93: "1", 89: "2"}, "600", "Race", {"id": "47"}, "2026", race_start=recent), "no_classification")
             create.assert_not_called()
             self.assertEqual(up.upload_moto_gp_race_results(cls, {93: "1", 89: "2"}, "600", "Race", {"id": "47"}, "2026", race_start=old), "no_classification")
@@ -181,7 +181,7 @@ class HardeningTest(unittest.TestCase):
         recent = (datetime.now(timezone.utc) - timedelta(minutes=45)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
         with mock.patch.object(up, "create_race_result") as create, \
              mock.patch.object(up, "update_config_for_race_result"), mock.patch.object(up, "process_update_moto_gp_stats"), \
-             mock.patch.object(up, "send_race_complete_notification") as push, mock.patch.object(up.time, "sleep"), \
+             mock.patch.object(up, "send_results_push") as push, mock.patch.object(up.time, "sleep"), \
              mock.patch.object(up, "results_readable", return_value=(True, "")):
             self.assertEqual(up.upload_moto_gp_race_results(cls, {93: "1", 89: "2"}, "600", "Race", {"id": "47"}, "2026", race_start=recent), "ingested")
         self.assertEqual(create.call_count, 2); push.assert_called_once()
@@ -198,7 +198,7 @@ class ResultsPushTest(unittest.TestCase):
         start = (datetime.now(timezone.utc) - timedelta(hours=hours_ago)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
         with mock.patch.object(up, "create_race_result"), mock.patch.object(up, "update_config_for_race_result"), \
              mock.patch.object(up, "process_update_moto_gp_stats"), mock.patch.object(up.time, "sleep"), \
-             mock.patch.object(up, "send_race_complete_notification") as push, \
+             mock.patch.object(up, "send_results_push") as push, \
              mock.patch.object(up, "results_readable", return_value=readable):
             status = up.upload_moto_gp_race_results(self.CLS, {93: "1"}, "600", "Race", {"id": "47"}, "2026", race_start=start)
         return status, push.call_count
@@ -293,3 +293,18 @@ class QuietHandoverTest(unittest.TestCase):
                         break
                     c.t += timedelta(minutes=handover)
                 self.assertEqual(len(sent), 6, (handover, offset_min))
+
+
+class ResultsPushFailureTest(unittest.TestCase):
+    def setUp(self):
+        logger.remove()
+
+    def test_failed_send_is_reported_and_the_results_stay_written(self):
+        cls = {"classification": [{"position": 1, "rider": {"number": 93, "id": "a"}, "points": 25}], "records": []}
+        start = (datetime.now(timezone.utc) - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+        with mock.patch.object(up, "create_race_result") as create, mock.patch.object(up, "update_config_for_race_result"), \
+             mock.patch.object(up, "process_update_moto_gp_stats"), mock.patch.object(up.time, "sleep"), \
+             mock.patch.object(up, "results_readable", return_value=(True, "")), \
+             mock.patch.object(up, "send_results_push", side_effect=ConnectionError("fcm down")):
+            status = up.upload_moto_gp_race_results(cls, {93: "1"}, "600", "Race", {"id": "47"}, "2026", race_start=start)
+        self.assertTrue(status.startswith("ingested_push_held:results push failed")); create.assert_called_once()

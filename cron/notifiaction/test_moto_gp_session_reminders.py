@@ -291,3 +291,41 @@ class LastMomentChangeTest(unittest.TestCase):
             rem.run_pass(FP1 - timedelta(minutes=14), lambda a, b: [r], st, sent.append, True)
         self.assertEqual(len(sent), 1)
 
+
+
+class ResultsCopyTest(unittest.TestCase):
+    def setUp(self):
+        logger.remove()
+
+    def _gp(self, name="PORTUGAL GP 26"):
+        return {"id": "63", "attributes": {"name": name}}
+
+    def test_every_language_and_every_2026_gp_passes_the_checks(self):
+        self.assertEqual(set(rem.RESULT_TEMPLATES), {"en", *locales})
+        for lang, sessions in rem.RESULT_TEMPLATES.items():
+            self.assertEqual(set(sessions), set(rem.RESULT_TYPES), lang)
+        for name in GP_NAMES_2026:
+            for rtype in rem.RESULT_TYPES:
+                self.assertEqual(set(rem.build_result_messages(self._gp(name), rtype)), {"en", *locales})
+
+    def test_approved_english_copy(self):
+        got = {t: rem.build_result_messages(self._gp(), t)["en"] for t in rem.RESULT_TYPES}
+        self.assertEqual(got, {"FP1": ("📊 Portugal GP: FP1 results", "See who topped FP1 👀🔥"),
+                               "PRACTICE": ("📊 Portugal GP: Practice", "Results are in: who made Q2? 🏁👀"),
+                               "FP2": ("📊 Portugal GP: FP2 results", "See who topped FP2 👀🔥"),
+                               "QNR2": ("🏁 Portugal GP: Grid is set", "See who took pole 👀🔥"),
+                               "Sprint": ("⚡ Portugal GP: Sprint results", "See who won the Sprint 🏆🔥"),
+                               "Race": ("🏆 Portugal GP: Race results", "See who won the Race 🏆🔥")})
+
+    def test_no_results_push_after_q1(self):
+        with self.assertRaises(ValueError):
+            rem.build_result_messages(self._gp(), "QNR1")
+
+    def test_uploader_sends_the_fixed_copy_without_translation(self):
+        from cron.data_upload.moto_gp import moto_gp_data_upload as up
+        with mock.patch.object(up, "send_localized_notification_to_topic") as send:
+            up.send_results_push("Race", self._gp())
+        messages = send.call_args.kwargs["messages"]
+        self.assertEqual(messages["en"], ("🏆 Portugal GP: Race results", "See who won the Race 🏆🔥"))
+        self.assertEqual(messages["it"], ("🏆 Portugal GP: risultati gara", "Scopri chi ha vinto la gara 🏆🔥"))
+        self.assertEqual(len(messages), 10)

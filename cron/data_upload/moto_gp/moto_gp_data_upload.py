@@ -1,5 +1,6 @@
 from cron.moto_gp.moto_gp_api import fetch_season, fetch_event, fetch_session, fetch_race_results
-from cron.notifiaction.notification_utils import send_race_complete_notification
+from cron.notifiaction.moto_gp_session_reminders import build_result_messages
+from cron.notifiaction.notification_utils import send_localized_notification_to_topic
 from cron.strapi_api.apis import get_config
 from cron.stats_calc.moto_gp.moto_gp_stats_update import process_update_moto_gp_stats
 from cron.strapi_api.apis import get_latest_past_race, get_race_results_for_race_event, get_season_grid_map, \
@@ -22,6 +23,11 @@ SCORING_POSITIONS = {"Race": 15, "Sprint": 9}
 # "Results are out" is news only near the session (Purple Sector rule): a session written later (a grid
 # fixed days after, a manual rerun) is a data correction and is not announced.
 RESULTS_PUSH_MAX_AGE_HOURS = 24
+
+
+def send_results_push(race_type: str, grand_prix: dict):
+    """Fixed, hand-written results copy in every language (RESULT_TEMPLATES), no machine translation."""
+    send_localized_notification_to_topic(is_f1=False, is_prod=True, messages=build_result_messages(grand_prix, race_type))
 
 
 def results_readable(race_id, expected_rows: int, gp_id, attempts: int = 3, pause: float = 10.0):
@@ -298,8 +304,12 @@ def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, 
             # The push would open an app that cannot show the results yet: hold it, report it.
             logger.error(f"{race_type} results push held: {why}")
             return "ingested_push_held:" + why
-        logger.info(f"sending race complete notification")
-        send_race_complete_notification(is_f1=False, race_type=race_type, grand_prix=grand_prix)
+        try:
+            send_results_push(race_type, grand_prix)
+            logger.info(f"results push sent for {race_type}")
+        except Exception as e:
+            logger.exception(f"{race_type} results push failed")
+            return f"ingested_push_held:results push failed: {type(e).__name__}: {e}"
     return "ingested"
 
 
