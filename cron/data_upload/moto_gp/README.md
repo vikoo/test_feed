@@ -26,6 +26,13 @@ motogp.com often shows the order first and the points a little later; the runner
 2 minutes and writes the result as soon as the points are in. Away from race weekends it exits within a minute. Manual runs are not needed during a weekend; the
 `once` mode keeps the old single pass.
 
+motogp.com first publishes a classification as provisional (`"official": false`, lap times rounded to
+0.01 s, e.g. `1:39.00`) and marks it official a few minutes later (`01:39.002`). A session written from a
+provisional classification is rechecked every 2 minutes; once official, the changed rows are rewritten
+(practice and qualifying: position, time, laps, dnf, Q1 finalPos; Sprint and Race: time and laps only, the
+order stays with the PDF check) and the app cache is bumped. No second push. After 90 minutes, or if the
+rider list changed, it is left to the 15-minute corrections below (also the fallback after a runner handover).
+
 A rider with no season grid no longer aborts the run halfway: the session is skipped with nothing
 written, the other sessions still run, and the job ends red so the failure email goes out. Riders whose
 only grid is marked `isOldGrid` (substitutes after their weekend) use that grid.
