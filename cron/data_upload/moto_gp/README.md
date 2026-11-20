@@ -15,7 +15,7 @@ to run script
 ## Weekend runner (race-result.yml)
 
 GitHub starts scheduled runs of this repo only about every 4 hours, so `weekend_runner.py` does not rely
-on the cron cadence. A run polls every 2 minutes, ingests each session as soon as its classification is
+on the cron cadence. A run polls every minute, ingests each session as soon as its classification is
 published (never earlier than the minimum session length after the start), and before the 6 hour job
 limit starts a new run of the workflow while a session is waiting or the next one starts within 26 hours.
 While idle it still wakes at least every 10 minutes, so a session moved earlier is seen in time. The
@@ -23,15 +23,28 @@ hand-over happens at a quiet moment (no reminder due within 35 minutes, in the l
 so a new run that takes up to 50 minutes to start cannot make a reminder late or lose it.
 A Sprint or Race is written only once every rider in a scoring position (top 9 / top 15) has points:
 motogp.com often shows the order first and the points a little later; the runner keeps polling every
-2 minutes and writes the result as soon as the points are in. Away from race weekends it exits within a minute. Manual runs are not needed during a weekend; the
+minute and writes the result as soon as the points are in. Away from race weekends it exits within a minute. Manual runs are not needed during a weekend; the
 `once` mode keeps the old single pass.
 
-motogp.com first publishes a classification as provisional (`"official": false`, lap times rounded to
-0.01 s, e.g. `1:39.00`) and marks it official a few minutes later (`01:39.002`). A session written from a
-provisional classification is rechecked every 2 minutes; once official, the changed rows are rewritten
-(practice and qualifying: position, time, laps, dnf, Q1 finalPos; Sprint and Race: time and laps only, the
-order stays with the PDF check) and the app cache is bumped. No second push. After 90 minutes, or if the
-rider list changed, it is left to the 15-minute corrections below (also the fallback after a runner handover).
+After the write, `results_followup.py` runs on every pass for each session of the last 6 hours (nothing
+important is kept in memory, so a handover changes nothing):
+- **Sync.** The session's Strapi rows (read uncached) are compared with motogp.com's current classification
+  and every difference is rewritten: practice and qualifying position, time, laps, dnf and Q1 finalPos;
+  Sprint and Race time and laps plus the Race fastest lap (order, points and dnf stay with the PDF-checked
+  corrections below). Missing rows (a write that failed halfway) are created. motogp.com publishes a
+  provisional classification first (`"official": false`, times rounded to 0.01 s) and the official one
+  minutes later; a provisional copy coarser than what the app already shows (a stale CDN copy) is ignored.
+- **Results push**, once per session, recorded on `motogp-state` next to the reminders (`results:<race id>`
+  and `results:<event>:<type>`), so it is never sent twice and a failed or held push is retried on the next
+  pass. It goes when the app shows exactly motogp.com's classification and at least 6 minutes after the last
+  row change (the Strapi proxy caches identical GraphQL queries, the app's too, for about 5 minutes): practice
+  and qualifying once the classification is official, or 10 minutes after the first write if it is still
+  provisional; Sprint and Race at once. The results cache key is bumped right before the send. No push after
+  Q1, none 30 minutes after the first write or 24 h after the start. Paused like the reminders
+  (`MOTOZ_SESSION_PUSH`, `control.json`).
+- **Stats** are recomputed after the push for every season written in the pass.
+
+Typical timing (Portugal FP1 2026 replay): official about 7 min after the first write, push 6 min later.
 
 A rider with no season grid no longer aborts the run halfway: the session is skipped with nothing
 written, the other sessions still run, and the job ends red so the failure email goes out. Riders whose

@@ -7,7 +7,7 @@ classification is published (polling, like the results watcher), and near the 6 
 the workflow to start a new run while a session is still waiting or about to start. Away from race
 weekends it exits at once.
 
-Environment: RUNNER_MAX_MINUTES (default 330), RUNNER_POLL_SECONDS (default 120),
+Environment: RUNNER_MAX_MINUTES (default 330), RUNNER_POLL_SECONDS (default 60),
 RUNNER_LOOKAHEAD_HOURS (default 26).
 Writes chain=true|false to $GITHUB_OUTPUT. Exit code 1 if any session failed or was skipped.
 """
@@ -24,7 +24,9 @@ from cron.notifiaction import moto_gp_session_reminders as reminders
 from cron.strapi_api.apis import get_races_starting_between
 
 MAX_MINUTES = int(os.getenv("RUNNER_MAX_MINUTES", "330"))
-POLL_SECONDS = int(os.getenv("RUNNER_POLL_SECONDS", "120"))
+# Poll interval while a session is waiting for its classification or its results push: results reach the
+# app at most this long after motogp.com publishes them.
+POLL_SECONDS = int(os.getenv("RUNNER_POLL_SECONDS", "60"))
 # Keep the chain alive when the next session starts within this many hours. Covers the longest gap
 # inside a weekend (Saturday Sprint to Sunday Race, about 22 h), not the gap between weekends.
 CHAIN_LOOKAHEAD_HOURS = int(os.getenv("RUNNER_LOOKAHEAD_HOURS", "26"))
@@ -93,10 +95,14 @@ def _send_reminder(messages):
     send_localized_notification_to_topic(is_f1=False, is_prod=True, messages=messages)
 
 
-def make_reminder_pass():
+def push_enabled() -> bool:
+    return os.getenv("MOTOZ_SESSION_PUSH", "").strip().lower() == "on"
+
+
+def make_reminder_pass(store=None):
     """Reminder pass bound to the real Strapi, GitHub record and Firebase sender."""
-    store = reminders.SentStore()
-    enabled = os.getenv("MOTOZ_SESSION_PUSH", "").strip().lower() == "on"
+    store = store or reminders.SentStore()
+    enabled = push_enabled()
     logger.info(f"session reminders {'ON' if enabled else 'dry run (MOTOZ_SESSION_PUSH is not on)'}")
     logged = set()
     fetch = lambda start, end: get_races_starting_between(False, iso(start), iso(end))
@@ -125,9 +131,27 @@ def should_chain(waiting: bool, next_start, now: datetime, started_at: datetime)
     return waiting or upcoming
 
 
+def make_followup_pass(store):
+    """Results follow-up (sync with motogp.com, results push, stats) bound to the real services."""
+    from cron.data_upload.moto_gp import results_followup
+    enabled = push_enabled()
+    logger.info(f"results push {'ON' if enabled else 'dry run (MOTOZ_SESSION_PUSH is not on)'}")
+    f = results_followup.Followup(results_followup.LiveDeps(), store, enabled)
+    uploader.defer_stats = True
+
+    def run_pass(now):
+        owed = set(uploader.stats_owed)
+        uploader.stats_owed.clear()
+        f.bump_owed |= uploader.bump_owed
+        uploader.bump_owed.clear()
+        return f.run(now, stats_owed=owed)  # f keeps both until they work
+    return run_pass
+
+
 def run(clock=lambda: datetime.now(timezone.utc), sleep=time.sleep, process=uploader.process,
         next_start_fn=next_session_start, max_minutes=MAX_MINUTES, poll_seconds=POLL_SECONDS,
-        remind=lambda now: [], post_race=lambda now: (False, []), time_sync=lambda now: [], next_reminder_fn=None):
+        remind=lambda now: [], post_race=lambda now: (False, []), time_sync=lambda now: [], next_reminder_fn=None,
+        followup=lambda now: (False, [])):
     # Without a reminder lookup (tests), every upcoming event is treated as a reminder: the safe side.
     next_reminder_fn = next_reminder_fn or next_start_fn
     started_at = clock()
@@ -148,11 +172,15 @@ def run(clock=lambda: datetime.now(timezone.utc), sleep=time.sleep, process=uplo
         except Exception as e:
             logger.exception(f"session time check failed: {type(e).__name__}: {e}")
             problems.append(f"session time check: {type(e).__name__}: {e}")
+        remind_failed = False
         try:
-            problems += remind(now)
+            remind_problems = remind(now)
+            problems += remind_problems
+            remind_failed = bool(remind_problems)  # a failed send or record: retry every poll until the start
         except Exception as e:
             logger.exception(f"reminder pass failed: {type(e).__name__}: {e}")
             problems.append(f"reminder pass: {type(e).__name__}: {e}")
+            remind_failed = True
         try:
             summary = process(now=now)
             problems += summary["skipped_missing_grid"] + summary["errors"]
@@ -162,16 +190,26 @@ def run(clock=lambda: datetime.now(timezone.utc), sleep=time.sleep, process=uplo
             problems.append(f"ingest pass: {type(e).__name__}: {e}")
             waiting, ok = True, False
         try:
+            follow_pending, follow_problems = followup(now)  # keep the app equal to motogp.com, results push
+            problems += follow_problems
+            waiting = waiting or follow_pending
+        except Exception as e:
+            logger.exception(f"results follow-up failed: {type(e).__name__}: {e}")
+            problems.append(f"results follow-up: {type(e).__name__}: {e}")
+            waiting = True
+        try:
             post_pending, post_problems = post_race(now)
             problems += post_problems
             waiting = waiting or post_pending  # keep polling until the official PDFs are in
         except Exception as e:
             logger.exception(f"post-race pass failed: {type(e).__name__}: {e}")
             problems.append(f"post-race pass: {type(e).__name__}: {e}")
+        waiting = waiting or remind_failed
         try:
             next_start = next_start_fn(now)
         except Exception as e:
             logger.exception(f"schedule lookup failed: {type(e).__name__}: {e}")
+            next_start = None  # a stale past value would make every pass run back to back
             waiting, ok = True, False
 
         now = clock()
@@ -183,6 +221,9 @@ def run(clock=lambda: datetime.now(timezone.utc), sleep=time.sleep, process=uplo
         if next_start is None and not waiting:
             logger.info("no session waiting and none in the next hours: weekend done")
             return False, problems
+        # The handover follows reminders only. Delaying it while a session waits for results was tried and lost a
+        # reminder with a 20 min GitHub start (WaitingHandoverTest); the results follow-up keeps no state in
+        # memory, so a handover only pauses the results while the next run starts.
         if now >= deadline - HANDOVER_WINDOW and should_chain(waiting, next_start, now, started_at):
             try:
                 nr = next_reminder_fn(pass_at)  # reminders after the reminder pass are still to send
@@ -213,8 +254,10 @@ def main():
     try:
         from cron.data_upload.moto_gp import post_race, time_sync, auto_grid
         uploader.on_missing_grid = auto_grid.make_handler()  # new substitute / wild card: create the grid
-        chain, problems = run(remind=make_reminder_pass(), post_race=post_race.make_pass(),
-                              time_sync=time_sync.make_pass(), next_reminder_fn=next_reminder)
+        store = reminders.SentStore()  # one record for reminders and results pushes (one writer, one sha)
+        chain, problems = run(remind=make_reminder_pass(store), post_race=post_race.make_pass(),
+                              time_sync=time_sync.make_pass(), next_reminder_fn=next_reminder,
+                              followup=make_followup_pass(store))
     except Exception as e:
         # Unexpected crash: hand over only if this run lasted long enough (never a tight re-dispatch loop).
         logger.exception(f"runner crashed: {type(e).__name__}: {e}")

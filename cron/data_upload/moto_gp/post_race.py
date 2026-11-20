@@ -1,3 +1,4 @@
+import time
 """Post-session corrections from the official FIM PDFs, run by the weekend runner.
 
 Replaces two manual mz-ops steps:
@@ -310,7 +311,8 @@ def fetch_standings_diffs(year: str) -> list:
 
 
 def pulselive(path: str):
-    r = requests.get(f"{PULSELIVE}/{path}", timeout=30)
+    # CloudFront serves these with stale-while-revalidate=600: a unique parameter always reaches the origin.
+    r = requests.get(f"{PULSELIVE}/{path}", params={"_t": str(time.time_ns())}, timeout=30)
     r.raise_for_status()
     return r.json()
 

@@ -16,7 +16,27 @@ from cron.strapi_api.api_queries import query_get_latest_grand_prixes, mutation_
     mutation_create_constructor_standing_moto_gp, mutation_create_driver_standing, \
     query_driver_standings_for_season_grid, query_races_starting_between, query_race_results_for_grand_prix
 from cron.utils import *
-import requests
+import requests as _requests
+
+
+class _TimeoutRequests:
+    """requests with a timeout on every call: a call without one can hang a 6 h runner on a half-open
+    connection (socket.setdefaulttimeout does not bound requests). Tests patch .post / .get as before."""
+    TIMEOUT = 60
+
+    def __getattr__(self, name):
+        return getattr(_requests, name)
+
+    def post(self, *a, **k):
+        k.setdefault("timeout", self.TIMEOUT)
+        return _requests.post(*a, **k)
+
+    def get(self, *a, **k):
+        k.setdefault("timeout", self.TIMEOUT)
+        return _requests.get(*a, **k)
+
+
+requests = _TimeoutRequests()
 import re
 import json
 import uuid
@@ -46,7 +66,7 @@ def no_cache(query: str) -> str:
 #----------------------------------------------------------------------------------------------------------------
 def get_config(is_f1_feed: bool) -> str:
     end_point = get_graphql_endpoint(is_f1_feed)
-    response = requests.post(end_point, json={'query': query_get_config}, headers=get_headers(is_f1_feed))
+    response = requests.post(end_point, json={'query': no_cache(query_get_config)}, headers=get_headers(is_f1_feed))
     config_json = response.json()['data']['config']['data']['attributes']
     logger.debug(f"config_json: {config_json}")
     return config_json
@@ -54,7 +74,7 @@ def get_config(is_f1_feed: bool) -> str:
 def get_config_for_feeds(is_f1_feed: bool) -> str:
     end_point = get_graphql_endpoint(is_f1_feed)
 
-    response = requests.post(end_point, json={'query': query_get_config}, headers=get_headers(is_f1_feed))
+    response = requests.post(end_point, json={'query': no_cache(query_get_config)}, headers=get_headers(is_f1_feed))
     logger.debug(f"get_config_for_feeds response: {response.json()}")
     config_json = response.json()['data']['config']['data']['attributes']['feedJson']
     logger.debug(f"config_json: {config_json}")
@@ -605,6 +625,26 @@ def get_race_results_for_grand_prix(is_f1_feed: bool, gp_id: str, types: list) -
     return body["data"]["raceResults"]["data"]
 
 
+def get_session_rows(is_f1_feed: bool, race_id) -> list:
+    """Rows of one session, uncached, as [{id, number, position, points, laps, time, dnf, finalPos,
+    createdAt, updatedAt}]. Raises on any GraphQL error, so a failed read is never taken for "no rows"."""
+    from cron.strapi_api.api_queries import query_session_rows
+    end_point = get_graphql_endpoint(is_f1_feed)
+    response = requests.post(end_point, json={'query': no_cache(query_session_rows), "variables": {"raceId": str(race_id)}},
+                             headers=get_headers(is_f1_feed), timeout=30)
+    response.raise_for_status()
+    body = response.json()
+    if body.get("errors"):
+        raise RuntimeError(f"session rows lookup failed: {body['errors']}")
+    out = []
+    for r in body["data"]["raceResults"]["data"]:
+        a = r["attributes"]
+        out.append({"id": r["id"], "number": ((a.get("seasonGrid") or {}).get("data") or {}).get("attributes", {}).get("driverNumber"),
+                    **{k: a.get(k) for k in ("position", "points", "laps", "time", "dnf", "finalPos", "fastestLap",
+                                                "fastestLapTime", "fastestLapNo", "createdAt", "updatedAt")}})
+    return out
+
+
 def get_races_starting_between(is_f1_feed: bool, start_iso: str, end_iso: str) -> list:
     """Sessions (Strapi races) whose startTime is in [start_iso, end_iso], earliest first."""
     end_point = get_graphql_endpoint(is_f1_feed)
@@ -856,7 +896,7 @@ def update_config_for_stats(is_f1_feed: bool, season_year: str):
     logger.debug(f"update_config_for_stats response: {response.json()}")
 
 
-def update_config_for_race_result(is_f1_feed: bool, gp_id: str):
+def update_config_for_race_result(is_f1_feed: bool, gp_id: str, strict: bool = False):
     config = get_config(is_f1_feed=is_f1_feed)
     config_gp = config.get("raceResultFastestLapForGrandPrixJson")
     logger.info(f"config_gp: {config_gp}")
@@ -884,6 +924,11 @@ def update_config_for_race_result(is_f1_feed: bool, gp_id: str):
 
     response = requests.post(end_point, json={"query": mutation_update_config_for_race_result, "variables": variables}, headers=get_headers(is_f1_feed))
     logger.debug(f"update_config_for_race_result response: {response}")
+    if strict:
+        response.raise_for_status()
+    body = response.json() if strict else {}
+    if strict and (body.get("errors") or not body.get("data")):
+        raise RuntimeError(f"results cache key update failed for GP {gp_id}: {body.get('errors')}")
     # logger.debug(f"update_config_for_race_result response: {response.json()}")
 
 

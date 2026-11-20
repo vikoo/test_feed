@@ -1013,3 +1013,28 @@ query_race_results_for_grand_prix = """
         }
 """
 
+
+# One session's rows with every field the results follow-up compares (always sent through no_cache()).
+query_session_rows = """
+        query SessionRows($raceId: ID!) {
+            raceResults(filters: { race: { id: { eq: $raceId } } }, pagination: { limit: 60 }) {
+                data {
+                    id
+                    attributes {
+                        position
+                        points
+                        laps
+                        time
+                        dnf
+                        finalPos
+                        fastestLap
+                        fastestLapTime
+                        fastestLapNo
+                        createdAt
+                        updatedAt
+                        seasonGrid { data { id attributes { driverNumber } } }
+                    }
+                }
+            }
+        }
+"""

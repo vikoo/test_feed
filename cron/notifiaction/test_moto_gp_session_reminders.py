@@ -321,11 +321,14 @@ class ResultsCopyTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             rem.build_result_messages(self._gp(), "QNR1")
 
-    def test_uploader_sends_the_fixed_copy_without_translation(self):
-        from cron.data_upload.moto_gp import moto_gp_data_upload as up
-        with mock.patch.object(up, "send_localized_notification_to_topic") as send:
-            up.send_results_push("Race", self._gp())
+    def test_results_push_sends_the_fixed_copy_without_translation(self):
+        from cron.data_upload.moto_gp import results_followup as rf
+        from cron.notifiaction import notification_utils as nu
+        deps = rf.LiveDeps()
+        with mock.patch.object(nu, "send_localized_notification_to_topic") as send:
+            deps.send(deps.result_messages(self._gp(), "Race"))
         messages = send.call_args.kwargs["messages"]
+        self.assertEqual(send.call_args.kwargs["is_f1"], False); self.assertEqual(send.call_args.kwargs["is_prod"], True)
         self.assertEqual(messages["en"], ("🏆 Portugal GP: Race results", "See who won the Race 🏆🔥"))
         self.assertEqual(messages["it"], ("🏆 Portugal GP: risultati gara", "Scopri chi ha vinto la gara 🏆🔥"))
         self.assertEqual(len(messages), 10)
