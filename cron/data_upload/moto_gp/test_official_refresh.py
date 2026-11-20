@@ -191,3 +191,21 @@ class RefreshTest(Base):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ReadBackUncachedTest(unittest.TestCase):
+    """Portugal FP1 2026: the Strapi proxy served the 0-row answer from before the write to the read-back
+    ("results push held: Strapi returns 0 of 22 rows"). Every row count must be a fresh request."""
+
+    def test_row_count_query_is_never_a_cache_hit(self):
+        from cron.strapi_api import apis
+        resp = mock.Mock(); resp.json.return_value = {"data": {"raceResults": {"data": []}}}
+        with mock.patch.object(apis, "get_graphql_endpoint", return_value="https://x/graphql"), \
+             mock.patch.object(apis, "get_headers", return_value={}), \
+             mock.patch.object(apis.requests, "post", return_value=resp) as post:
+            apis.get_race_results_for_race_event(is_f1_feed=False, race_id="600")
+            apis.get_race_results_for_race_event(is_f1_feed=False, race_id="600")
+        q1, q2 = (c.kwargs["json"]["query"] for c in post.call_args_list)
+        self.assertNotEqual(q1, q2)
+        self.assertTrue(q1.startswith("# ") and "raceResults" in q1)
+        self.assertEqual(post.call_args_list[0].kwargs["json"]["variables"], {"raceId": "600"})

@@ -534,7 +534,10 @@ def get_race_results_for_race_event(is_f1_feed: bool, race_id: str) -> str:
         "raceId": race_id
     }
     logger.info(f"get_race_results_for_race_event variables: {variables}")
-    response = requests.post(end_point, json={'query': query_race_results_for_race_event, "variables": variables}, headers=get_headers(is_f1_feed))
+    # Uncached: this count decides whether a session is written (0 rows) and whether the results push may go
+    # out. A cached answer from before the write held the Portugal FP1 2026 push ("0 of 22 rows") and could
+    # make a session be written twice.
+    response = requests.post(end_point, json={'query': no_cache(query_race_results_for_race_event), "variables": variables}, headers=get_headers(is_f1_feed))
     data = response.json()
     logger.debug(f"get_race_results_for_race_event response: {data}")
     return data
