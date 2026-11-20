@@ -14,8 +14,9 @@ Run by the weekend runner on every pass, for every session that started in the l
 2. Results push. Sent once per session (recorded on the motogp-state branch next to the reminders, so a
    handover or a second run never sends it twice), and only when the app shows exactly motogp.com's
    classification; the app's results cache key is bumped right before the send:
-   - practice and qualifying: when the classification is official, or HOLD_MINUTES after the first write
-     if motogp.com is still provisional then (so the push is never lost);
+   - Practice and Q2: when the classification is official, or HOLD_MINUTES after the first write if
+     motogp.com is still provisional then (so the push is never lost);
+   - FP1 and FP2: on the quick version (no wait for "official");
    - Sprint and Race: at once (they are only written when every scoring rider has points);
    - and never within APP_CACHE_MINUTES of the last row change (the proxy cache in front of Strapi).
    A push that cannot go yet is retried on the next pass; nothing is announced over PUSH_LATE_MINUTES
@@ -35,7 +36,10 @@ PUSH_MAX_AGE_HOURS = 24
 # "Results are in" is news only right after they are: no push this long after the first write (a runner
 # outage, a record that stayed unavailable). Covers the provisional hold and retries with a wide margin.
 PUSH_LATE_MINUTES = 30
-HOLD_MINUTES = {"FP1": 10, "PRACTICE": 10, "FP2": 10, "QNR2": 10, "Sprint": 0, "Race": 0}
+# Minutes a push waits for motogp.com's "official" classification (Ankur, 2026-11-20, as a user would want it):
+# FP1/FP2 push on the quick version (nothing depends on their order); Practice ("who made Q2?") and Q2
+# ("who took pole?") wait for it, since a lap deleted after the session can change exactly that.
+HOLD_MINUTES = {"FP1": 0, "PRACTICE": 10, "FP2": 0, "QNR2": 10, "Sprint": 0, "Race": 0}
 # The Strapi nginx proxy answers identical GraphQL queries (the app's too) from a cache for about 5 minutes.
 # A push sent sooner after the last row change can open the app on the old answer, so it waits this long.
 APP_CACHE_MINUTES = 6
