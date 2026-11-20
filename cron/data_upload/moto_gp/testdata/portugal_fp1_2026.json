@@ -1,0 +1,629 @@
+{
+ "note": "motogp.com v2 classifications, Portugal FP1 2026: provisional (fetched 11:37 UTC) and official (12:4x UTC)",
+ "provisional": {
+  "official": false,
+  "classification": [
+   {
+    "position": 1,
+    "rider": {
+     "number": 72,
+     "id": "ab06dbae-7d6e-47c3-b63f-b7ac6b7d3bcd"
+    },
+    "best_lap": {
+     "number": 9,
+     "time": "1:39.00"
+    },
+    "total_laps": 18,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 2,
+    "rider": {
+     "number": 89,
+     "id": "5cbd7eb6-ccfc-4b9f-aad1-ede25d394f7b"
+    },
+    "best_lap": {
+     "number": 18,
+     "time": "1:39.14"
+    },
+    "total_laps": 19,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 3,
+    "rider": {
+     "number": 73,
+     "id": "e7e4c72e-952e-4f64-8e8a-a47ff590fade"
+    },
+    "best_lap": {
+     "number": 5,
+     "time": "1:39.24"
+    },
+    "total_laps": 15,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 4,
+    "rider": {
+     "number": 93,
+     "id": "f55b433d-38b8-4d1d-bb3a-a709c82a0260"
+    },
+    "best_lap": {
+     "number": 7,
+     "time": "1:39.26"
+    },
+    "total_laps": 17,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 5,
+    "rider": {
+     "number": 25,
+     "id": "58448742-f520-466a-a1a1-bf3286cce9c3"
+    },
+    "best_lap": {
+     "number": 11,
+     "time": "1:39.41"
+    },
+    "total_laps": 17,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 6,
+    "rider": {
+     "number": 49,
+     "id": "6c33de41-f014-4f17-8dc9-e6f36e61026a"
+    },
+    "best_lap": {
+     "number": 10,
+     "time": "1:39.46"
+    },
+    "total_laps": 15,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 7,
+    "rider": {
+     "number": 43,
+     "id": "6e940243-5167-4cc3-a343-a74337369b94"
+    },
+    "best_lap": {
+     "number": 16,
+     "time": "1:39.50"
+    },
+    "total_laps": 18,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 8,
+    "rider": {
+     "number": 54,
+     "id": "2614e0f6-7e02-4076-a746-50f43fe3143c"
+    },
+    "best_lap": {
+     "number": 12,
+     "time": "1:39.51"
+    },
+    "total_laps": 15,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 9,
+    "rider": {
+     "number": 37,
+     "id": "a6108385-dd4c-490d-b02e-542ed0275f79"
+    },
+    "best_lap": {
+     "number": 11,
+     "time": "1:39.61"
+    },
+    "total_laps": 18,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 10,
+    "rider": {
+     "number": 10,
+     "id": "7b0687b0-90bd-4ad6-b157-8c66fb8a93cf"
+    },
+    "best_lap": {
+     "number": 17,
+     "time": "1:39.88"
+    },
+    "total_laps": 18,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 11,
+    "rider": {
+     "number": 33,
+     "id": "ba579548-f026-402b-a607-38db5317d33f"
+    },
+    "best_lap": {
+     "number": 13,
+     "time": "1:39.92"
+    },
+    "total_laps": 19,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 12,
+    "rider": {
+     "number": 11,
+     "id": "3c7598e5-12ec-4e19-9311-1c0e9a017cbe"
+    },
+    "best_lap": {
+     "number": 5,
+     "time": "1:39.99"
+    },
+    "total_laps": 17,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 13,
+    "rider": {
+     "number": 79,
+     "id": "eb47c439-e136-40ff-9534-5c612853f529"
+    },
+    "best_lap": {
+     "number": 11,
+     "time": "1:40.00"
+    },
+    "total_laps": 18,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 14,
+    "rider": {
+     "number": 5,
+     "id": "487440af-cfa9-478a-903b-4e893ee18d3a"
+    },
+    "best_lap": {
+     "number": 5,
+     "time": "1:40.01"
+    },
+    "total_laps": 18,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 15,
+    "rider": {
+     "number": 23,
+     "id": "ff225c9d-64a2-43ac-a70e-62cf385a85a1"
+    },
+    "best_lap": {
+     "number": 4,
+     "time": "1:40.19"
+    },
+    "total_laps": 18,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 16,
+    "rider": {
+     "number": 27,
+     "id": "173da4e6-99bd-4468-b277-cf47f1efd24b"
+    },
+    "best_lap": {
+     "number": 18,
+     "time": "1:40.27"
+    },
+    "total_laps": 18,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 17,
+    "rider": {
+     "number": 20,
+     "id": "fcdd5500-a769-4ff4-8b9e-080d1849ff42"
+    },
+    "best_lap": {
+     "number": 17,
+     "time": "1:40.29"
+    },
+    "total_laps": 18,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 18,
+    "rider": {
+     "number": 42,
+     "id": "56475aa3-f3d1-485a-b6db-ca1149e1b6fa"
+    },
+    "best_lap": {
+     "number": 15,
+     "time": "1:40.31"
+    },
+    "total_laps": 18,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 19,
+    "rider": {
+     "number": 12,
+     "id": "66ee98b2-239c-487f-8913-aab8493ce280"
+    },
+    "best_lap": {
+     "number": 11,
+     "time": "1:40.54"
+    },
+    "total_laps": 17,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 20,
+    "rider": {
+     "number": 21,
+     "id": "a73f8ef2-784f-4f52-8511-1d315fd3a459"
+    },
+    "best_lap": {
+     "number": 11,
+     "time": "1:40.66"
+    },
+    "total_laps": 17,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 21,
+    "rider": {
+     "number": 96,
+     "id": "6cbb2071-121c-4407-9966-1a16cacbf970"
+    },
+    "best_lap": {
+     "number": 15,
+     "time": "1:40.76"
+    },
+    "total_laps": 20,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 22,
+    "rider": {
+     "number": 47,
+     "id": "1113c9b8-c231-4ba7-a352-4c11c92ab9df"
+    },
+    "best_lap": {
+     "number": 9,
+     "time": "1:41.33"
+    },
+    "total_laps": 18,
+    "status": "INSTND",
+    "time": null
+   }
+  ]
+ },
+ "official": {
+  "official": true,
+  "classification": [
+   {
+    "position": 1,
+    "rider": {
+     "number": 72,
+     "id": "ab06dbae-7d6e-47c3-b63f-b7ac6b7d3bcd"
+    },
+    "best_lap": {
+     "number": 9,
+     "time": "01:39.002"
+    },
+    "total_laps": 18,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 2,
+    "rider": {
+     "number": 89,
+     "id": "5cbd7eb6-ccfc-4b9f-aad1-ede25d394f7b"
+    },
+    "best_lap": {
+     "number": 18,
+     "time": "01:39.144"
+    },
+    "total_laps": 19,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 3,
+    "rider": {
+     "number": 73,
+     "id": "e7e4c72e-952e-4f64-8e8a-a47ff590fade"
+    },
+    "best_lap": {
+     "number": 5,
+     "time": "01:39.245"
+    },
+    "total_laps": 15,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 4,
+    "rider": {
+     "number": 93,
+     "id": "f55b433d-38b8-4d1d-bb3a-a709c82a0260"
+    },
+    "best_lap": {
+     "number": 7,
+     "time": "01:39.261"
+    },
+    "total_laps": 17,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 5,
+    "rider": {
+     "number": 25,
+     "id": "58448742-f520-466a-a1a1-bf3286cce9c3"
+    },
+    "best_lap": {
+     "number": 11,
+     "time": "01:39.411"
+    },
+    "total_laps": 17,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 6,
+    "rider": {
+     "number": 49,
+     "id": "6c33de41-f014-4f17-8dc9-e6f36e61026a"
+    },
+    "best_lap": {
+     "number": 10,
+     "time": "01:39.463"
+    },
+    "total_laps": 15,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 7,
+    "rider": {
+     "number": 43,
+     "id": "6e940243-5167-4cc3-a343-a74337369b94"
+    },
+    "best_lap": {
+     "number": 16,
+     "time": "01:39.504"
+    },
+    "total_laps": 18,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 8,
+    "rider": {
+     "number": 54,
+     "id": "2614e0f6-7e02-4076-a746-50f43fe3143c"
+    },
+    "best_lap": {
+     "number": 12,
+     "time": "01:39.513"
+    },
+    "total_laps": 15,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 9,
+    "rider": {
+     "number": 37,
+     "id": "a6108385-dd4c-490d-b02e-542ed0275f79"
+    },
+    "best_lap": {
+     "number": 11,
+     "time": "01:39.618"
+    },
+    "total_laps": 18,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 10,
+    "rider": {
+     "number": 10,
+     "id": "7b0687b0-90bd-4ad6-b157-8c66fb8a93cf"
+    },
+    "best_lap": {
+     "number": 17,
+     "time": "01:39.886"
+    },
+    "total_laps": 18,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 11,
+    "rider": {
+     "number": 33,
+     "id": "ba579548-f026-402b-a607-38db5317d33f"
+    },
+    "best_lap": {
+     "number": 13,
+     "time": "01:39.929"
+    },
+    "total_laps": 19,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 12,
+    "rider": {
+     "number": 11,
+     "id": "3c7598e5-12ec-4e19-9311-1c0e9a017cbe"
+    },
+    "best_lap": {
+     "number": 5,
+     "time": "01:39.991"
+    },
+    "total_laps": 17,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 13,
+    "rider": {
+     "number": 79,
+     "id": "eb47c439-e136-40ff-9534-5c612853f529"
+    },
+    "best_lap": {
+     "number": 11,
+     "time": "01:40.001"
+    },
+    "total_laps": 18,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 14,
+    "rider": {
+     "number": 5,
+     "id": "487440af-cfa9-478a-903b-4e893ee18d3a"
+    },
+    "best_lap": {
+     "number": 5,
+     "time": "01:40.013"
+    },
+    "total_laps": 18,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 15,
+    "rider": {
+     "number": 23,
+     "id": "ff225c9d-64a2-43ac-a70e-62cf385a85a1"
+    },
+    "best_lap": {
+     "number": 4,
+     "time": "01:40.191"
+    },
+    "total_laps": 18,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 16,
+    "rider": {
+     "number": 27,
+     "id": "173da4e6-99bd-4468-b277-cf47f1efd24b"
+    },
+    "best_lap": {
+     "number": 18,
+     "time": "01:40.271"
+    },
+    "total_laps": 18,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 17,
+    "rider": {
+     "number": 20,
+     "id": "fcdd5500-a769-4ff4-8b9e-080d1849ff42"
+    },
+    "best_lap": {
+     "number": 17,
+     "time": "01:40.296"
+    },
+    "total_laps": 18,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 18,
+    "rider": {
+     "number": 42,
+     "id": "56475aa3-f3d1-485a-b6db-ca1149e1b6fa"
+    },
+    "best_lap": {
+     "number": 15,
+     "time": "01:40.315"
+    },
+    "total_laps": 18,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 19,
+    "rider": {
+     "number": 12,
+     "id": "66ee98b2-239c-487f-8913-aab8493ce280"
+    },
+    "best_lap": {
+     "number": 11,
+     "time": "01:40.540"
+    },
+    "total_laps": 17,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 20,
+    "rider": {
+     "number": 21,
+     "id": "a73f8ef2-784f-4f52-8511-1d315fd3a459"
+    },
+    "best_lap": {
+     "number": 11,
+     "time": "01:40.669"
+    },
+    "total_laps": 17,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 21,
+    "rider": {
+     "number": 96,
+     "id": "6cbb2071-121c-4407-9966-1a16cacbf970"
+    },
+    "best_lap": {
+     "number": 15,
+     "time": "01:40.766"
+    },
+    "total_laps": 20,
+    "status": "INSTND",
+    "time": null
+   },
+   {
+    "position": 22,
+    "rider": {
+     "number": 47,
+     "id": "1113c9b8-c231-4ba7-a352-4c11c92ab9df"
+    },
+    "best_lap": {
+     "number": 9,
+     "time": "01:41.332"
+    },
+    "total_laps": 18,
+    "status": "INSTND",
+    "time": null
+   }
+  ]
+ }
+}

@@ -115,7 +115,11 @@ def plan_session(stype: str, cls: list, rows: list, pdf_rows: list):
                 held.append(f"#{num}: API time {otime} vs PDF {p['ms']} ms, left untouched")
                 continue
         scur = _norm_t(r.get("time"))
-        if not (scur == "DNF" and otime is None) and scur != otime:
+        coarser = otime is not None and scur not in (None, "DNF") and "." in scur and "." in otime \
+            and len(otime.rsplit(".", 1)[1]) < len(scur.rsplit(".", 1)[1])
+        if coarser:
+            held.append(f"#{num}: API time {otime} is coarser than stored {scur} (an old cached copy), left untouched")
+        elif not (scur == "DNF" and otime is None) and scur != otime:
             setf(r, "time", otime, "official time")
         tl, lcur = c.get("total_laps"), r.get("laps")
         if lcur is not None and tl is not None and lcur != tl:

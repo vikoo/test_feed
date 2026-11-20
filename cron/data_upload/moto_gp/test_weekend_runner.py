@@ -154,7 +154,7 @@ class HardeningTest(unittest.TestCase):
         old = (datetime.now(timezone.utc) - timedelta(hours=4)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
         with mock.patch.object(up, "create_race_result") as create, \
              mock.patch.object(up, "update_config_for_race_result"), mock.patch.object(up, "process_update_moto_gp_stats"), \
-             mock.patch.object(up, "send_results_push"), mock.patch.object(up.time, "sleep"):
+             mock.patch.object(up.time, "sleep"):
             self.assertEqual(up.upload_moto_gp_race_results(cls, {93: "1", 89: "2"}, "600", "Race", {"id": "47"}, "2026", race_start=recent), "no_classification")
             create.assert_not_called()
             self.assertEqual(up.upload_moto_gp_race_results(cls, {93: "1", 89: "2"}, "600", "Race", {"id": "47"}, "2026", race_start=old), "no_classification")
@@ -181,51 +181,9 @@ class HardeningTest(unittest.TestCase):
         recent = (datetime.now(timezone.utc) - timedelta(minutes=45)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
         with mock.patch.object(up, "create_race_result") as create, \
              mock.patch.object(up, "update_config_for_race_result"), mock.patch.object(up, "process_update_moto_gp_stats"), \
-             mock.patch.object(up, "send_results_push") as push, mock.patch.object(up.time, "sleep"), \
-             mock.patch.object(up, "results_readable", return_value=(True, "")):
-            self.assertEqual(up.upload_moto_gp_race_results(cls, {93: "1", 89: "2"}, "600", "Race", {"id": "47"}, "2026", race_start=recent), "ingested")
-        self.assertEqual(create.call_count, 2); push.assert_called_once()
-
-
-class ResultsPushTest(unittest.TestCase):
-    """Purple Sector rules: announce only fresh sessions, and only once the app can read the results."""
-    def setUp(self):
-        logger.remove()
-
-    CLS = {"classification": [{"position": 1, "rider": {"number": 93, "id": "a"}, "points": 25}], "records": []}
-
-    def _upload(self, hours_ago, readable=(True, "")):
-        start = (datetime.now(timezone.utc) - timedelta(hours=hours_ago)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
-        with mock.patch.object(up, "create_race_result"), mock.patch.object(up, "update_config_for_race_result"), \
-             mock.patch.object(up, "process_update_moto_gp_stats"), mock.patch.object(up.time, "sleep"), \
-             mock.patch.object(up, "send_results_push") as push, \
-             mock.patch.object(up, "results_readable", return_value=readable):
-            status = up.upload_moto_gp_race_results(self.CLS, {93: "1"}, "600", "Race", {"id": "47"}, "2026", race_start=start)
-        return status, push.call_count
-
-    def test_fresh_session_is_announced(self):
-        self.assertEqual(self._upload(1), ("ingested", 1))
-
-    def test_session_written_a_day_later_is_not_announced(self):
-        self.assertEqual(self._upload(30), ("ingested", 0))
-
-    def test_push_held_when_the_app_cannot_read_the_results_yet(self):
-        status, pushes = self._upload(1, readable=(False, "Strapi returns 0 of 1 rows"))
-        self.assertEqual(pushes, 0); self.assertTrue(status.startswith("ingested_push_held:"))
-
-    def test_held_push_is_reported_and_the_session_counts_as_written(self):
-        r = [race(607, "Race", "2026-11-22T13:00:00.000Z")]
-        with mock.patch.object(up, "get_latest_past_race", return_value={"data": {"races": {"data": r}}}), \
-             mock.patch.object(up, "_process_session", return_value="ingested_push_held:Strapi returns 0 of 22 rows"):
-            s = up.process(now=up.parse_time("2026-11-22T14:00:00.000Z"))
-        self.assertEqual(len(s["ingested"]), 1); self.assertIn("push held", s["errors"][0])
-
-    def test_read_back_retries_then_passes(self):
-        answers = iter([{"data": {"raceResults": {"data": []}}}, {"data": {"raceResults": {"data": [1, 2]}}}])
-        with mock.patch.object(up, "get_race_results_for_race_event", side_effect=lambda **kw: next(answers)), \
-             mock.patch.object(up, "get_config", return_value={"raceResultFastestLapForGrandPrixJson": {"47": "1"}}), \
              mock.patch.object(up.time, "sleep"):
-            self.assertEqual(up.results_readable("600", 2, "47"), (True, ""))
+            self.assertEqual(up.upload_moto_gp_race_results(cls, {93: "1", 89: "2"}, "600", "Race", {"id": "47"}, "2026", race_start=recent), "ingested")
+        self.assertEqual(create.call_count, 2)  # the results push is sent by results_followup
 
 
 class MovedSessionTest(unittest.TestCase):
@@ -295,16 +253,56 @@ class QuietHandoverTest(unittest.TestCase):
                 self.assertEqual(len(sent), 6, (handover, offset_min))
 
 
-class ResultsPushFailureTest(unittest.TestCase):
+
+
+class WaitingHandoverTest(unittest.TestCase):
+    """Worst case: a session waits for results the whole weekend. No reminder may be lost."""
     def setUp(self):
         logger.remove()
 
-    def test_failed_send_is_reported_and_the_results_stay_written(self):
-        cls = {"classification": [{"position": 1, "rider": {"number": 93, "id": "a"}, "points": 25}], "records": []}
-        start = (datetime.now(timezone.utc) - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
-        with mock.patch.object(up, "create_race_result") as create, mock.patch.object(up, "update_config_for_race_result"), \
-             mock.patch.object(up, "process_update_moto_gp_stats"), mock.patch.object(up.time, "sleep"), \
-             mock.patch.object(up, "results_readable", return_value=(True, "")), \
-             mock.patch.object(up, "send_results_push", side_effect=ConnectionError("fcm down")):
-            status = up.upload_moto_gp_race_results(cls, {93: "1"}, "600", "Race", {"id": "47"}, "2026", race_start=start)
-        self.assertTrue(status.startswith("ingested_push_held:results push failed")); create.assert_called_once()
+    def test_no_reminder_lost_when_a_session_is_waiting_the_whole_time(self):
+        fp1 = datetime(2026, 11, 20, 10, 45, tzinfo=timezone.utc)
+        starts = [fp1, fp1 + timedelta(minutes=255), fp1 + timedelta(hours=23, minutes=25), fp1 + timedelta(hours=24, minutes=5),
+                  fp1 + timedelta(hours=28, minutes=15), fp1 + timedelta(hours=50, minutes=15)]
+        rems = [s - timedelta(minutes=15) for s in starts]
+        always_waiting = lambda now: {"ingested": [], "waiting": ["POR X"], "skipped_missing_grid": [], "errors": []}
+        for handover in (4, 20, 40):
+            for offset_min in range(0, 26 * 60, 25):
+                c = FakeClock(fp1 - timedelta(minutes=offset_min) - timedelta(minutes=20))
+                sent = []
+                def remind(now):
+                    for s in starts:
+                        if timedelta(0) < s - now <= timedelta(minutes=15) and s not in sent:
+                            sent.append(s)
+                    return []
+                nxt = lambda now: min([e for e in starts + rems if e > now], default=None)
+                nrem = lambda now: min([e for e in rems if e > now], default=None)
+                for _ in range(60):
+                    chain, _p = wr.run(clock=c, sleep=c.sleep, process=always_waiting, next_start_fn=nxt,
+                                       remind=remind, next_reminder_fn=nrem, max_minutes=330)
+                    if not chain or c.t > starts[-1]:
+                        break
+                    c.t += timedelta(minutes=handover)
+                self.assertEqual(len(sent), 6, (handover, offset_min))
+
+    def test_failed_reminder_is_retried_every_poll(self):
+        c = FakeClock(T0)
+        start = T0 + timedelta(minutes=14)
+        calls = []
+        def remind(now):
+            calls.append(now)
+            return ["race 601 PRACTICE: send failed: FCM 503"] if len(calls) < 3 else []
+        wr.run(clock=c, sleep=c.sleep, process=lambda now: summary(), next_start_fn=lambda now: start if now < start else None,
+               remind=remind, next_reminder_fn=lambda now: None, max_minutes=30, poll_seconds=60)
+        self.assertLessEqual((calls[2] - calls[0]).total_seconds(), 130)  # retried within the reminder window
+
+    def test_failed_schedule_lookup_does_not_spin(self):
+        c = FakeClock(T0)
+        n = {"c": 0}
+        def nxt(now):
+            n["c"] += 1
+            if n["c"] == 1:
+                return T0 + timedelta(minutes=1)
+            raise RuntimeError("Strapi down")
+        wr.run(clock=c, sleep=c.sleep, process=lambda now: summary(), next_start_fn=nxt, max_minutes=30, poll_seconds=60)
+        self.assertLess(n["c"], 40)  # about one pass a minute for 30 minutes, not thousands

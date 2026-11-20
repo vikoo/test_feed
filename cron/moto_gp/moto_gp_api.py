@@ -1,3 +1,4 @@
+import time
 from typing import Any
 
 import requests
@@ -168,7 +169,9 @@ def fetch_session(session_type: str, event_uuid: str)-> str:
 def fetch_race_results(session_uuid: str) :
     race_result_end_point = end_point + "/v2/results/classifications?session=" + session_uuid
     logger.debug(f"race_result_end_point: {race_result_end_point}")
-    response = requests.get(race_result_end_point, timeout=30)
+    # CloudFront serves this with max-age=30, stale-while-revalidate=600: a stale provisional copy could be
+    # read after the official one is out. A unique parameter always reaches the origin.
+    response = requests.get(race_result_end_point, params={"_t": str(time.time_ns())}, timeout=30)
     response.raise_for_status()
 
     events = response.json()

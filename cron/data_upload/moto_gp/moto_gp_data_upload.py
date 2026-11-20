@@ -1,7 +1,4 @@
 from cron.moto_gp.moto_gp_api import fetch_season, fetch_event, fetch_session, fetch_race_results
-from cron.notifiaction.moto_gp_session_reminders import build_result_messages
-from cron.notifiaction.notification_utils import send_localized_notification_to_topic
-from cron.strapi_api.apis import get_config
 from cron.stats_calc.moto_gp.moto_gp_stats_update import process_update_moto_gp_stats
 from cron.strapi_api.apis import get_latest_past_race, get_race_results_for_race_event, get_season_grid_map, \
     create_race_result, update_race_result, update_config_for_race_result
@@ -20,50 +17,11 @@ MIN_SESSION_MINUTES = {"FP1": 45, "PRACTICE": 60, "FP2": 30, "QNR1": 15, "QNR2":
 WAITING_WINDOW_HOURS = 8
 # Riders in these classified positions always score (Race 25..1, Sprint 12..1, also with half points).
 SCORING_POSITIONS = {"Race": 15, "Sprint": 9}
-# "Results are out" is news only near the session (Purple Sector rule): a session written later (a grid
-# fixed days after, a manual rerun) is a data correction and is not announced.
-RESULTS_PUSH_MAX_AGE_HOURS = 24
-# motogp.com first publishes a classification as provisional ("official": false): lap times rounded to
-# 0.01 s ("1:39.00"), track-limit lap cancellations maybe not applied yet. It turns official minutes later
-# (Portugal FP1 2026: written 11:36 UTC, official about 11:43 UTC). A session written from a provisional
-# classification is rechecked every pass (the runner then polls every 2 min) and refreshed as soon as the
-# feed is official. After this long without the official flag it is left to corrections.py (every 15 min).
-PROVISIONAL_WATCH_MINUTES = 90
-# race_id -> {"at", "session", "race_type", "gp_id", "year", "fields": {rider number: fields as written}}.
-# In memory: lost on a runner handover, then corrections.py still fixes the times within 15 minutes.
-_provisional = {}
-# Fields rewritten from the official classification. Sprint and Race order, points and dnf stay with
-# corrections.py, which checks them against the official FIM PDF.
-REFRESH_FIELDS_SC = ("time", "laps")
-REFRESH_FIELDS = ("position", "time", "laps", "dnf", "finalPos")
-
-
-def send_results_push(race_type: str, grand_prix: dict):
-    """Fixed, hand-written results copy in every language (RESULT_TEMPLATES), no machine translation."""
-    send_localized_notification_to_topic(is_f1=False, is_prod=True, messages=build_result_messages(grand_prix, race_type))
-
-
-def results_readable(race_id, expected_rows: int, gp_id, attempts: int = 3, pause: float = 10.0):
-    """Read back what the app will read before the push goes out: every row of the session and the results
-    cache key of the Grand Prix. Returns (ok, why not)."""
-    why = "not checked"
-    for attempt in range(attempts):
-        if attempt:
-            time.sleep(pause)
-        try:
-            rows = ((get_race_results_for_race_event(is_f1_feed=False, race_id=race_id).get("data") or {})
-                    .get("raceResults") or {}).get("data") or []
-            cfg = get_config(is_f1_feed=False).get("raceResultFastestLapForGrandPrixJson") or {}
-            cfg = json.loads(cfg) if isinstance(cfg, str) else cfg
-            if len(rows) < expected_rows:
-                why = f"Strapi returns {len(rows)} of {expected_rows} rows"
-            elif str(gp_id) not in {str(k) for k in cfg}:
-                why = f"results cache key for GP {gp_id} missing"
-            else:
-                return True, ""
-        except Exception as e:
-            why = f"read-back failed: {type(e).__name__}: {e}"
-    return False, why
+# Set by the weekend runner: the derived stats are then recomputed by results_followup after the results
+# push (they take about a minute), for every season in stats_owed. Alone (once mode) they run here.
+defer_stats = False
+stats_owed = set()
+bump_owed = set()  # Grand Prix whose results cache key bump failed after a write (runner retries)
 
 
 def points_missing(classification: list, race_type: str) -> list:
@@ -141,19 +99,12 @@ def process(now: datetime = None) -> dict:
 
         if status == "ingested":
             summary["ingested"].append(label)
-        elif str(status).startswith("ingested_push_held:"):
-            summary["ingested"].append(label)
-            summary["errors"].append(f"{label}: written, results push held ({status.split(':', 1)[1]})")
-        elif status == "refreshed":
-            logger.info(f"{label}: official classification written over the provisional one")
         elif status == "no_classification" and age_minutes < WAITING_WINDOW_HOURS * 60:
             summary["waiting"].append(label)
         elif status == "no_classification" and age_minutes < (WAITING_WINDOW_HOURS + 2) * 60:
             # Reported once, by the pass that stops waiting (the session drops out of the window after).
             summary["errors"].append(f"{label}: no classification {WAITING_WINDOW_HOURS} h after the start, not ingested "
                                      f"(fine if the session was cancelled; otherwise ingest it by hand)")
-        if str(race_id) in _provisional and label not in summary["waiting"]:
-            summary["waiting"].append(label)  # written from a provisional classification: recheck in 2 min
 
     logger.info(f"summary: {summary}")
     return summary
@@ -173,8 +124,6 @@ def _process_session(race_entry, race_id, race_type, grand_prix):
         if race_result_count == 0:
             moto_gp_race_results, season_grid_map, year = fetch_and_upload_race_data(race_json_data)
             status = upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year, race_start=race_entry["attributes"]["startTime"])
-        elif str(race_id) in _provisional:
-            status = refresh_provisional(str(race_id), strapi_races)
         else:
             logger.info("Race results already exist in Strapi. No need to fetch from MotoGP API.")
     else:
@@ -248,58 +197,6 @@ def result_fields(item: dict, index: int, race_type: str) -> dict:
     return fields
 
 
-def plan_refresh(race_type: str, classification: list, written: dict, row_ids: dict):
-    """Rows to rewrite now that the classification is official. written: {rider number: fields as written
-    from the provisional classification}; row_ids: {rider number: Strapi row id}.
-    Returns (changes [(row_id, {field: new})], why not refreshed or "")."""
-    names = REFRESH_FIELDS_SC if race_type in ("Sprint", "Race") else REFRESH_FIELDS
-    new = {c["rider"]["number"]: result_fields(c, i, race_type) for i, c in enumerate(classification)}
-    if not new:
-        return [], "official classification is empty"
-    if set(new) != set(written):
-        return [], f"riders differ from the provisional classification: {sorted(set(new) ^ set(written))}"
-    if set(new) - set(row_ids):
-        return [], f"no Strapi row for riders {sorted(set(new) - set(row_ids))}"
-    changes = []
-    for num in sorted(new, key=lambda n: new[n]["position"]):
-        diff = {f: new[num].get(f) for f in names if new[num].get(f) != written[num].get(f)}
-        if diff:
-            changes.append((row_ids[num], diff))
-    return changes, ""
-
-
-def refresh_provisional(race_id: str, strapi_races: dict, now: datetime = None) -> str:
-    """A session written from a provisional classification: rewrite what changed once motogp.com marks it
-    official. Returns provisional (still waiting), refreshed, or exists (given up, corrections.py has it)."""
-    now = now or datetime.now(timezone.utc)
-    w = _provisional[race_id]
-    label = f"{w['race_type']} (race {race_id})"
-    if now - w["at"] > timedelta(minutes=PROVISIONAL_WATCH_MINUTES):
-        _provisional.pop(race_id, None)
-        logger.warning(f"{label} still provisional after {PROVISIONAL_WATCH_MINUTES} min: left to corrections.py")
-        return "exists"
-    results = fetch_race_results(w["session"])
-    if not results.get("official"):
-        logger.info(f"{label} classification still provisional, rechecked next pass")
-        return "provisional"
-    changes, why_not = plan_refresh(w["race_type"], results.get("classification") or [], w["fields"],
-                                    convert_strapi_races_to_driver_map(strapi_races))
-    if why_not:
-        _provisional.pop(race_id, None)
-        logger.warning(f"{label} not refreshed from the official classification: {why_not}. Left to corrections.py")
-        return "exists"
-    for row_id, fields in changes:
-        logger.info(f"{label} official classification: row {row_id} {fields}")
-        update_race_result(is_f1_feed=False, json_str=json.dumps(fields), row_id=row_id)
-    if changes:
-        update_config_for_race_result(is_f1_feed=False, gp_id=w["gp_id"])
-        if any({"position", "dnf", "finalPos"} & set(f) for _, f in changes):
-            process_update_moto_gp_stats(season_year=w["year"])  # order changed: poles, Q2 entries, first rows
-    logger.info(f"{label} official: {len(changes)} rows rewritten")
-    _provisional.pop(race_id, None)
-    return "refreshed"
-
-
 def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year, driver_number_to_id_map=None, race_start=None):
     official = moto_gp_race_results.get("official", False)
     # if not official:
@@ -316,10 +213,15 @@ def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, 
     if classification is None or len(classification) == 0:
         logger.warning("No classification data found in MotoGP API response.")
         return "no_classification"
+    # A session still running (late start, red flag stopping the clock) must not be written from a live order.
+    session_status = str(((moto_gp_race_results.get("session") or {}).get("status")) or "FINISHED").upper()
+    if session_status != "FINISHED":
+        logger.warning(f"{race_type} classification present but the session is {session_status}: waiting")
+        return "no_classification"
 
     # Sprint and Race: written only once every rider in a scoring position has points. Covers the order
     # published before the points, and a red-flag part 1 (0 points for everyone, Catalonia 2026) before
-    # the restart is listed. Polled every 2 minutes; after WAITING_WINDOW_HOURS the run reports it.
+    # the restart is listed. Polled every minute; after WAITING_WINDOW_HOURS the run reports it.
     missing_points = points_missing(classification, race_type)
     if missing_points:
         logger.warning(f"{race_type} order is published but riders {missing_points} have no points yet: waiting")
@@ -363,34 +265,16 @@ def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, 
         else:
             create_race_result(is_f1_feed=False, json_str=json.dumps(race_result_json))
 
-    update_config_for_race_result(is_f1_feed=False, gp_id=gp_id)
-    session_uuid = (moto_gp_race_results.get("session") or {}).get("id")
-    if not driver_number_to_id_map and not official and session_uuid:
-        _provisional[str(race_id)] = {"at": datetime.now(timezone.utc), "session": session_uuid, "race_type": race_type,
-                                      "gp_id": gp_id, "year": year, "fields": written}
-        logger.info(f"{race_type} written from a provisional classification: rechecked until it is official")
-    logger.info("######################")
-    logger.info(f"update stats")
-    process_update_moto_gp_stats(season_year=year)
-    logger.info("######################")
-    # No results push after Q1: Q2 starts minutes later and its push ("Qualifying") covers both.
-    if not is_update_enabled and race_type != "QNR1":
-        started = parse_time(race_start) if race_start else None
-        if started and datetime.now(timezone.utc) - started > timedelta(hours=RESULTS_PUSH_MAX_AGE_HOURS):
-            logger.info(f"{race_type} started over {RESULTS_PUSH_MAX_AGE_HOURS} h ago: written without a results push")
-            return "ingested"
-        time.sleep(30)
-        ok, why = results_readable(race_id, len(classification), gp_id)
-        if not ok:
-            # The push would open an app that cannot show the results yet: hold it, report it.
-            logger.error(f"{race_type} results push held: {why}")
-            return "ingested_push_held:" + why
-        try:
-            send_results_push(race_type, grand_prix)
-            logger.info(f"results push sent for {race_type}")
-        except Exception as e:
-            logger.exception(f"{race_type} results push failed")
-            return f"ingested_push_held:results push failed: {type(e).__name__}: {e}"
+    # The results push is sent by results_followup once the app shows motogp.com's classification.
+    if defer_stats:
+        stats_owed.add(str(year))  # queued before the bump: a failed bump must not drop the stats
+        bump_owed.add(str(gp_id))
+        update_config_for_race_result(is_f1_feed=False, gp_id=gp_id, strict=True)
+        bump_owed.discard(str(gp_id))
+    else:
+        update_config_for_race_result(is_f1_feed=False, gp_id=gp_id)
+        logger.info("update stats")
+        process_update_moto_gp_stats(season_year=year)
     return "ingested"
 
 
