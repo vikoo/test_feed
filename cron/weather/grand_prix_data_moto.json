@@ -1,1 +1,129 @@
-""
+{
+  "data": {
+    "grandPrixes": {
+      "data": [
+        {
+          "id": "64",
+          "attributes": {
+            "name": "VALENCIA GP 26",
+            "startDate": "2026-11-27T09:45:00.000Z",
+            "fullName": "CHESTE",
+            "endDate": "2026-11-29T13:45:00.000Z",
+            "round": "22",
+            "season": {
+              "data": {
+                "attributes": {
+                  "year": "2026"
+                }
+              }
+            },
+            "track": {
+              "data": {
+                "id": "20",
+                "attributes": {
+                  "name": "Circuit Ricardo Tormo",
+                  "imageOutline": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/tracks/ricardotormo_valencia.png",
+                  "image": "https://purple-sector-bucket.s3.ap-south-1.amazonaws.com/wheelie/tracks/detailed/cheste_valencia.png",
+                  "imageFancy": null,
+                  "city": "Cheste",
+                  "country": "Valencia",
+                  "latitude": 39.484827117416735,
+                  "longitude": -0.626201737052497
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "races": {
+      "data": [
+        {
+          "id": "608",
+          "attributes": {
+            "type": "PRACTICE",
+            "startTime": "2026-11-27T14:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "64"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "97"
+              }
+            }
+          }
+        },
+        {
+          "id": "610",
+          "attributes": {
+            "type": "QNR1",
+            "startTime": "2026-11-28T09:50:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "64"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "98"
+              }
+            }
+          }
+        },
+        {
+          "id": "611",
+          "attributes": {
+            "type": "QNR2",
+            "startTime": "2026-11-28T10:15:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "64"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "99"
+              }
+            }
+          }
+        },
+        {
+          "id": "612",
+          "attributes": {
+            "type": "Sprint",
+            "startTime": "2026-11-28T14:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "64"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "100"
+              }
+            }
+          }
+        },
+        {
+          "id": "613",
+          "attributes": {
+            "type": "Race",
+            "startTime": "2026-11-29T13:00:00.000Z",
+            "grandPrix": {
+              "data": {
+                "id": "64"
+              }
+            },
+            "weather": {
+              "data": {
+                "id": "101"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
