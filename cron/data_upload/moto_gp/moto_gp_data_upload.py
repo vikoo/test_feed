@@ -36,6 +36,10 @@ def points_missing(classification: list, race_type: str) -> list:
 
 # Set by the weekend runner: on_missing_grid(year, gp_short_name, numbers) -> (all created: bool, problems).
 on_missing_grid = None
+# Set by the weekend runner: on_team_check(year, gp_short_name, classification, grid_map) -> (grid_map, problems).
+# A rider who rides for another team than the one his grid counts for is written on a grid of that team.
+on_team_check = None
+team_problems = []  # filled by on_team_check, reported by process()
 
 
 class MissingSeasonGridError(Exception):
@@ -97,6 +101,8 @@ def process(now: datetime = None) -> dict:
                 status = "failed"
                 break
 
+        summary["errors"].extend(f"{label}: {p}" for p in team_problems)
+        team_problems.clear()
         if status == "ingested":
             summary["ingested"].append(label)
         elif status == "no_classification" and age_minutes < WAITING_WINDOW_HOURS * 60:
@@ -137,6 +143,18 @@ def _process_session(race_entry, race_id, race_type, grand_prix):
             logger.info(f"Driver number to ID map: {driver_number_to_id_map}")
             status = upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, race_type, grand_prix, year, driver_number_to_id_map, race_start=race_entry["attributes"]["startTime"])
     return status
+
+
+def team_checked(year, gp_short, classification, season_grid_map):
+    """The grid map for this session after the team check (unchanged without a check or when it fails)."""
+    if not on_team_check:
+        return season_grid_map
+    try:
+        grid_map, problems = on_team_check(year, gp_short, classification, season_grid_map)
+    except Exception as e:
+        grid_map, problems = season_grid_map, [f"team check failed ({type(e).__name__}: {e}); check riders who changed team by hand"]
+    team_problems.extend(problems)
+    return grid_map
 
 
 def fetch_and_upload_race_data(json_data):
@@ -232,6 +250,7 @@ def upload_moto_gp_race_results(moto_gp_race_results, season_grid_map, race_id, 
     missing = sorted({item["rider"]["number"] for item in classification if item["rider"]["number"] not in season_grid_map})
     if missing:
         raise MissingSeasonGridError(missing)
+    season_grid_map = team_checked(year, (grand_prix.get("attributes") or {}).get("shortName"), classification, season_grid_map)
 
     for record in records:
         if record.get("type") == "fastestLap":

@@ -255,6 +255,20 @@ class PushOnceTest(Base):
         self.assertEqual(self.follow(quiet).run(M(70)), (False, []))  # today's FP1 at deploy time: no noise
         d2 = self.setup_fp1(); self.follow(d2).run(M(29)); self.assertEqual(len(d2.kinds("push")), 1)
 
+    def test_push_sent_by_the_previous_run_is_no_alarm(self):
+        """Portugal 2026: FP2 push sent 10:55 by one run; the next run (11:14) reported it as NOT sent."""
+        deps = self.setup_fp1()
+        store = FakeStore(remote={"results:600": "2026-11-20T11:42:00+00:00"})  # in the record, not in memory
+        self.assertEqual(store.sent, {})
+        pending, problems = self.follow(deps, store).run(M(31))
+        self.assertEqual((deps.kinds("push"), problems), ([], []))
+
+    def test_record_unreadable_near_miss_still_alarms(self):
+        deps = self.setup_fp1()
+        pending, problems = self.follow(deps, FakeStore(fail_load=True)).run(M(31))
+        self.assertEqual(deps.kinds("push"), [])
+        self.assertIn("results push NOT sent", problems[0]); self.assertIn("push record unavailable", problems[0])
+
     def test_q1_has_no_push_q2_has_one(self):
         q1 = [item(1, 1, "01:38.101"), item(2, 2, "01:38.202"), item(3, 3, "01:38.303")]
         deps = FakeDeps([race("603", "QNR1", "2026-11-21T10:50:00.000Z"), race("604", "QNR2", "2026-11-21T11:15:00.000Z")],

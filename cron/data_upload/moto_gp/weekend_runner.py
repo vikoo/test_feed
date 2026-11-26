@@ -252,8 +252,9 @@ def main():
     socket.setdefaulttimeout(90)  # the Strapi helpers send requests without a timeout; never hang a 6 h job
     started = datetime.now(timezone.utc)
     try:
-        from cron.data_upload.moto_gp import post_race, time_sync, auto_grid
+        from cron.data_upload.moto_gp import post_race, time_sync, auto_grid, team_switch
         uploader.on_missing_grid = auto_grid.make_handler()  # new substitute / wild card: create the grid
+        uploader.on_team_check = team_switch.make_handler()  # rider with a grid who rides for another team
         store = reminders.SentStore()  # one record for reminders and results pushes (one writer, one sha)
         chain, problems = run(remind=make_reminder_pass(store), post_race=post_race.make_pass(),
                               time_sync=time_sync.make_pass(), next_reminder_fn=next_reminder,

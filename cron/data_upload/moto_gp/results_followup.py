@@ -289,8 +289,18 @@ class Followup:
         decision, why = push_decision(rtype, official, equal, first, start, now, last)
         if decision == "never":
             if rid not in self.logged:
-                logger.info(f"{label}: no results push ({why})")
                 self.logged.add(rid)
+                # A new run's record is loaded only before a send: a push sent by the previous run is in the
+                # shared record but not in memory yet (Portugal 2026: FP2 and Sprint pushes were sent, and the
+                # next run reported them as NOT sent).
+                try:
+                    recorded = any(k in self.store.load() for k in keys)
+                except Exception as e:
+                    recorded = False
+                    why = f"{why}; push record unavailable ({type(e).__name__}), it may have been sent by the previous run"
+                if recorded:
+                    return True
+                logger.info(f"{label}: no results push ({why})")
                 if first is not None and now - first < timedelta(minutes=PUSH_LATE_MINUTES + 30):
                     problems.append(f"{label}: results push NOT sent ({why}); check the run log")
             return True
@@ -372,6 +382,9 @@ class LiveDeps:
         nums = sorted({m["rider"]["number"] for m in missing if m["rider"]["number"] not in grid})
         if nums:
             raise MissingSeasonGridError(nums)
+        from cron.data_upload.moto_gp.moto_gp_data_upload import team_checked
+        gp_short = race["attributes"]["grandPrix"]["data"]["attributes"]["shortName"]
+        grid = team_checked(year, gp_short, cls, grid)  # same team rule as the ingest (problems: next ingest pass)
         index = {id(c): i for i, c in enumerate(cls)}
         for m in missing:
             body = {"race": str(race["id"]), "seasonGrid": grid[m["rider"]["number"]], **result_fields(m, index[id(m)], rtype)}
