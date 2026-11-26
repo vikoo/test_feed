@@ -252,7 +252,10 @@ class Followup:
         nums = sorted(m["rider"]["number"] for m in missing)
         if missing and not dup and self.missing_seen.get(rid) == nums:
             # Missing on two passes in a row: not a create of this pass's ingest still on its way.
-            created = self.d.create_rows(race, missing, cls, rtype)  # raises on a missing season grid
+            try:
+                created = self.d.create_rows(race, missing, cls, rtype)  # raises on a missing season grid
+            finally:
+                problems += [f"{label}: {p}" for p in getattr(self.d, "take_problems", lambda: [])()]
             logger.info(f"{label}: created {created} missing rows")
             wrote = True
         self.missing_seen[rid] = nums
@@ -350,6 +353,13 @@ class Followup:
 class LiveDeps:
     """The real Strapi, MotoGP API and Firebase calls."""
 
+    def __init__(self):
+        self.problems = []  # from the team check of rows created here
+
+    def take_problems(self):
+        out, self.problems = self.problems, []
+        return out
+
     def races_between(self, start, end):
         from cron.strapi_api.apis import get_races_starting_between
         iso = lambda dt: dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
@@ -388,7 +398,7 @@ class LiveDeps:
             raise MissingSeasonGridError(nums)
         from cron.data_upload.moto_gp.moto_gp_data_upload import team_checked
         gp_short = race["attributes"]["grandPrix"]["data"]["attributes"]["shortName"]
-        grid = team_checked(year, gp_short, cls, grid)  # same team rule as the ingest (problems: next ingest pass)
+        grid = team_checked(year, gp_short, cls, grid, sink=self.problems)  # same team rule as the ingest
         index = {id(c): i for i, c in enumerate(cls)}
         for m in missing:
             body = {"race": str(race["id"]), "seasonGrid": grid[m["rider"]["number"]], **result_fields(m, index[id(m)], rtype)}

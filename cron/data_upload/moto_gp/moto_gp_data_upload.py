@@ -145,15 +145,16 @@ def _process_session(race_entry, race_id, race_type, grand_prix):
     return status
 
 
-def team_checked(year, gp_short, classification, season_grid_map):
-    """The grid map for this session after the team check (unchanged without a check or when it fails)."""
+def team_checked(year, gp_short, classification, season_grid_map, sink=None):
+    """The grid map for this session after the team check (unchanged without a check or when it fails).
+    Problems go to sink (the follow-up's own list) or to team_problems (reported by process())."""
     if not on_team_check:
         return season_grid_map
     try:
         grid_map, problems = on_team_check(year, gp_short, classification, season_grid_map)
     except Exception as e:
         grid_map, problems = season_grid_map, [f"team check failed ({type(e).__name__}: {e}); check riders who changed team by hand"]
-    team_problems.extend(problems)
+    (team_problems if sink is None else sink).extend(problems)
     return grid_map
 
 
