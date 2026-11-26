@@ -149,28 +149,30 @@ class PortugalFp1ReplayTest(Base):
     """Today's FP1, minute by minute, with the real motogp.com classifications."""
 
     def test_provisional_then_official(self):
-        deps = FakeDeps([race()], {"600": FIX["provisional"]})
-        deps.write_session("600", FIX["provisional"]["classification"], "FP1")
+        """Practice waits for the official classification (FP1's real feeds, replayed as Practice)."""
+        deps = FakeDeps([race("601", "PRACTICE")], {"601": FIX["provisional"]})
+        deps.rows = {}
+        deps.write_session("601", FIX["provisional"]["classification"], "PRACTICE")
         store = FakeStore()
         f = self.follow(deps, store)
-        # 11:37: provisional, equal to the app: no push yet (practice waits for the official times)
+        # 11:37: provisional, equal to the app: no push yet (Practice waits for the official times)
         pending, problems = f.run(M(1))
         self.assertTrue(pending); self.assertEqual(problems, []); self.assertEqual(deps.kinds("push"), [])
         # 11:43: official. All 22 times rewritten at once and the cache bumped; the push waits out the proxy cache
-        deps.feeds["600"] = FIX["official"]
+        deps.feeds["601"] = FIX["official"]
         pending, problems = f.run(M(7))
         updates = deps.kinds("update")
         self.assertEqual(len(updates), 22)
         self.assertEqual({tuple(u[2]) for u in updates}, {("time",)})
-        self.assertIn(("update", "600-72", {"time": "01:39.002"}), updates)
+        self.assertIn(("update", "601-72", {"time": "01:39.002"}), updates)
         self.assertEqual(deps.kinds("push"), []); self.assertTrue(pending)
         f.run(M(12)); self.assertEqual(deps.kinds("push"), [])
         # 11:49: six minutes after the last change: cache bumped again and the push sent, once
         pending, problems = f.run(M(13))
-        self.assertEqual(deps.kinds("push"), [("push", "📊 Portugal GP: FP1 results")])
+        self.assertEqual(deps.kinds("push"), [("push", "📊 Portugal GP: Practice")])
         self.assertEqual(deps.log[-1][0], "push"); self.assertEqual(deps.log[-2][0], "bump")
         self.assertFalse(pending); self.assertEqual(problems, [])
-        self.assertEqual(store.marks, [["results:600", "results:c7f7626b:FP1"]])
+        self.assertEqual(store.marks, [["results:601", "results:c7f7626b:PRACTICE"]])
         n = len(deps.log)
         f.run(M(15)); f.run(M(29))
         self.assertEqual(len(deps.log), n)
@@ -183,14 +185,36 @@ class PortugalFp1ReplayTest(Base):
         f.run(M(6)); self.assertEqual(len(deps.kinds("push")), 1); self.assertEqual(deps.kinds("update"), [])
 
     def test_still_provisional_after_the_hold_is_announced_anyway(self):
-        deps = FakeDeps([race()], {"600": FIX["provisional"]})
-        deps.write_session("600", FIX["provisional"]["classification"], "FP1")
+        deps = FakeDeps([race("601", "PRACTICE")], {"601": FIX["provisional"]})
+        deps.write_session("601", FIX["provisional"]["classification"], "PRACTICE")
         f = self.follow(deps)
         f.run(M(9)); self.assertEqual(deps.kinds("push"), [])
         f.run(M(10)); self.assertEqual(len(deps.kinds("push")), 1)
-        deps.feeds["600"] = FIX["official"]
+        deps.feeds["601"] = FIX["official"]
         f.run(M(20))  # official later: times rewritten, no second push
         self.assertEqual(len(deps.kinds("update")), 22); self.assertEqual(len(deps.kinds("push")), 1)
+
+    def test_fp1_and_fp2_push_on_the_quick_version(self):
+        """FP1/FP2 (Ankur, 2026-11-20): no wait for "official", only the 6 min proxy-cache wait."""
+        for rid, rtype in (("600", "FP1"), ("602", "FP2")):
+            deps = FakeDeps([race(rid, rtype)], {rid: FIX["provisional"]})
+            deps.rows = {}
+            deps.write_session(rid, FIX["provisional"]["classification"], rtype)
+            f = self.follow(deps)
+            f.run(M(5)); self.assertEqual(deps.kinds("push"), [], rtype)
+            f.run(M(6)); self.assertEqual(len(deps.kinds("push")), 1, rtype)
+            deps.feeds[rid] = FIX["official"]
+            f.run(M(8))  # official later: all 22 times rewritten, no second push
+            self.assertEqual(len(deps.kinds("update")), 22, rtype); self.assertEqual(len(deps.kinds("push")), 1, rtype)
+
+    def test_practice_and_q2_still_wait_for_official(self):
+        for rtype in ("PRACTICE", "QNR2"):
+            deps = FakeDeps([race("601", rtype)], {"601": FIX["provisional"]})
+            deps.rows = {}
+            deps.write_session("601", FIX["provisional"]["classification"], rtype)
+            f = self.follow(deps)
+            f.run(M(6)); f.run(M(9)); self.assertEqual(deps.kinds("push"), [], rtype)
+            f.run(M(10)); self.assertEqual(len(deps.kinds("push")), 1, rtype)
 
     def test_stale_provisional_copy_never_overwrites_official_times(self):
         deps = FakeDeps([race()], {"600": FIX["official"]})
@@ -254,6 +278,20 @@ class PushOnceTest(Base):
         quiet = self.setup_fp1()
         self.assertEqual(self.follow(quiet).run(M(70)), (False, []))  # today's FP1 at deploy time: no noise
         d2 = self.setup_fp1(); self.follow(d2).run(M(29)); self.assertEqual(len(d2.kinds("push")), 1)
+
+    def test_push_sent_by_the_previous_run_is_no_alarm(self):
+        """Portugal 2026: FP2 push sent 10:55 by one run; the next run (11:14) reported it as NOT sent."""
+        deps = self.setup_fp1()
+        store = FakeStore(remote={"results:600": "2026-11-20T11:42:00+00:00"})  # in the record, not in memory
+        self.assertEqual(store.sent, {})
+        pending, problems = self.follow(deps, store).run(M(31))
+        self.assertEqual((deps.kinds("push"), problems), ([], []))
+
+    def test_record_unreadable_near_miss_still_alarms(self):
+        deps = self.setup_fp1()
+        pending, problems = self.follow(deps, FakeStore(fail_load=True)).run(M(31))
+        self.assertEqual(deps.kinds("push"), [])
+        self.assertIn("results push NOT sent", problems[0]); self.assertIn("push record unavailable", problems[0])
 
     def test_q1_has_no_push_q2_has_one(self):
         q1 = [item(1, 1, "01:38.101"), item(2, 2, "01:38.202"), item(3, 3, "01:38.303")]

@@ -14,8 +14,9 @@ Run by the weekend runner on every pass, for every session that started in the l
 2. Results push. Sent once per session (recorded on the motogp-state branch next to the reminders, so a
    handover or a second run never sends it twice), and only when the app shows exactly motogp.com's
    classification; the app's results cache key is bumped right before the send:
-   - practice and qualifying: when the classification is official, or HOLD_MINUTES after the first write
-     if motogp.com is still provisional then (so the push is never lost);
+   - Practice and Q2: when the classification is official, or HOLD_MINUTES after the first write if
+     motogp.com is still provisional then (so the push is never lost);
+   - FP1 and FP2: on the quick version (no wait for "official");
    - Sprint and Race: at once (they are only written when every scoring rider has points);
    - and never within APP_CACHE_MINUTES of the last row change (the proxy cache in front of Strapi).
    A push that cannot go yet is retried on the next pass; nothing is announced over PUSH_LATE_MINUTES
@@ -35,7 +36,10 @@ PUSH_MAX_AGE_HOURS = 24
 # "Results are in" is news only right after they are: no push this long after the first write (a runner
 # outage, a record that stayed unavailable). Covers the provisional hold and retries with a wide margin.
 PUSH_LATE_MINUTES = 30
-HOLD_MINUTES = {"FP1": 10, "PRACTICE": 10, "FP2": 10, "QNR2": 10, "Sprint": 0, "Race": 0}
+# Minutes a push waits for motogp.com's "official" classification (Ankur, 2026-11-20, as a user would want it):
+# FP1/FP2 push on the quick version (nothing depends on their order); Practice ("who made Q2?") and Q2
+# ("who took pole?") wait for it, since a lap deleted after the session can change exactly that.
+HOLD_MINUTES = {"FP1": 0, "PRACTICE": 10, "FP2": 0, "QNR2": 10, "Sprint": 0, "Race": 0}
 # The Strapi nginx proxy answers identical GraphQL queries (the app's too) from a cache for about 5 minutes.
 # A push sent sooner after the last row change can open the app on the old answer, so it waits this long.
 APP_CACHE_MINUTES = 6
@@ -289,8 +293,18 @@ class Followup:
         decision, why = push_decision(rtype, official, equal, first, start, now, last)
         if decision == "never":
             if rid not in self.logged:
-                logger.info(f"{label}: no results push ({why})")
                 self.logged.add(rid)
+                # A new run's record is loaded only before a send: a push sent by the previous run is in the
+                # shared record but not in memory yet (Portugal 2026: FP2 and Sprint pushes were sent, and the
+                # next run reported them as NOT sent).
+                try:
+                    recorded = any(k in self.store.load() for k in keys)
+                except Exception as e:
+                    recorded = False
+                    why = f"{why}; push record unavailable ({type(e).__name__}), it may have been sent by the previous run"
+                if recorded:
+                    return True
+                logger.info(f"{label}: no results push ({why})")
                 if first is not None and now - first < timedelta(minutes=PUSH_LATE_MINUTES + 30):
                     problems.append(f"{label}: results push NOT sent ({why}); check the run log")
             return True
@@ -372,6 +386,9 @@ class LiveDeps:
         nums = sorted({m["rider"]["number"] for m in missing if m["rider"]["number"] not in grid})
         if nums:
             raise MissingSeasonGridError(nums)
+        from cron.data_upload.moto_gp.moto_gp_data_upload import team_checked
+        gp_short = race["attributes"]["grandPrix"]["data"]["attributes"]["shortName"]
+        grid = team_checked(year, gp_short, cls, grid)  # same team rule as the ingest (problems: next ingest pass)
         index = {id(c): i for i, c in enumerate(cls)}
         for m in missing:
             body = {"race": str(race["id"]), "seasonGrid": grid[m["rider"]["number"]], **result_fields(m, index[id(m)], rtype)}

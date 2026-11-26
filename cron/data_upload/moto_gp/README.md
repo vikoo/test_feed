@@ -37,9 +37,9 @@ important is kept in memory, so a handover changes nothing):
 - **Results push**, once per session, recorded on `motogp-state` next to the reminders (`results:<race id>`
   and `results:<event>:<type>`), so it is never sent twice and a failed or held push is retried on the next
   pass. It goes when the app shows exactly motogp.com's classification and at least 6 minutes after the last
-  row change (the Strapi proxy caches identical GraphQL queries, the app's too, for about 5 minutes): practice
-  and qualifying once the classification is official, or 10 minutes after the first write if it is still
-  provisional; Sprint and Race at once. The results cache key is bumped right before the send. No push after
+  row change (the Strapi proxy caches identical GraphQL queries, the app's too, for about 5 minutes): Practice
+  and Q2 once the classification is official, or 10 minutes after the first write if it is still
+  provisional; FP1, FP2, Sprint and Race without waiting for it. The results cache key is bumped right before the send. No push after
   Q1, none 30 minutes after the first write or 24 h after the start. Paused like the reminders
   (`MOTOZ_SESSION_PUSH`, `control.json`).
 - **Stats** are recomputed after the push for every season written in the pass.
