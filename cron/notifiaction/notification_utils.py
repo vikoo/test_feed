@@ -1,10 +1,12 @@
 import base64
+import hashlib
 import os
 import json
 import asyncio
 
 import firebase_admin
 from firebase_admin import credentials, messaging
+from firebase_admin import exceptions as firebase_exceptions
 from dotenv import load_dotenv
 from googletrans import Translator
 from loguru import logger
@@ -47,7 +49,14 @@ def __get_service_account_dict(is_prod: bool=False):
     logger.info(f"Service account loaded for {'PROD' if is_prod else 'DEV'}")
     return service_account_dict
 
-def __send_notification_to_topic_lang(is_f1: bool, title: str, body: str, lang_code: str):
+def push_collapse_id(title: str, body: str) -> str:
+    """Same id for every copy of one push (all languages), so a phone that holds two or more FCM
+    registrations for the same app (iOS reinstall keeps the old one alive) shows ONE card: iOS replaces
+    cards with the same apns-collapse-id, Android cards with the same tag. Max 64 bytes for APNs."""
+    return "mz-" + hashlib.sha256(f"{title}\n{body}".encode("utf-8")).hexdigest()[:24]
+
+
+def __send_notification_to_topic_lang(is_f1: bool, title: str, body: str, lang_code: str, collapse_id: str = None):
     # Validate inputs
     if is_f1 is None:
         raise ValueError("is_f1 parameter cannot be None")
@@ -75,12 +84,28 @@ def __send_notification_to_topic_lang(is_f1: bool, title: str, body: str, lang_c
             body=body
         ),
         data=data if data else {},
-        topic=notification_topic
+        topic=notification_topic,
+        apns=messaging.APNSConfig(headers={"apns-collapse-id": collapse_id}) if collapse_id else None,
+        android=messaging.AndroidConfig(
+            collapse_key=collapse_id, notification=messaging.AndroidNotification(tag=collapse_id)
+        ) if collapse_id else None,
     )
 
     # Send the message to the topic
-    response = messaging.send(message)
-    logger.info(f"Successfully sent message to topic {notification_topic}: {response}")
+    try:
+        response = messaging.send(message)
+    except firebase_exceptions.InvalidArgumentError as e:
+        if not collapse_id:
+            raise
+        # FCM refused the request (400, nothing was delivered): never lose a push over the collapse label,
+        # send the plain message as before.
+        logger.warning(f"FCM refused the collapse id for {notification_topic} ({e}); sending without it")
+        message.apns = None
+        message.android = None
+        collapse_id = None
+        response = messaging.send(message)
+    logger.info(f"Successfully sent message to topic {notification_topic}: {response}"
+                + (f" (collapse id {collapse_id})" if collapse_id else ""))
 
 
 async def send_notification_to_topic(is_f1: bool, is_prod: bool, title: str, body: str):
@@ -133,13 +158,14 @@ def send_localized_notification_to_topic(is_f1: bool, is_prod: bool, messages: d
         raise ValueError("English copy is required")
     __init_firebase_admin(is_prod=is_prod)
     title, body = messages["en"]
-    __send_notification_to_topic_lang(is_f1, title, body, "en")
+    collapse_id = push_collapse_id(title, body)
+    __send_notification_to_topic_lang(is_f1, title, body, "en", collapse_id)
     for lang in sorted(locales):
         if lang not in messages:
             continue
         try:
             title, body = messages[lang]
-            __send_notification_to_topic_lang(is_f1, title, body, lang)
+            __send_notification_to_topic_lang(is_f1, title, body, lang, collapse_id)
         except Exception as e:
             logger.warning(f"send failed for {lang}: {type(e).__name__}: {e}")
 
